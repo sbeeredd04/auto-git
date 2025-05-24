@@ -66,12 +66,12 @@ auto-git commit --dry-run       # Preview what would be committed (coming soon)
 ```
 
 #### `auto-git watch`
-Starts file watching mode - automatically commits changes when files are modified.
+Starts file watching mode - automatically commits changes when files are modified **recursively throughout the entire repository**.
 
 ```bash
-auto-git watch                  # Watch current directory
-auto-git watch --paths src lib  # Watch specific directories
-auto-git watch --no-push        # Watch and commit but don't push
+auto-git watch                    # Watch ALL files recursively (default)
+auto-git watch --paths src lib    # Watch specific directories only
+auto-git watch --no-push          # Watch and commit but don't push
 ```
 
 #### `auto-git config`
@@ -95,16 +95,20 @@ Auto-Git supports multiple configuration methods (in order of priority):
 1. **Environment Variables**
    ```bash
    export GEMINI_API_KEY="your-key"
-   export AUTO_GIT_WATCH_PATHS="src,lib,docs"
-   export AUTO_GIT_DEBOUNCE_MS="3000"
+   export AUTO_GIT_WATCH_PATHS="**/*,src/**,lib/**"  # Glob patterns
+   export AUTO_GIT_DEBOUNCE_MS="30000"
    ```
 
 2. **User Config File** (`~/.auto-gitrc.json`)
    ```json
    {
      "apiKey": "your-gemini-api-key",
-     "watchPaths": ["src", "lib"],
-     "debounceMs": 2000
+     "watchPaths": ["**/*"],
+     "debounceMs": 30000,
+     "watchOptions": {
+       "ignored": ["node_modules/**", "*.log"],
+       "depth": null
+     }
    }
    ```
 
@@ -112,6 +116,29 @@ Auto-Git supports multiple configuration methods (in order of priority):
    ```bash
    GEMINI_API_KEY=your-key
    ```
+
+### 🔍 **Recursive File Watching**
+
+By default, Auto-Git now watches **ALL files recursively** in your repository:
+
+- ✅ **Monitors all directories and subdirectories**
+- ✅ **Watches all file types** (code, docs, configs, etc.)
+- ✅ **Intelligent filtering** - ignores `.git`, `node_modules`, logs, temp files
+- ✅ **Customizable patterns** - use glob patterns for specific needs
+- ✅ **Performance optimized** - efficient recursive watching
+
+**Default behavior:**
+- Watches: `**/*` (all files recursively)
+- Ignores: `.git/`, `node_modules/`, `*.log`, `*.tmp`, build outputs
+
+**Custom patterns:**
+```bash
+# Watch only JavaScript and TypeScript files recursively
+export AUTO_GIT_WATCH_PATHS="**/*.js,**/*.ts,**/*.json"
+
+# Watch specific directories
+auto-git watch --paths src docs tests
+```
 
 ## 🔧 Installation Options
 
@@ -135,10 +162,11 @@ npm install -g git+https://github.com/sbeeredd04/auto-git.git
 
 ## 🎯 How It Works
 
-1. **File Detection**: Monitors file changes using `chokidar`
-2. **Change Analysis**: Runs `git diff` to understand what changed
-3. **AI Processing**: Sends changes to Gemini AI for commit message generation
-4. **Git Operations**: Automatically runs `git add .`, `git commit`, and `git push`
+1. **Recursive File Detection**: Monitors file changes using `chokidar` with deep recursive watching of all repository files
+2. **Smart Filtering**: Automatically ignores common non-source files (node_modules, .git, logs, temp files)
+3. **Change Analysis**: Runs `git diff` to understand what changed across all monitored files
+4. **AI Processing**: Sends comprehensive change analysis to Gemini AI for intelligent commit message generation
+5. **Git Operations**: Automatically runs `git add .`, `git commit`, and `git push`
 
 ### Generated Commit Messages
 
@@ -158,30 +186,68 @@ Auto-Git generates conventional commit messages following best practices:
 
 ## 🎛️ Advanced Usage
 
-### Custom Watch Paths
+### Recursive Watch Patterns
 ```bash
-auto-git watch --paths src components lib
+# Default: Watch all files recursively
+auto-git watch
+
+# Watch specific file types across all directories
+export AUTO_GIT_WATCH_PATHS="**/*.js,**/*.ts,**/*.md,**/*.json"
+auto-git watch
+
+# Watch specific directories and their subdirectories
+auto-git watch --paths src tests docs
+
+# Watch with custom ignore patterns
+```
+
+### Advanced Configuration
+Create `~/.auto-gitrc.json` for sophisticated setups:
+
+```json
+{
+  "apiKey": "your-gemini-api-key",
+  "watchPaths": ["**/*"],
+  "debounceMs": 30000,
+  "watchOptions": {
+    "ignored": [
+      "node_modules/**",
+      "dist/**", 
+      "build/**",
+      "coverage/**",
+      "*.log",
+      "*.tmp",
+      "package-lock.json"
+    ],
+    "depth": null,
+    "followSymlinks": false,
+    "persistent": true
+  }
+}
 ```
 
 ### Environment-Specific Config
 ```bash
-# Development
+# Development - watch source files only
 export GEMINI_API_KEY="dev-key"
-auto-git watch --paths src
+export AUTO_GIT_WATCH_PATHS="src/**,tests/**,docs/**"
+auto-git watch
 
-# Production
+# Production - commit manually with all files
 export GEMINI_API_KEY="prod-key" 
 auto-git commit --no-push
 ```
 
-### Debounce Configuration
-Prevent too many commits during rapid changes:
+### Performance Optimization
+For large repositories, optimize watching:
 
 ```json
-// ~/.auto-gitrc.json
 {
-  "debounceMs": 5000,  // Wait 5 seconds after last change
-  "apiKey": "your-key"
+  "watchPaths": ["src/**", "lib/**", "*.md"],
+  "debounceMs": 60000,
+  "watchOptions": {
+    "ignored": ["node_modules/**", "*.log", "dist/**"]
+  }
 }
 ```
 

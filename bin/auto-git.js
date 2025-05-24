@@ -14,8 +14,8 @@ program
 
 program
   .command('watch')
-  .description('Watch for file changes and auto-commit with AI-generated messages')
-  .option('-p, --paths <paths...>', 'Paths to watch for changes', ['.'])
+  .description('Watch for file changes recursively and auto-commit with AI-generated messages')
+  .option('-p, --paths <paths...>', 'Custom paths to watch (default: all files recursively)')
   .option('--no-push', 'Commit but do not push to remote')
   .action(async (options) => {
     try {
@@ -40,7 +40,12 @@ program
       console.log(`🔗 Remote: ${remote ? '✅' : '❌ (commits will be local only)'}`);
       console.log('');
       
-      const watcher = await startWatcher(options.paths);
+      // Pass custom paths if provided, otherwise use default recursive watching
+      const watchPaths = options.paths && options.paths.length > 0 && !options.paths.includes('.') 
+        ? options.paths 
+        : null; // null will use config defaults
+      
+      const watcher = await startWatcher(watchPaths);
       
       // Handle graceful shutdown
       process.on('SIGINT', () => {
@@ -92,10 +97,16 @@ program
       console.log('');
       console.log(`🔑 API Key: ${config.apiKey ? '✅ Set' : '❌ Not set'}`);
       console.log(`👀 Watch paths: ${config.watchPaths.join(', ')}`);
+      console.log(`🔄 Recursive watching: ${config.watchOptions.depth === undefined ? 'Yes (all levels)' : 'Limited'}`);
       console.log(`⏱️  Debounce time: ${config.debounceMs}ms`);
       console.log('');
+      console.log('🚫 Ignored patterns:');
+      config.watchOptions.ignored.forEach(pattern => {
+        console.log(`   - ${pattern.toString()}`);
+      });
+      console.log('');
       console.log('📝 Configuration sources (in order of priority):');
-      console.log('   1. Environment variables (GEMINI_API_KEY)');
+      console.log('   1. Environment variables (GEMINI_API_KEY, AUTO_GIT_WATCH_PATHS, AUTO_GIT_DEBOUNCE_MS)');
       console.log('   2. User config (~/.auto-gitrc.json)');
       console.log('   3. .env file');
       console.log('');
@@ -105,6 +116,11 @@ program
         console.log('   export GEMINI_API_KEY="your-api-key"');
         console.log('   OR create ~/.auto-gitrc.json with: {"apiKey": "your-api-key"}');
       }
+      
+      console.log('💡 Watching behavior:');
+      console.log('   • Watches ALL files recursively in the repository by default');
+      console.log('   • Ignores .git, node_modules, and common temporary files');
+      console.log('   • Can be customized via ~/.auto-gitrc.json or environment variables');
       
     } catch (error) {
       console.error('❌ Error:', error.message);
