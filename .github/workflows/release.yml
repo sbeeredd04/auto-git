@@ -1,5 +1,8 @@
 name: Create Release
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -63,28 +66,24 @@ jobs:
           git push
           
       - name: Create Release
-        uses: actions/create-release@v1
+        run: |
+          gh release create ${{ env.NEW_VERSION }} \
+            --title "Release ${{ env.NEW_VERSION }}" \
+            --notes "## Changes in ${{ env.NEW_VERSION }}
+
+          ${{ github.event.inputs.changelog }}
+
+          ## Installation
+
+          \`\`\`bash
+          npm install -g @sbeeredd04/auto-git
+          \`\`\`
+
+          ## Usage
+
+          \`\`\`bash
+          auto-git commit    # One-time commit
+          auto-git watch     # Continuous watching
+          \`\`\`"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.NEW_VERSION }}
-          release_name: Release ${{ env.NEW_VERSION }}
-          body: |
-            ## Changes in ${{ env.NEW_VERSION }}
-            
-            ${{ github.event.inputs.changelog }}
-            
-            ## Installation
-            
-            ```bash
-            npm install -g @sbeeredd04/auto-git
-            ```
-            
-            ## Usage
-            
-            ```bash
-            auto-git commit    # One-time commit
-            auto-git watch     # Continuous watching
-            ```
-          draft: false
-          prerelease: false 
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
