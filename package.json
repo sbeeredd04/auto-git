@@ -1,0 +1,33 @@
+{
+  "name": "auto-git",
+  "version": "1.0.0",
+  "description": "Auto-commit and push with AI-generated commit messages using Gemini",
+  "main": "bin/auto-git.js",
+  "type": "module",
+  "bin": {
+    "auto-git": "bin/auto-git.js"
+  },
+  "scripts": {
+    "start": "node bin/auto-git.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "git",
+    "automation",
+    "ai",
+    "commit",
+    "gemini"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "chokidar": "^3.5.3",
+    "dotenv": "^16.3.1",
+    "execa": "^8.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
