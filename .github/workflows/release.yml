@@ -1,0 +1,90 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+      changelog:
+        description: 'Changelog notes'
+        required: false
+        default: 'Bug fixes and improvements'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+      - name: Bump version
+        run: |
+          NEW_VERSION=$(npm version ${{ github.event.inputs.version }} --no-git-tag-version)
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          
+      - name: Update CHANGELOG
+        run: |
+          echo "## ${{ env.NEW_VERSION }} - $(date +'%Y-%m-%d')" > CHANGELOG_NEW.md
+          echo "" >> CHANGELOG_NEW.md
+          echo "${{ github.event.inputs.changelog }}" >> CHANGELOG_NEW.md
+          echo "" >> CHANGELOG_NEW.md
+          if [ -f CHANGELOG.md ]; then
+            cat CHANGELOG.md >> CHANGELOG_NEW.md
+          fi
+          mv CHANGELOG_NEW.md CHANGELOG.md
+          
+      - name: Commit changes
+        run: |
+          git add package.json CHANGELOG.md
+          git commit -m "chore: bump version to ${{ env.NEW_VERSION }}"
+          git push
+          
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          release_name: Release ${{ env.NEW_VERSION }}
+          body: |
+            ## Changes in ${{ env.NEW_VERSION }}
+            
+            ${{ github.event.inputs.changelog }}
+            
+            ## Installation
+            
+            ```bash
+            npm install -g @sbeeredd04/auto-git
+            ```
+            
+            ## Usage
+            
+            ```bash
+            auto-git commit    # One-time commit
+            auto-git watch     # Continuous watching
+            ```
+          draft: false
+          prerelease: false 
