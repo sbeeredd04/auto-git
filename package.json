@@ -1,5 +1,5 @@
 {
-  "name": "auto-git",
+  "name": "@sbeeredd04/auto-git",
   "version": "1.0.0",
   "description": "Auto-commit and push with AI-generated commit messages using Gemini",
   "main": "bin/auto-git.js",
@@ -11,14 +11,27 @@
     "start": "node bin/auto-git.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sbeeredd04/auto-git.git"
+  },
+  "homepage": "https://github.com/sbeeredd04/auto-git#readme",
+  "bugs": {
+    "url": "https://github.com/sbeeredd04/auto-git/issues"
+  },
   "keywords": [
     "git",
     "automation",
     "ai",
     "commit",
-    "gemini"
+    "gemini",
+    "cli",
+    "automatic",
+    "commit-message",
+    "file-watcher",
+    "conventional-commits"
   ],
-  "author": "",
+  "author": "sbeeredd04",
   "license": "MIT",
   "dependencies": {
     "commander": "^11.1.0",

@@ -16,10 +16,10 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
+### 1. Install Auto-Git
 
 ```bash
-npm install
+npm install -g @sbeeredd04/auto-git
 ```
 
 ### 2. Get a Gemini API Key
@@ -36,10 +36,6 @@ export GEMINI_API_KEY="your-api-key-here"
 
 **One-time commit:**
 ```bash
-# Link the tool locally
-npm link
-
-# Commit current changes
 auto-git commit
 ```
 
@@ -111,22 +107,22 @@ Auto-Git supports multiple configuration methods (in order of priority):
 
 ## 🔧 Installation Options
 
-### Option 1: Local Development
+### Option 1: Global Installation (Recommended)
 ```bash
-git clone <this-repo>
+npm install -g @sbeeredd04/auto-git
+```
+
+### Option 2: Local Development
+```bash
+git clone https://github.com/sbeeredd04/auto-git.git
 cd auto-git
 npm install
 npm link
 ```
 
-### Option 2: Global Installation (if published to npm)
-```bash
-npm install -g auto-git
-```
-
 ### Option 3: Direct from Git
 ```bash
-npm install -g git+https://github.com/yourusername/auto-git.git
+npm install -g git+https://github.com/sbeeredd04/auto-git.git
 ```
 
 ## 🎯 How It Works
