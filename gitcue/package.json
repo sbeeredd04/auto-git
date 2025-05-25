@@ -10,7 +10,7 @@
     "theme": "dark"
   },
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": ">=1.50.0 <2.0.0"
   },
   "categories": [
     "SCM Providers",
@@ -35,7 +35,14 @@
     "url": "https://github.com/sbeeredd04/auto-git/issues"
   },
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:gitcue.commit",
+    "onCommand:gitcue.watchToggle",
+    "onCommand:gitcue.openDashboard",
+    "onCommand:gitcue.reset",
+    "onCommand:gitcue.configure",
+    "onCommand:gitcue.showStatus",
+    "workspaceContains:.git"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -226,7 +233,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "@types/vscode": "^1.100.0",
+    "@types/vscode": "^1.50.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.10",
