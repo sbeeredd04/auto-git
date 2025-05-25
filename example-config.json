@@ -1,0 +1,31 @@
+{
+  "apiKey": "your-gemini-api-key-here",
+  "watchPaths": ["**/*"],
+  "debounceMs": 30000,
+  "interactiveOnError": true,
+  "enableSuggestions": true,
+  "hotkeys": {
+    "pause": "ctrl+p",
+    "resume": "ctrl+r",
+    "enterRepl": "ctrl+i"
+  },
+  "watchOptions": {
+    "ignored": [
+      "node_modules/**",
+      "dist/**",
+      "build/**",
+      "coverage/**",
+      ".git/**",
+      "*.log",
+      "*.tmp",
+      "*.temp",
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml"
+    ],
+    "persistent": true,
+    "ignoreInitial": true,
+    "followSymlinks": false,
+    "depth": null
+  }
+} 
