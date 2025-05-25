@@ -1,0 +1,238 @@
+{
+  "name": "gitcue",
+  "displayName": "GitCue",
+  "description": "GitCue — your Git helper extension for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.",
+  "version": "0.0.1",
+  "publisher": "sbeeredd04",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "ai",
+    "automation",
+    "commit",
+    "gemini",
+    "auto-commit",
+    "git-automation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sbeeredd04/auto-git.git",
+    "directory": "gitcue"
+  },
+  "homepage": "https://github.com/sbeeredd04/auto-git/tree/main/gitcue",
+  "bugs": {
+    "url": "https://github.com/sbeeredd04/auto-git/issues"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitcue.commit",
+        "title": "GitCue: AI Commit",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "gitcue.watchToggle",
+        "title": "GitCue: Toggle Auto-Watch",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "gitcue.openDashboard",
+        "title": "GitCue: Open Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "gitcue.reset",
+        "title": "GitCue: Reset Commits",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "gitcue.configure",
+        "title": "GitCue: Configure Settings",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "gitcue.showStatus",
+        "title": "GitCue: Show Status",
+        "icon": "$(info)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "gitcue.commit",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "gitcue.commit",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        },
+        {
+          "command": "gitcue.watchToggle",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "gitcue.commit",
+          "when": "scmProvider == git"
+        },
+        {
+          "command": "gitcue.watchToggle",
+          "when": "scmProvider == git"
+        },
+        {
+          "command": "gitcue.openDashboard",
+          "when": "scmProvider == git"
+        },
+        {
+          "command": "gitcue.reset",
+          "when": "scmProvider == git"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "gitcue.commit",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c",
+        "when": "scmProvider == git"
+      },
+      {
+        "command": "gitcue.watchToggle",
+        "key": "ctrl+alt+w",
+        "mac": "cmd+alt+w",
+        "when": "scmProvider == git"
+      }
+    ],
+    "configuration": {
+      "title": "GitCue",
+      "properties": {
+        "gitcue.geminiApiKey": {
+          "type": "string",
+          "description": "Your Gemini API key for AI-powered commit messages",
+          "scope": "application"
+        },
+        "gitcue.commitMode": {
+          "type": "string",
+          "enum": [
+            "periodic",
+            "intelligent"
+          ],
+          "default": "intelligent",
+          "description": "Commit mode: periodic (time-based) or intelligent (AI-driven decisions)"
+        },
+        "gitcue.autoPush": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically push commits to remote repository"
+        },
+        "gitcue.watchPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "src/**",
+            "lib/**",
+            "*.js",
+            "*.ts",
+            "*.jsx",
+            "*.tsx",
+            "*.py",
+            "*.java",
+            "*.cpp",
+            "*.c",
+            "*.h"
+          ],
+          "description": "Glob patterns for files to watch for changes"
+        },
+        "gitcue.debounceMs": {
+          "type": "number",
+          "default": 30000,
+          "description": "Debounce time in milliseconds before processing file changes"
+        },
+        "gitcue.bufferTimeSeconds": {
+          "type": "number",
+          "default": 30,
+          "description": "Buffer time in seconds to cancel commits in intelligent mode"
+        },
+        "gitcue.maxCallsPerMinute": {
+          "type": "number",
+          "default": 15,
+          "description": "Maximum API calls per minute for rate limiting"
+        },
+        "gitcue.enableNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications for commits and status updates"
+        },
+        "gitcue.autoWatch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start watching files when VS Code opens"
+        }
+      }
+    },
+    "views": {
+      "scm": [
+        {
+          "id": "gitcueStatus",
+          "name": "GitCue Status",
+          "when": "scmProvider == git"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitcue",
+          "title": "GitCue",
+          "icon": "$(git-branch)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.100.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.7",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@sbeeredd04/auto-git": "^3.9.1"
+  }
+}
