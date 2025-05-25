@@ -1,4 +1,4 @@
-# Auto-Git v3.9.2 Release Notes
+# Auto-Git v3.9.3 Release Notes
 
 ## 🚀 What's New
 
@@ -27,12 +27,12 @@ We've added multiple ways to cancel pending commits for better user experience:
 - **GitCue Extension v0.0.2** with improved buffer notifications
 - **Multiple cancellation methods** supported in the VS Code interface
 - **Enhanced keyboard shortcuts** including Ctrl+X support
-- **Updated dependency** to auto-git v3.9.2
+- **Updated dependency** to auto-git v3.9.3
 
 ## 🔧 Technical Details
 
 ### Package Updates
-- **Auto-Git NPM Package**: Updated to v3.9.2
+- **Auto-Git NPM Package**: Updated to v3.9.3
 - **GitCue VS Code Extension**: Updated to v0.0.2
 - **Dependencies**: All packages updated and published
 
@@ -99,7 +99,7 @@ In the GitCue buffer notification panel:
 ### NPM Package
 ```bash
 # Install or update to latest version
-npm install -g @sbeeredd04/auto-git@3.9.2
+npm install -g @sbeeredd04/auto-git@3.9.3
 
 # Verify installation
 auto-git --version
@@ -112,7 +112,7 @@ auto-git --version
 
 ## 🔄 Migration Guide
 
-### From v3.9.1
+### From v3.9.3
 - **No breaking changes** - all existing configurations work
 - **Enhanced functionality** - new cancellation methods available immediately
 - **Automatic benefits** - improved safety and user experience
@@ -166,7 +166,7 @@ We've addressed the community feedback about:
 
 ## 📊 Summary
 
-**Auto-Git v3.9.2** is a critical update that resolves the buffer period cancellation issue and significantly improves the user experience with multiple cancellation methods. The update maintains full backward compatibility while adding enhanced safety features and better user control.
+**Auto-Git v3.9.3** is a critical update that resolves the buffer period cancellation issue and significantly improves the user experience with multiple cancellation methods. The update maintains full backward compatibility while adding enhanced safety features and better user control.
 
 **Key Benefits:**
 - ✅ Fixed critical cancellation bug
@@ -180,6 +180,6 @@ We've addressed the community feedback about:
 ---
 
 **Released**: January 25, 2025  
-**Version**: 3.9.2  
+**Version**: 3.9.3  
 **Compatibility**: Node.js 18+, VS Code 1.96+  
 **License**: MIT 

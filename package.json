@@ -1,6 +1,6 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "3.9.2",
+  "version": "3.9.3",
   "description": "AI-powered Git automation with intelligent commit decisions using Gemini function calling, smart diff optimization, push control, and enhanced interactive terminal session with persistent command history",
   "main": "bin/auto-git.js",
   "type": "module",
@@ -70,6 +70,7 @@
   "license": "MIT",
   "dependencies": {
     "@google/genai": "^1.0.1",
+    "@sbeeredd04/auto-git": "^3.9.3",
     "boxen": "^7.1.1",
     "chalk": "^5.3.0",
     "chokidar": "^3.5.3",

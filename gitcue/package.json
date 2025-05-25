@@ -253,6 +253,6 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@sbeeredd04/auto-git": "^3.9.2"
+    "@sbeeredd04/auto-git": "^3.9.3"
   }
 }

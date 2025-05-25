@@ -1,4 +1,4 @@
-## v3.9.1 - 2024-12-19
+## v3.9.3 - 2024-12-19
 
 ### 🔧 Bug Fixes
 
@@ -515,7 +515,7 @@ When creating new releases:
    - **Fixed** for any bug fixes
    - **Security** for vulnerability fixes
 
-## [3.9.2] - 2025-01-25
+## [3.9.3] - 2025-01-25
 
 ### 🛠️ Fixed
 - **Buffer Period Cancellation**: Fixed issue where 'c' key wouldn't cancel commits in intelligent mode
@@ -534,9 +534,9 @@ When creating new releases:
 
 ### 📦 Dependencies
 - **GitCue Extension**: Updated to version 0.0.2 with improved buffer notifications
-- **Auto-Git Package**: Published version 3.9.2 to npm with fixes
+- **Auto-Git Package**: Published version 3.9.3 to npm with fixes
 
-## [3.9.1] - 2025-01-24
+## [3.9.3] - 2025-01-24
 
 ### ✨ Added
 - **GitCue VS Code Extension**: Complete VS Code integration with modern dashboard
