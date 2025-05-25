@@ -5,9 +5,18 @@ import { execa } from 'execa';
 import { startWatcher, performSingleCommit, cleanup } from '../lib/watcher.js';
 import { getConfig, validateConfig, getInteractiveConfig } from '../lib/config.js';
 import { isGitRepository, hasRemote, getCurrentBranch } from '../lib/git.js';
+import { forceExit } from '../lib/utils.js';
 import logger from '../utils/logger.js';
 
 const program = new Command();
+
+// Global Ctrl+C handler for force exit
+process.on('SIGINT', () => {
+  logger.space();
+  logger.info('Force exiting Auto-Git...', 'SHUTDOWN');
+  cleanup();
+  forceExit(0);
+});
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
@@ -159,14 +168,8 @@ program
       
       const watcher = await startWatcher(watchPaths);
       
-      // Handle graceful shutdown
-      process.on('SIGINT', () => {
-        logger.space();
-        logger.info('Stopping file watcher...', 'SHUTDOWN');
-        cleanup(); // Clean up keyboard controls
-        watcher.close();
-        process.exit(0);
-      });
+      // The global SIGINT handler will take care of cleanup
+      // No need for a duplicate handler here
       
     } catch (error) {
       logger.error('Failed to start watcher', error.message);
