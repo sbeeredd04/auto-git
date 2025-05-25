@@ -24,15 +24,22 @@ jobs:
         
       - name: Run tests (if any)
         run: npm test
-        continue-on-error: true
         
       - name: Update package version from tag
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           # Extract version from tag (remove 'v' prefix if present)
           VERSION=${GITHUB_REF#refs/tags/}
           VERSION=${VERSION#v}
           echo "Setting version to $VERSION"
           npm version $VERSION --no-git-tag-version
+        
+      - name: Get current version for manual triggers
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Using current package.json version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
         
       - name: Publish to NPM
         run: npm publish --access=public
@@ -42,5 +49,11 @@ jobs:
       - name: Create Success Comment
         if: success()
         run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION=${VERSION#v}
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
           echo "✅ Successfully published @sbeeredd04/auto-git@$VERSION to NPM!"
           echo "📦 Install with: npm install -g @sbeeredd04/auto-git" 
