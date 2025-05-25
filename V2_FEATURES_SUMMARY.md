@@ -106,11 +106,24 @@ EXAMPLES:
 
 ### 3. Interactive Controls & Keyboard Shortcuts
 
-#### Real-Time Watcher Control
-- **Ctrl+P**: Pause file watching without stopping the process
-- **Ctrl+R**: Resume file watching instantly
-- **Ctrl+I**: Enter interactive REPL mode on-demand
+#### Real-Time Watcher Control (Cross-Platform Compatible)
+- **Ctrl+Shift+P**: Pause file watching without stopping the process (or press "1")
+- **Ctrl+Shift+R**: Resume file watching instantly (or press "2")
+- **Ctrl+Shift+1**: Enter interactive REPL mode on-demand (or press "3")
 - **Ctrl+C**: Graceful shutdown with cleanup
+
+#### Cross-Platform Design
+Auto-Git v2.0 uses **cross-platform compatible hotkeys** that work reliably on both macOS and Windows:
+
+**Primary Hotkeys (Ctrl+Shift combinations):**
+- Avoid conflicts with common terminal shortcuts
+- Work consistently across different operating systems
+- No conflicts with Cmd+Shift+I (dev tools) or other system shortcuts
+
+**Alternative Number Keys:**
+- Better terminal compatibility for environments that don't support complex key combinations
+- Simple single-key shortcuts for quick access
+- Fallback option when Ctrl+Shift combinations don't work
 
 #### Interactive REPL Commands
 ```bash
@@ -298,7 +311,8 @@ auto-git reset 1 --hard
 │                                 │
 │  Error Recovery    ✓ Enabled    │
 │  AI Suggestions    ✓ Enabled    │
-│  Hotkeys          ctrl+p/r/i    │
+│  Hotkeys          ctrl+shift+p/r/1    │
+│  Number Keys      1/2/3         │
 └─────────────────────────────────┘
 
 NEXT STEPS:
@@ -348,9 +362,12 @@ EXAMPLE CONFIG FILE (~/.auto-gitrc.json):
     "interactiveOnError": true,
     "enableSuggestions": true,
     "hotkeys": {
-      "pause": "ctrl+p",
-      "resume": "ctrl+r",
-      "enterRepl": "ctrl+i"
+      "pause": "ctrl+shift+p",
+      "resume": "ctrl+shift+r",
+      "enterRepl": "ctrl+shift+1",
+      "pauseAlt": "1",
+      "resumeAlt": "2",
+      "enterReplAlt": "3"
     }
   }
 

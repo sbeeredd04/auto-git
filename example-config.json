@@ -5,23 +5,19 @@
   "interactiveOnError": true,
   "enableSuggestions": true,
   "hotkeys": {
-    "pause": "ctrl+p",
-    "resume": "ctrl+r",
-    "enterRepl": "ctrl+i"
+    "pause": "ctrl+shift+p",
+    "resume": "ctrl+shift+r",
+    "enterRepl": "ctrl+shift+1",
+    "pauseAlt": "1",
+    "resumeAlt": "2",
+    "enterReplAlt": "3"
   },
   "watchOptions": {
     "ignored": [
       "node_modules/**",
-      "dist/**",
-      "build/**",
-      "coverage/**",
-      ".git/**",
       "*.log",
-      "*.tmp",
-      "*.temp",
-      "package-lock.json",
-      "yarn.lock",
-      "pnpm-lock.yaml"
+      "dist/**",
+      "build/**"
     ],
     "persistent": true,
     "ignoreInitial": true,
