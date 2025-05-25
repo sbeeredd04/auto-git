@@ -32,9 +32,9 @@ function displayStyledHelp() {
   
   logger.space();
   logger.info('INTERACTIVE FEATURES (v2.0):', 'FEATURES');
-  logger.info('  Ctrl+P        Pause file watching', '');
-  logger.info('  Ctrl+R        Resume file watching', '');
-  logger.info('  Ctrl+I        Enter interactive REPL mode', '');
+  logger.info('  Ctrl+Shift+P  Pause file watching (or press "1")', '');
+  logger.info('  Ctrl+Shift+R  Resume file watching (or press "2")', '');
+  logger.info('  Ctrl+Shift+1  Enter interactive REPL mode (or press "3")', '');
   logger.info('  Ctrl+C        Graceful shutdown', '');
   
   logger.space();
@@ -149,6 +149,7 @@ program
       logger.info(`  Error Recovery: ${interactiveConfig.interactiveOnError ? '✓ Enabled' : '✗ Disabled'}`);
       logger.info(`  AI Suggestions: ${interactiveConfig.enableSuggestions ? '✓ Enabled' : '✗ Disabled'}`);
       logger.info(`  Hotkeys: ${interactiveConfig.hotkeys.pause}, ${interactiveConfig.hotkeys.resume}, ${interactiveConfig.hotkeys.enterRepl}`);
+      logger.info(`  Number Keys: ${interactiveConfig.hotkeys.pauseAlt}, ${interactiveConfig.hotkeys.resumeAlt}, ${interactiveConfig.hotkeys.enterReplAlt}`);
       
       // Pass custom paths if provided, otherwise use default recursive watching
       const watchPaths = options.paths && options.paths.length > 0 && !options.paths.includes('.') 
@@ -342,9 +343,9 @@ program
       const interactiveItems = {
         'Interactive Error Recovery': interactiveConfig.interactiveOnError ? '✓ Enabled' : '✗ Disabled',
         'AI Error Suggestions': interactiveConfig.enableSuggestions ? '✓ Enabled' : '✗ Disabled',
-        'Pause Hotkey': interactiveConfig.hotkeys.pause,
-        'Resume Hotkey': interactiveConfig.hotkeys.resume,
-        'REPL Hotkey': interactiveConfig.hotkeys.enterRepl
+        'Pause Hotkey': `${interactiveConfig.hotkeys.pause} or "${interactiveConfig.hotkeys.pauseAlt}"`,
+        'Resume Hotkey': `${interactiveConfig.hotkeys.resume} or "${interactiveConfig.hotkeys.resumeAlt}"`,
+        'REPL Hotkey': `${interactiveConfig.hotkeys.enterRepl} or "${interactiveConfig.hotkeys.enterReplAlt}"`
       };
 
       logger.config('INTERACTIVE FEATURES (NEW IN v2.0)', interactiveItems);
@@ -411,7 +412,8 @@ program
     
     logger.space();
     logger.info('New in v2.0 - Interactive Features:', 'FEATURES');
-    logger.info('  • Keyboard shortcuts for pause/resume/REPL');
+    logger.info('  • Cross-platform keyboard shortcuts (Ctrl+Shift combinations)');
+    logger.info('  • Alternative number key shortcuts for better compatibility');
     logger.info('  • Error-driven AI suggestions');
     logger.info('  • Interactive recovery commands');
     logger.info('  • Built-in git reset functionality');
@@ -423,9 +425,12 @@ program
     logger.info('    "interactiveOnError": true,');
     logger.info('    "enableSuggestions": true,');
     logger.info('    "hotkeys": {');
-    logger.info('      "pause": "ctrl+p",');
-    logger.info('      "resume": "ctrl+r",');
-    logger.info('      "enterRepl": "ctrl+i"');
+    logger.info('      "pause": "ctrl+shift+p",');
+    logger.info('      "resume": "ctrl+shift+r",');
+    logger.info('      "enterRepl": "ctrl+shift+1",');
+    logger.info('      "pauseAlt": "1",');
+    logger.info('      "resumeAlt": "2",');
+    logger.info('      "enterReplAlt": "3"');
     logger.info('    }');
     logger.info('  }');
     

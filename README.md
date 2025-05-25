@@ -170,9 +170,9 @@ USAGE:
 ╰─────────────────────────────────────────────────╯
 
 INTERACTIVE FEATURES (v2.0):
-  Ctrl+P        Pause file watching
-  Ctrl+R        Resume file watching
-  Ctrl+I        Enter interactive REPL mode
+  Ctrl+Shift+P  Pause file watching (or press "1")
+  Ctrl+Shift+R  Resume file watching (or press "2")
+  Ctrl+Shift+1  Enter interactive REPL mode (or press "3")
   Ctrl+C        Graceful shutdown
 
 EXAMPLES:
@@ -363,14 +363,14 @@ EXAMPLES:
 
 | Key               | Action                                |
 |-------------------|---------------------------------------|
-| **Ctrl+P**        | Pause file watching                   |
-| **Ctrl+R**        | Resume file watching                  |
-| **Ctrl+I**        | Enter interactive REPL (on-demand)   |
+| **Ctrl+Shift+P**  | Pause file watching (or press "1")       |
+| **Ctrl+Shift+R**  | Resume file watching (or press "2")       |
+| **Ctrl+Shift+1**  | Enter interactive REPL mode (or press "3") |
 | **Ctrl+C**        | Stop and exit                         |
 
 #### Interactive REPL Commands
 
-When errors occur or when you press **Ctrl+I**, Auto-Git enters an interactive mode:
+When errors occur or when you press **Ctrl+Shift+1**, Auto-Git enters an interactive mode:
 
 ```bash
 auto-git> help                    # Show available commands
@@ -385,6 +385,26 @@ auto-git> branch -a               # List all branches
 auto-git> stash                   # Stash current changes
 auto-git> exit                    # Exit REPL and continue
 ```
+
+#### Cross-Platform Hotkey Design
+
+Auto-Git v2.0 uses **cross-platform compatible hotkeys** that work reliably on both macOS and Windows:
+
+**Primary Hotkeys (Ctrl+Shift combinations):**
+- `Ctrl+Shift+P` - Pause file watching
+- `Ctrl+Shift+R` - Resume file watching  
+- `Ctrl+Shift+1` - Enter interactive REPL mode
+
+**Alternative Number Keys (for better terminal compatibility):**
+- Press `1` - Pause file watching
+- Press `2` - Resume file watching
+- Press `3` - Enter interactive REPL mode
+
+**Why these combinations?**
+- **Ctrl+Shift** combinations avoid conflicts with common terminal shortcuts
+- **Number keys** work in terminals that don't support complex key combinations
+- **Cross-platform** compatibility ensures consistent behavior on macOS and Windows
+- **No conflicts** with Cmd+Shift+I (which opens dev tools) or other system shortcuts
 
 ### Enhanced Git Command Support
 
@@ -553,9 +573,12 @@ Auto-Git supports multiple configuration methods (in order of priority):
      "interactiveOnError": true,
      "enableSuggestions": true,
      "hotkeys": {
-       "pause": "ctrl+p",
-       "resume": "ctrl+r",
-       "enterRepl": "ctrl+i"
+       "pause": "ctrl+shift+p",
+       "resume": "ctrl+shift+r",
+       "enterRepl": "ctrl+shift+1",
+       "pauseAlt": "1",
+       "resumeAlt": "2",
+       "enterReplAlt": "3"
      },
      "watchOptions": {
        "ignored": ["node_modules/**", "*.log"],
@@ -610,9 +633,12 @@ auto-git commit --verbose
   "interactiveOnError": true,
   "enableSuggestions": true,
   "hotkeys": {
-    "pause": "ctrl+p",
-    "resume": "ctrl+r", 
-    "enterRepl": "ctrl+i"
+    "pause": "ctrl+shift+p",
+    "resume": "ctrl+shift+r", 
+    "enterRepl": "ctrl+shift+1",
+    "pauseAlt": "1",
+    "resumeAlt": "2",
+    "enterReplAlt": "3"
   }
 }
 ```
@@ -621,7 +647,7 @@ auto-git commit --verbose
 ```bash
 # Start interactive mode
 auto-git watch
-# Press Ctrl+I to enter REPL
+# Press Ctrl+Shift+1 to enter REPL
 
 # Run any git command with AI error handling
 auto-git> git log --graph --oneline
@@ -667,9 +693,12 @@ Create `~/.auto-gitrc.json` for sophisticated setups:
   "interactiveOnError": true,
   "enableSuggestions": true,
   "hotkeys": {
-    "pause": "ctrl+p",
-    "resume": "ctrl+r",
-    "enterRepl": "ctrl+i"
+    "pause": "ctrl+shift+p",
+    "resume": "ctrl+shift+r",
+    "enterRepl": "ctrl+shift+1",
+    "pauseAlt": "1",
+    "resumeAlt": "2",
+    "enterReplAlt": "3"
   },
   "watchOptions": {
     "ignored": [
@@ -822,8 +851,8 @@ auto-git commit --verbose
 
 # Test interactive features
 auto-git watch --verbose
-# Press Ctrl+I to enter REPL
-# Press Ctrl+P to pause, Ctrl+R to resume
+# Press Ctrl+Shift+1 to enter REPL
+# Press Ctrl+Shift+P to pause, Ctrl+Shift+R to resume
 
 # Test styled help system
 auto-git --help
@@ -870,7 +899,7 @@ auto-git commit --verbose
 
 # Test interactive features
 auto-git watch
-# Press Ctrl+I to test REPL
+# Press Ctrl+Shift+1 to test REPL
 
 # Get styled help
 auto-git --help
@@ -918,7 +947,7 @@ A: By default, Auto-Git watches all files recursively in your repository, exclud
 A: Yes! Use `--paths` flag, set `AUTO_GIT_WATCH_PATHS` environment variable, or configure `watchPaths` in your config file.
 
 **Q: What are the keyboard shortcuts?**
-A: Ctrl+P (pause), Ctrl+R (resume), Ctrl+I (interactive REPL), Ctrl+C (exit).
+A: Ctrl+Shift+P (pause), Ctrl+Shift+R (resume), Ctrl+Shift+1 (interactive REPL), Ctrl+C (exit).
 
 **Q: How do I undo commits made by Auto-Git?**
 A: Use `auto-git reset <count>` with optional `--soft`, `--mixed`, or `--hard` flags.
@@ -929,7 +958,7 @@ A: Use `auto-git reset <count>` with optional `--soft`, `--mixed`, or `--hard` f
 A: The REPL (Read-Eval-Print Loop) is an interactive command interface where you can run git commands, get AI help, and recover from errors.
 
 **Q: How do I access the REPL?**
-A: Press Ctrl+I during watch mode, or it will automatically activate when errors occur (if enabled in config).
+A: Press Ctrl+Shift+1 during watch mode, or it will automatically activate when errors occur (if enabled in config).
 
 **Q: Can I run any git command in the REPL?**
 A: Yes! The REPL supports any git command with AI-powered error handling.
@@ -991,8 +1020,8 @@ auto-git commit
 # 4. Or start watching with interactive controls
 auto-git watch
 # → Shows configuration in styled boxes
-# → Use Ctrl+P/R to pause/resume
-# → Use Ctrl+I for interactive mode
+# → Use Ctrl+Shift+P/R to pause/resume
+# → Use Ctrl+Shift+1 for interactive mode
 # → Automatically commits future changes
 ```
 
