@@ -34,11 +34,20 @@ jobs:
         
       - name: Validate package.json
         run: |
-          # Check for circular dependencies
-          if grep -q '"@sbeeredd04/auto-git"' package.json; then
-            echo "Error: Circular dependency detected in package.json"
+          # Check for circular dependencies in main package.json dependencies section
+          if grep -A 20 '"dependencies"' package.json | grep -q '"@sbeeredd04/auto-git"'; then
+            echo "Error: Circular dependency detected in package.json dependencies"
             exit 1
           fi
+          
+          # Check for circular dependencies in gitcue/package.json dependencies section
+          if [ -f gitcue/package.json ]; then
+            if grep -A 20 '"dependencies"' gitcue/package.json | grep -q '"@sbeeredd04/auto-git"'; then
+              echo "Error: Circular dependency detected in gitcue/package.json dependencies"
+              exit 1
+            fi
+          fi
+          
           echo "package.json validation passed"
         
       - name: Clean install dependencies
@@ -92,11 +101,20 @@ jobs:
         
       - name: Validate package.json
         run: |
-          # Check for circular dependencies
-          if grep -q '"@sbeeredd04/auto-git"' package.json; then
-            echo "Error: Circular dependency detected in package.json"
+          # Check for circular dependencies in main package.json dependencies section
+          if grep -A 20 '"dependencies"' package.json | grep -q '"@sbeeredd04/auto-git"'; then
+            echo "Error: Circular dependency detected in package.json dependencies"
             exit 1
           fi
+          
+          # Check for circular dependencies in gitcue/package.json dependencies section
+          if [ -f gitcue/package.json ]; then
+            if grep -A 20 '"dependencies"' gitcue/package.json | grep -q '"@sbeeredd04/auto-git"'; then
+              echo "Error: Circular dependency detected in gitcue/package.json dependencies"
+              exit 1
+            fi
+          fi
+          
           echo "package.json validation passed"
         
       - name: Clean install dependencies
