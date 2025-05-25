@@ -338,7 +338,62 @@ auto-git> reset --hard HEAD~1     # Reset commits with git reset
 auto-git> status                  # Show git status
 auto-git> diff                    # Show current git diff
 auto-git> commit                  # Manual commit with AI message
+auto-git> git <command>           # Execute any git command with AI error handling
+auto-git> log --oneline           # Direct git subcommands (auto-detected)
+auto-git> branch -a               # List all branches
+auto-git> stash                   # Stash current changes
 auto-git> exit                    # Exit REPL and continue
+```
+
+#### 🆕 Enhanced Git Command Support
+
+The REPL now supports **any Git command** with intelligent error handling:
+
+**Direct Git Commands:**
+```bash
+auto-git> git log --oneline -10   # Show recent commits
+auto-git> git branch -a           # List all branches  
+auto-git> git stash push -m "WIP" # Stash with message
+auto-git> git pull origin main    # Pull latest changes
+auto-git> git rebase main         # Rebase current branch
+```
+
+**Auto-Detected Git Subcommands:**
+```bash
+auto-git> log --oneline           # Automatically runs: git log --oneline
+auto-git> branch -a               # Automatically runs: git branch -a
+auto-git> stash                   # Automatically runs: git stash
+auto-git> pull origin main        # Automatically runs: git pull origin main
+```
+
+**AI-Powered Error Recovery:**
+When any Git command fails, Auto-Git will:
+
+1. **Analyze the error** with AI
+2. **Provide step-by-step solutions**
+3. **Explain what commands do** (optional)
+4. **Offer to run suggested fixes**
+
+**Example Error Recovery:**
+```bash
+auto-git> push origin feature-branch
+✗ Git command failed: push origin feature-branch
+  Error: fatal: The current branch has no upstream branch
+
+🤖 AI Suggestion:
+To push the current branch and set the remote as upstream, use:
+  git push --set-upstream origin feature-branch
+
+Would you like me to explain what these suggested commands do? (y/N)
+
+🎓 Command Explanations:
+  git push --set-upstream origin feature-branch
+    → Uploads local commits and sets up tracking between local and remote branch
+
+💡 Pro tip: You can run these commands directly in this REPL!
+
+auto-git> git push --set-upstream origin feature-branch
+✓ Git command completed: push --set-upstream origin feature-branch
 ```
 
 ### 🤖 Error-Driven AI Suggestions
@@ -545,6 +600,30 @@ auto-git commit --verbose
     "enterRepl": "ctrl+i"
   }
 }
+```
+
+### 🆕 Enhanced Git Command Support in REPL
+```bash
+# Start interactive mode
+auto-git watch
+# Press Ctrl+I to enter REPL
+
+# Run any git command with AI error handling
+auto-git> git log --graph --oneline
+auto-git> git rebase -i HEAD~3
+auto-git> git cherry-pick abc123
+auto-git> git bisect start
+
+# Auto-detected git subcommands
+auto-git> log --graph --oneline     # Runs: git log --graph --oneline
+auto-git> rebase -i HEAD~3          # Runs: git rebase -i HEAD~3
+auto-git> cherry-pick abc123        # Runs: git cherry-pick abc123
+
+# When commands fail, get AI help automatically
+auto-git> push origin feature
+# ✗ Error: fatal: The current branch has no upstream branch
+# 🤖 AI suggests: git push --set-upstream origin feature
+# 🎓 Explains: "This sets up tracking between local and remote branch"
 ```
 
 ### Recursive Watch Patterns

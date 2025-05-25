@@ -102,8 +102,39 @@ auto-git> reset --hard HEAD~1     # Reset commits with git reset
 auto-git> status                  # Show git status
 auto-git> diff                    # Show current git diff
 auto-git> commit                  # Manual commit with AI message
+auto-git> git <command>           # Execute any git command with AI error handling
+auto-git> log --oneline           # Direct git subcommands (auto-detected)
+auto-git> branch -a               # List all branches
+auto-git> stash                   # Stash current changes
 auto-git> exit                    # Exit REPL and continue
 ```
+
+#### 🆕 Enhanced Git Command Support
+The REPL now supports **any Git command** with intelligent error handling:
+
+**Direct Git Commands:**
+```bash
+auto-git> git log --oneline -10   # Show recent commits
+auto-git> git branch -a           # List all branches  
+auto-git> git stash push -m "WIP" # Stash with message
+auto-git> git pull origin main    # Pull latest changes
+auto-git> git rebase main         # Rebase current branch
+```
+
+**Auto-Detected Git Subcommands:**
+```bash
+auto-git> log --oneline           # Automatically runs: git log --oneline
+auto-git> branch -a               # Automatically runs: git branch -a
+auto-git> stash                   # Automatically runs: git stash
+auto-git> pull origin main        # Automatically runs: git pull origin main
+```
+
+**AI-Powered Error Recovery with Command Explanations:**
+When any Git command fails, Auto-Git will:
+1. **Analyze the error** with AI
+2. **Provide step-by-step solutions**
+3. **Explain what commands do** (optional)
+4. **Offer educational context** for learning
 
 ### 4. 🤖 Error-Driven AI Suggestions
 
