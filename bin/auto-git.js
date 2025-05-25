@@ -11,7 +11,7 @@ const program = new Command();
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.2.0', 'AI-powered Git automation with cross-platform hotkeys');
+  logger.section('Auto-Git v3.3.0', 'AI-powered Git automation with arrow key navigation');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -21,7 +21,7 @@ function displayStyledHelp() {
   const commands = {
     'watch': 'Watch files and auto-commit with AI messages (interactive mode)',
     'commit (c)': 'Generate AI commit for current changes',
-    'reset <count>': 'Undo commits with safety checks (NEW in v3.2.0)',
+    'reset <count>': 'Undo commits with safety checks (NEW in v3.3.0)',
     'config': 'Show configuration and interactive features',
     'setup': 'Interactive setup guide for first-time users',
     'debug': 'Run system diagnostics and health check',
@@ -31,10 +31,10 @@ function displayStyledHelp() {
   logger.config('AVAILABLE COMMANDS', commands);
   
   logger.space();
-  logger.info('INTERACTIVE FEATURES (v3.2.0):', 'FEATURES');
-  logger.info('  Ctrl+Shift+P  Pause file watching (or press "1")', '');
-  logger.info('  Ctrl+Shift+R  Resume file watching (or press "2")', '');
-  logger.info('  Ctrl+Shift+1  Enter interactive REPL mode (or press "3")', '');
+  logger.info('INTERACTIVE FEATURES (v3.3.0):', 'FEATURES');
+  logger.info('  Ctrl+P        Pause and show navigation menu', '');
+  logger.info('  ↑↓ Arrows     Navigate menu options when paused', '');
+  logger.info('  Enter         Select menu option', '');
   logger.info('  Ctrl+C        Graceful shutdown', '');
   
   logger.space();
@@ -88,7 +88,7 @@ function handleMissingApiKey(commandName) {
 program
   .name('auto-git')
   .description('Auto-commit and push with AI-generated commit messages using Gemini - now with interactive controls')
-  .version('3.2.0')
+  .version('3.3.0')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -120,7 +120,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v3.2.0', 'Initializing file monitoring system with cross-platform hotkeys');
+      logger.section('Auto-Git Watcher v3.3.0', 'Initializing file monitoring system with cross-platform hotkeys');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -148,8 +148,8 @@ program
       logger.info('Interactive Features:', 'FEATURES');
       logger.info(`  Error Recovery: ${interactiveConfig.interactiveOnError ? '✓ Enabled' : '✗ Disabled'}`);
       logger.info(`  AI Suggestions: ${interactiveConfig.enableSuggestions ? '✓ Enabled' : '✗ Disabled'}`);
-      logger.info(`  Hotkeys: ${interactiveConfig.hotkeys.pause}, ${interactiveConfig.hotkeys.resume}, ${interactiveConfig.hotkeys.enterRepl}`);
-      logger.info(`  Number Keys: ${interactiveConfig.hotkeys.pauseAlt}, ${interactiveConfig.hotkeys.resumeAlt}, ${interactiveConfig.hotkeys.enterReplAlt}`);
+      logger.info(`  Navigation Menu: ✓ Enabled (Ctrl+P)`);
+      logger.info(`  Arrow Key Navigation: ✓ Enabled`);
       
       // Pass custom paths if provided, otherwise use default recursive watching
       const watchPaths = options.paths && options.paths.length > 0 && !options.paths.includes('.') 
@@ -343,12 +343,12 @@ program
       const interactiveItems = {
         'Interactive Error Recovery': interactiveConfig.interactiveOnError ? '✓ Enabled' : '✗ Disabled',
         'AI Error Suggestions': interactiveConfig.enableSuggestions ? '✓ Enabled' : '✗ Disabled',
-        'Pause Hotkey': `${interactiveConfig.hotkeys.pause} or "${interactiveConfig.hotkeys.pauseAlt}"`,
-        'Resume Hotkey': `${interactiveConfig.hotkeys.resume} or "${interactiveConfig.hotkeys.resumeAlt}"`,
-        'REPL Hotkey': `${interactiveConfig.hotkeys.enterRepl} or "${interactiveConfig.hotkeys.enterReplAlt}"`
+        'Navigation Menu': '✓ Enabled (Ctrl+P)',
+        'Arrow Key Navigation': '✓ Enabled',
+        'Menu Options': 'Resume, Interactive, Exit'
       };
 
-      logger.config('INTERACTIVE FEATURES (NEW IN v3.2.0)', interactiveItems);
+      logger.config('INTERACTIVE FEATURES (NEW IN v3.3.0)', interactiveItems);
       
       logger.space();
       logger.info('Configuration sources (in order of priority):');
@@ -411,9 +411,10 @@ program
     logger.setup(steps);
     
     logger.space();
-    logger.info('New in v3.2.0 - Interactive Features:', 'FEATURES');
-    logger.info('  • Cross-platform keyboard shortcuts (Ctrl+Shift combinations)');
-    logger.info('  • Alternative number key shortcuts for better compatibility');
+    logger.info('New in v3.3.0 - Interactive Features:', 'FEATURES');
+    logger.info('  • Simplified navigation with Ctrl+P pause menu');
+    logger.info('  • Arrow key navigation for menu options');
+    logger.info('  • Visual menu with descriptions for each option');
     logger.info('  • Error-driven AI suggestions');
     logger.info('  • Interactive recovery commands');
     logger.info('  • Built-in git reset functionality');
@@ -425,12 +426,7 @@ program
     logger.info('    "interactiveOnError": true,');
     logger.info('    "enableSuggestions": true,');
     logger.info('    "hotkeys": {');
-    logger.info('      "pause": "ctrl+shift+p",');
-    logger.info('      "resume": "ctrl+shift+r",');
-    logger.info('      "enterRepl": "ctrl+shift+1",');
-    logger.info('      "pauseAlt": "1",');
-    logger.info('      "resumeAlt": "2",');
-    logger.info('      "enterReplAlt": "3"');
+    logger.info('      "pause": "ctrl+p"');
     logger.info('    }');
     logger.info('  }');
     
@@ -446,7 +442,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v3.2.0', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.3.0', 'System health check');
     
     try {
       const config = getConfig();
@@ -456,7 +452,7 @@ program
       const remote = isRepo ? await hasRemote() : false;
       
       const diagnostics = {
-        'Auto-Git Version': '3.2.0',
+        'Auto-Git Version': '3.3.0',
         'Node.js Version': process.version,
         'Platform': process.platform,
         'Working Directory': process.cwd(),

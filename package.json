@@ -1,7 +1,7 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "3.2.0",
-  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with interactive controls and cross-platform hotkeys",
+  "version": "3.3.0",
+  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with arrow key navigation menu",
   "main": "bin/auto-git.js",
   "type": "module",
   "bin": {
