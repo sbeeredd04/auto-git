@@ -1,9 +1,15 @@
 {
   "apiKey": "your-gemini-api-key-here",
+  "commitMode": "periodic",
+  "noPush": false,
   "watchPaths": ["**/*"],
   "debounceMs": 30000,
   "interactiveOnError": true,
   "enableSuggestions": true,
+  "rateLimiting": {
+    "maxCallsPerMinute": 15,
+    "bufferTimeSeconds": 30
+  },
   "hotkeys": {
     "pause": "ctrl+shift+p",
     "resume": "ctrl+shift+r",

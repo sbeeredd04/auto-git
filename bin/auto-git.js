@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import { execa } from 'execa';
 import { startWatcher, performSingleCommit, cleanup } from '../lib/watcher.js';
-import { getConfig, validateConfig, getInteractiveConfig } from '../lib/config.js';
+import { getConfig, validateConfig, getInteractiveConfig, getCommitConfig } from '../lib/config.js';
 import { isGitRepository, hasRemote, getCurrentBranch } from '../lib/git.js';
 import { forceExit } from '../lib/utils.js';
 import { startInteractiveSession } from '../lib/repl.js';
@@ -21,7 +21,7 @@ process.on('SIGINT', () => {
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.8.1', 'AI-powered Git automation with enhanced interactive terminal session');
+  logger.section('Auto-Git v3.9.1', 'AI-powered Git automation with intelligent commit decisions and enhanced interactive terminal session');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -30,6 +30,7 @@ function displayStyledHelp() {
   logger.space();
   const commands = {
     'watch': 'Watch files and auto-commit with AI messages (simple Ctrl+C to exit)',
+    'watch --mode intelligent': 'Watch with AI-driven commit decisions and 30s buffer',
     'commit (c)': 'Generate AI commit for current changes',
     'interactive': 'Start enhanced interactive terminal session with AI assistance',
     'reset <count>': 'Undo commits with safety checks',
@@ -42,6 +43,15 @@ function displayStyledHelp() {
   logger.config('AVAILABLE COMMANDS', commands);
   
   logger.space();
+  logger.info('COMMIT MODES:', 'MODES');
+  logger.info('  Periodic Mode        Time-based commits (default behavior)', '');
+  logger.info('  Intelligent Mode     AI decides when to commit based on change significance', '');
+  logger.info('                       • Analyzes code changes for completeness', '');
+  logger.info('                       • 30-second buffer to cancel commits', '');
+  logger.info('                       • Rate limited to 15 API calls per minute', '');
+  logger.info('                       • Smart diff optimization reduces API usage', '');
+  
+  logger.space();
   logger.info('INTERACTIVE FEATURES:', 'FEATURES');
   logger.info('  Enhanced Session     Persistent command history and markdown AI responses', '');
   logger.info('  Arrow Key Navigation Browse command history with ↑↓ keys', '');
@@ -52,7 +62,9 @@ function displayStyledHelp() {
   logger.space();
   logger.info('EXAMPLES:', 'EXAMPLES');
   logger.info('  auto-git setup                    # First-time setup guide', '');
-  logger.info('  auto-git watch                    # Start simple file watching', '');
+  logger.info('  auto-git watch                    # Start simple file watching (periodic)', '');
+  logger.info('  auto-git watch --mode intelligent # Start intelligent commit mode', '');
+  logger.info('  auto-git watch --no-push          # Watch and commit without pushing', '');
   logger.info('  auto-git interactive              # Start enhanced interactive session', '');
   logger.info('  auto-git commit --verbose         # One-time commit with details', '');
   logger.info('  auto-git reset 2 --soft           # Undo last 2 commits (soft)', '');
@@ -100,8 +112,8 @@ function handleMissingApiKey(commandName) {
 
 program
   .name('auto-git')
-  .description('Auto-commit and push with AI-generated commit messages using Gemini - now with enhanced interactive terminal session, persistent command history, and simplified workflow')
-  .version('3.8.1')
+  .description('AI-powered Git automation with intelligent commit decisions using Gemini function calling, smart diff optimization, push control, and enhanced interactive terminal session')
+  .version('3.9.1')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -115,11 +127,28 @@ program
   .option('-p, --paths <paths...>', 'Custom paths to watch (default: all files recursively)')
   .option('--no-push', 'Commit but do not push to remote')
   .option('-v, --verbose', 'Enable verbose output')
+  .option('-m, --mode <mode>', 'Commit mode: "periodic" (time-based) or "intelligent" (AI-driven)', 'periodic')
   .action(async (options) => {
     try {
       // Set verbose mode if requested
       if (options.verbose) {
         logger.setVerbose(true);
+      }
+
+      // Validate commit mode
+      if (options.mode && !['periodic', 'intelligent'].includes(options.mode)) {
+        logger.error('Invalid commit mode', 'Mode must be either "periodic" or "intelligent"');
+        process.exit(1);
+      }
+
+      // Temporarily override config for this session
+      if (options.mode) {
+        process.env.AUTO_GIT_COMMIT_MODE = options.mode;
+      }
+      
+      // Handle --no-push option
+      if (options.push === false) { // Commander.js sets this when --no-push is used
+        process.env.AUTO_GIT_NO_PUSH = 'true';
       }
 
       // Validate configuration with enhanced error handling
@@ -133,7 +162,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v3.8.1', 'Simple file monitoring with auto-commit (Ctrl+C to exit)');
+      logger.section('Auto-Git Watcher v3.9.1', 'Simple file monitoring with auto-commit (Ctrl+C to exit)');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -334,9 +363,11 @@ program
     try {
       const config = getConfig();
       const interactiveConfig = getInteractiveConfig();
+      const commitConfig = getCommitConfig();
       
       const configItems = {
         'API Key': config.apiKey ? '✓ Set' : '✗ Not set',
+        'Commit Mode': commitConfig.commitMode,
         'Watch Paths': config.watchPaths.join(', '),
         'Recursive Watching': config.watchOptions.depth === undefined,
         'Debounce Time': `${config.debounceMs}ms`,
@@ -344,6 +375,18 @@ program
       };
 
       logger.config('AUTO-GIT CONFIGURATION', configItems);
+      
+      // Show commit mode specific settings
+      logger.space();
+      const commitItems = {
+        'Commit Mode': commitConfig.commitMode.toUpperCase(),
+        'Push to Remote': commitConfig.noPush ? '✗ Disabled' : '✓ Enabled',
+        'Rate Limit': `${commitConfig.rateLimiting.maxCallsPerMinute} calls/minute`,
+        'Buffer Time': `${commitConfig.rateLimiting.bufferTimeSeconds} seconds`,
+        'Function Calling': commitConfig.commitMode === 'intelligent' ? '✓ Enabled' : '✗ Disabled'
+      };
+
+      logger.config('COMMIT SETTINGS', commitItems);
       
       // Show interactive features
       logger.space();
@@ -387,7 +430,8 @@ program
       if (!config.apiKey) {
         logger.info('  auto-git setup                    # Complete setup first', '');
       } else {
-        logger.info('  auto-git watch                    # Start watching files', '');
+        logger.info('  auto-git watch                    # Start watching files (periodic)', '');
+        logger.info('  auto-git watch --mode intelligent # Start intelligent commit mode', '');
         logger.info('  auto-git interactive              # Start interactive session', '');
         logger.info('  auto-git commit                   # Make one-time commit', '');
       }
@@ -443,7 +487,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v3.8.1', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.9.1', 'System health check');
     
     try {
       const config = getConfig();
@@ -456,7 +500,7 @@ program
         'Node.js Version': process.version,
         'Platform': process.platform,
         'Architecture': process.arch,
-        'Auto-Git Version': '3.8.1',
+        'Auto-Git Version': '3.9.1',
         'Working Directory': process.cwd(),
         'Git Repository': isRepo,
         'Current Branch': branch || 'N/A',
