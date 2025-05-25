@@ -1,4 +1,4 @@
-# Auto-Git v3.5.0
+# Auto-Git v3.6.0
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -8,9 +8,9 @@
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 [![GitHub Release](https://img.shields.io/github/release/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/releases)
 
-> AI-powered automatic Git commits with Gemini-generated commit messages - now with completely stable REPL and proper input handling
+> AI-powered automatic Git commits with Gemini-generated commit messages - now with bulletproof Ctrl+C handling, smart input deduplication, and rock-solid interactive navigation
 
-Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.5.0** completely fixes the REPL character duplication issue and provides a stable, reliable interactive experience.
+Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.6.0** introduces bulletproof Ctrl+C handling that works everywhere, smart input deduplication to prevent typing issues, and completely robust interactive navigation that never gets stuck.
 
 ## Table of Contents
 
@@ -76,6 +76,15 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **Clear Exit Commands**: Type "resume" to resume watcher, "exit" to exit without resuming
 - **Proper Terminal State**: Clean transitions between navigation menu and REPL
 - **Reliable Experience**: No more input conflicts or terminal state issues
+
+### 🚀 New in v3.6.0: Bulletproof Interactive Experience
+- **🛡️ Bulletproof Ctrl+C Handling**: Force exit from anywhere - navigation menu, REPL, or watcher
+- **🧠 Smart Input Deduplication**: Automatically removes duplicate characters (e.g., "ggiitt" → "git")
+- **🎯 Rock-Solid Navigation**: No more stuck states - arrow keys always work perfectly
+- **⚡ Robust stdin Management**: Proper terminal state handling with automatic cleanup
+- **🔄 Enhanced Error Recovery**: Improved AI suggestions with better error handling
+- **🎮 Force Exit Everywhere**: Ctrl+C immediately exits the entire application from any state
+- **📱 Better Terminal Compatibility**: Works flawlessly across different terminal emulators
 
 ## Quick Start
 
