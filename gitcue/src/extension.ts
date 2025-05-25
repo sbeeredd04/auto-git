@@ -22,7 +22,7 @@ interface GitCueConfig {
 class GitCueExtension {
 	private statusBarItem: vscode.StatusBarItem;
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
-	private isWatching = false;
+	public isWatching = false;
 	private outputChannel: vscode.OutputChannel;
 	private statusProvider: GitCueStatusProvider;
 	private debounceTimer: NodeJS.Timeout | undefined;
@@ -46,15 +46,15 @@ class GitCueExtension {
 	private getConfig(): GitCueConfig {
 		const config = vscode.workspace.getConfiguration('gitcue');
 		return {
-			geminiApiKey: config.get('geminiApiKey', ''),
-			commitMode: config.get('commitMode', 'intelligent'),
-			autoPush: config.get('autoPush', true),
-			watchPaths: config.get('watchPaths', ['src/**', 'lib/**', '*.js', '*.ts']),
-			debounceMs: config.get('debounceMs', 30000),
-			bufferTimeSeconds: config.get('bufferTimeSeconds', 30),
-			maxCallsPerMinute: config.get('maxCallsPerMinute', 15),
-			enableNotifications: config.get('enableNotifications', true),
-			autoWatch: config.get('autoWatch', false)
+			geminiApiKey: config.get('geminiApiKey') || process.env.GEMINI_API_KEY || '',
+			commitMode: config.get('commitMode') || 'periodic',
+			autoPush: config.get('autoPush') ?? true,
+			watchPaths: config.get('watchPaths') || ['**/*'],
+			debounceMs: config.get('debounceMs') || 30000,
+			bufferTimeSeconds: config.get('bufferTimeSeconds') || 30,
+			maxCallsPerMinute: config.get('maxCallsPerMinute') || 15,
+			enableNotifications: config.get('enableNotifications') ?? true,
+			autoWatch: config.get('autoWatch') ?? false
 		};
 	}
 
@@ -66,14 +66,20 @@ class GitCueExtension {
 
 	private updateStatusBar() {
 		if (this.isWatching) {
-			this.statusBarItem.text = '$(eye) GitCue: Watching';
-			this.statusBarItem.tooltip = 'GitCue is actively watching for changes. Click to stop.';
-			this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
+			this.statusBarItem.text = `$(eye) GitCue: Watching`;
+			this.statusBarItem.tooltip = 'GitCue is actively watching for file changes. Click to open dashboard.';
+			this.statusBarItem.backgroundColor = undefined; // Use default success color
+			this.statusBarItem.color = undefined;
 		} else {
-			this.statusBarItem.text = '$(eye-closed) GitCue: Idle';
-			this.statusBarItem.tooltip = 'GitCue is idle. Click to start watching.';
-			this.statusBarItem.backgroundColor = undefined;
+			this.statusBarItem.text = `$(eye-closed) GitCue: Idle`;
+			this.statusBarItem.tooltip = 'GitCue is not watching. Click to open dashboard or start watching.';
+			this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+			this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
 		}
+		
+		// Add command to open dashboard when clicked
+		this.statusBarItem.command = 'gitcue.openDashboard';
+		this.statusBarItem.show();
 	}
 
 	private registerCommands() {
@@ -924,10 +930,67 @@ class GitCueExtension {
 			'gitcueDashboard',
 			'GitCue Dashboard',
 			vscode.ViewColumn.One,
-			{ enableScripts: true }
+			{ 
+				enableScripts: true,
+				retainContextWhenHidden: true
+			}
 		);
 
 		panel.webview.html = this.getDashboardHtml();
+
+		// Handle messages from the dashboard
+		panel.webview.onDidReceiveMessage(async (message) => {
+			switch (message.action) {
+				case 'toggleWatching':
+					this.toggleWatching();
+					// Send updated status back to dashboard
+					panel.webview.postMessage({
+						action: 'statusUpdate',
+						data: { isWatching: this.isWatching }
+					});
+					break;
+				case 'openSettings':
+					this.openSettings();
+					break;
+				case 'manualCommit':
+					this.commitWithPreview();
+					break;
+				case 'showLogs':
+					this.showStatus();
+					break;
+				case 'refreshStatus':
+					// Send current status to dashboard
+					panel.webview.postMessage({
+						action: 'statusUpdate',
+						data: { 
+							isWatching: this.isWatching,
+							config: this.getConfig()
+						}
+					});
+					break;
+			}
+		});
+
+		// Auto-refresh dashboard when status changes
+		const refreshDashboard = () => {
+			if (panel.visible) {
+				panel.webview.postMessage({
+					action: 'statusUpdate',
+					data: { 
+						isWatching: this.isWatching,
+						config: this.getConfig()
+					}
+				});
+			}
+		};
+
+		// Set up periodic refresh
+		const refreshInterval = setInterval(refreshDashboard, 2000);
+		
+		// Clean up interval when panel is disposed
+		panel.onDidDispose(() => {
+			clearInterval(refreshInterval);
+		});
 	}
 
 	private getDashboardHtml(): string {
@@ -1627,13 +1690,58 @@ class GitCueStatusProvider implements vscode.TreeDataProvider<GitCueStatusItem> 
 
 	getChildren(element?: GitCueStatusItem): Thenable<GitCueStatusItem[]> {
 		if (!element) {
+			const config = this.getConfig();
+			const isWatching = gitCueExtension?.isWatching || false;
+			
 			return Promise.resolve([
-				new GitCueStatusItem('Status', vscode.TreeItemCollapsibleState.None, 'info'),
-				new GitCueStatusItem('Recent Commits', vscode.TreeItemCollapsibleState.None, 'git-commit'),
-				new GitCueStatusItem('Configuration', vscode.TreeItemCollapsibleState.None, 'settings-gear')
+				new GitCueStatusItem(
+					`Status: ${isWatching ? 'Active' : 'Idle'}`, 
+					vscode.TreeItemCollapsibleState.None, 
+					isWatching ? 'check' : 'circle-outline',
+					isWatching ? 'GitCue is actively watching for changes' : 'GitCue is not currently watching'
+				),
+				new GitCueStatusItem(
+					`Mode: ${config.commitMode}`, 
+					vscode.TreeItemCollapsibleState.None, 
+					config.commitMode === 'intelligent' ? 'brain' : 'clock',
+					`Current commit mode: ${config.commitMode}`
+				),
+				new GitCueStatusItem(
+					`API: ${config.geminiApiKey ? 'Configured' : 'Not Set'}`, 
+					vscode.TreeItemCollapsibleState.None, 
+					config.geminiApiKey ? 'key' : 'warning',
+					config.geminiApiKey ? 'Gemini API key is configured' : 'Gemini API key needs to be set'
+				),
+				new GitCueStatusItem(
+					`Auto Push: ${config.autoPush ? 'On' : 'Off'}`, 
+					vscode.TreeItemCollapsibleState.None, 
+					config.autoPush ? 'cloud-upload' : 'cloud',
+					`Auto push to remote: ${config.autoPush ? 'enabled' : 'disabled'}`
+				),
+				new GitCueStatusItem(
+					`Watch Paths: ${config.watchPaths.length}`, 
+					vscode.TreeItemCollapsibleState.None, 
+					'folder',
+					`Monitoring ${config.watchPaths.length} path pattern(s)`
+				)
 			]);
 		}
 		return Promise.resolve([]);
+	}
+
+	private getConfig(): GitCueConfig {
+		const config = vscode.workspace.getConfiguration('gitcue');
+		return {
+			geminiApiKey: config.get('geminiApiKey') || process.env.GEMINI_API_KEY || '',
+			commitMode: config.get('commitMode') || 'periodic',
+			autoPush: config.get('autoPush') ?? true,
+			watchPaths: config.get('watchPaths') || ['**/*'],
+			debounceMs: config.get('debounceMs') || 30000,
+			bufferTimeSeconds: config.get('bufferTimeSeconds') || 30,
+			maxCallsPerMinute: config.get('maxCallsPerMinute') || 15,
+			enableNotifications: config.get('enableNotifications') ?? true,
+			autoWatch: config.get('autoWatch') ?? false
+		};
 	}
 }
 
@@ -1641,10 +1749,14 @@ class GitCueStatusItem extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		iconName: string
+		iconName: string,
+		tooltip?: string
 	) {
 		super(label, collapsibleState);
 		this.iconPath = new vscode.ThemeIcon(iconName);
+		if (tooltip) {
+			this.tooltip = tooltip;
+		}
 	}
 }
 
