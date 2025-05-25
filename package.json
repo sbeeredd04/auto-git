@@ -1,7 +1,7 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "3.5.0",
-  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with stable REPL and proper input handling",
+  "version": "3.6.0",
+  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with bulletproof Ctrl+C handling, smart input deduplication, and rock-solid interactive navigation",
   "main": "bin/auto-git.js",
   "type": "module",
   "bin": {
@@ -52,7 +52,11 @@
     "keyboard-shortcuts",
     "macos",
     "windows",
-    "terminal-compatibility"
+    "terminal-compatibility",
+    "input-deduplication",
+    "force-exit",
+    "stdin-management",
+    "robust-navigation"
   ],
   "author": "sbeeredd04",
   "license": "MIT",
