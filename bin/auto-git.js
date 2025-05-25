@@ -9,10 +9,92 @@ import logger from '../utils/logger.js';
 
 const program = new Command();
 
+// Custom help formatter with styled output
+function displayStyledHelp() {
+  logger.section('Auto-Git v2.0', 'AI-powered Git automation with interactive controls');
+  
+  logger.space();
+  logger.info('USAGE:', 'COMMAND');
+  logger.info('  auto-git [command] [options]', '');
+  
+  logger.space();
+  const commands = {
+    'watch': 'Watch files and auto-commit with AI messages (interactive mode)',
+    'commit (c)': 'Generate AI commit for current changes',
+    'reset <count>': 'Undo commits with safety checks (NEW in v2.0)',
+    'config': 'Show configuration and interactive features',
+    'setup': 'Interactive setup guide for first-time users',
+    'debug': 'Run system diagnostics and health check',
+    'help': 'Display this help information'
+  };
+  
+  logger.config('AVAILABLE COMMANDS', commands);
+  
+  logger.space();
+  logger.info('INTERACTIVE FEATURES (v2.0):', 'FEATURES');
+  logger.info('  Ctrl+P        Pause file watching', '');
+  logger.info('  Ctrl+R        Resume file watching', '');
+  logger.info('  Ctrl+I        Enter interactive REPL mode', '');
+  logger.info('  Ctrl+C        Graceful shutdown', '');
+  
+  logger.space();
+  logger.info('EXAMPLES:', 'EXAMPLES');
+  logger.info('  auto-git setup                    # First-time setup guide', '');
+  logger.info('  auto-git watch                    # Start interactive watching', '');
+  logger.info('  auto-git commit --verbose         # One-time commit with details', '');
+  logger.info('  auto-git reset 2 --soft           # Undo last 2 commits (soft)', '');
+  logger.info('  auto-git config                   # Show current configuration', '');
+  
+  logger.space();
+  logger.info('QUICK START:', 'SETUP');
+  logger.info('  1. Get API key: https://aistudio.google.com/app/apikey', '');
+  logger.info('  2. Set API key: export GEMINI_API_KEY="your-key"', '');
+  logger.info('  3. Run setup:   auto-git setup', '');
+  logger.info('  4. Start using: auto-git watch', '');
+  
+  logger.space();
+  logger.info('For detailed help on any command, use: auto-git [command] --help', 'HELP');
+}
+
+// Enhanced error handler for missing API key
+function handleMissingApiKey(commandName) {
+  logger.space();
+  logger.error('Gemini API Key Required', 'API key not found or configured');
+  
+  logger.space();
+  logger.warning('QUICK SETUP REQUIRED', 'Auto-Git needs a Gemini API key to function');
+  
+  logger.space();
+  logger.info('OPTION 1 - Use Setup Guide (Recommended):', 'SETUP');
+  logger.info('  auto-git setup', '');
+  
+  logger.space();
+  logger.info('OPTION 2 - Manual Setup:', 'MANUAL');
+  logger.info('  1. Get API key: https://aistudio.google.com/app/apikey', '');
+  logger.info('  2. Set environment variable:', '');
+  logger.info('     export GEMINI_API_KEY="your-api-key-here"', '');
+  logger.info('  3. Or create config file:', '');
+  logger.info('     echo \'{"apiKey": "your-key"}\' > ~/.auto-gitrc.json', '');
+  
+  logger.space();
+  logger.info('OPTION 3 - Test Configuration:', 'TEST');
+  logger.info('  auto-git config                   # Check current setup', '');
+  logger.info('  auto-git debug                    # Run diagnostics', '');
+  
+  logger.space();
+  logger.info(`After setup, retry: auto-git ${commandName}`, 'RETRY');
+}
+
 program
   .name('auto-git')
   .description('Auto-commit and push with AI-generated commit messages using Gemini - now with interactive controls')
-  .version('2.0.0');
+  .version('2.0.0')
+  .configureHelp({
+    formatHelp: () => {
+      displayStyledHelp();
+      return ''; // Return empty string since we handle formatting ourselves
+    }
+  });
 
 program
   .command('watch')
@@ -27,8 +109,16 @@ program
         logger.setVerbose(true);
       }
 
-      // Validate configuration
-      validateConfig();
+      // Validate configuration with enhanced error handling
+      try {
+        validateConfig();
+      } catch (error) {
+        if (error.message.includes('GEMINI_API_KEY')) {
+          handleMissingApiKey('watch');
+          process.exit(1);
+        }
+        throw error;
+      }
       
       logger.section('Auto-Git Watcher v2.0', 'Initializing file monitoring system with interactive controls');
       
@@ -38,6 +128,11 @@ program
           'Not a Git repository',
           'Please run this command inside a Git repository or initialize one with: git init'
         );
+        logger.space();
+        logger.info('QUICK FIX:', 'SETUP');
+        logger.info('  git init                          # Initialize new repository', '');
+        logger.info('  git remote add origin <url>       # Add remote (optional)', '');
+        logger.info('  auto-git watch                    # Start watching', '');
         process.exit(1);
       }
       
@@ -72,6 +167,11 @@ program
       
     } catch (error) {
       logger.error('Failed to start watcher', error.message);
+      logger.space();
+      logger.info('TROUBLESHOOTING:', 'HELP');
+      logger.info('  auto-git debug                    # Run diagnostics', '');
+      logger.info('  auto-git config                   # Check configuration', '');
+      logger.info('  auto-git setup                    # Re-run setup', '');
       process.exit(1);
     }
   });
@@ -90,8 +190,16 @@ program
         logger.setVerbose(true);
       }
 
-      // Validate configuration
-      validateConfig();
+      // Validate configuration with enhanced error handling
+      try {
+        validateConfig();
+      } catch (error) {
+        if (error.message.includes('GEMINI_API_KEY')) {
+          handleMissingApiKey('commit');
+          process.exit(1);
+        }
+        throw error;
+      }
       
       if (options.dryRun) {
         logger.warning('Dry run mode enabled', 'No actual commits will be made');
@@ -103,6 +211,11 @@ program
       
     } catch (error) {
       logger.error('Commit operation failed', error.message);
+      logger.space();
+      logger.info('TROUBLESHOOTING:', 'HELP');
+      logger.info('  auto-git debug                    # Run diagnostics', '');
+      logger.info('  auto-git config                   # Check configuration', '');
+      logger.info('  git status                        # Check repository state', '');
       process.exit(1);
     }
   });
@@ -119,12 +232,21 @@ program
       const isRepo = await isGitRepository();
       if (!isRepo) {
         logger.error('Not a Git repository', 'Please run this command inside a Git repository');
+        logger.space();
+        logger.info('QUICK FIX:', 'SETUP');
+        logger.info('  git init                          # Initialize repository', '');
+        logger.info('  cd /path/to/git/repo              # Navigate to Git repository', '');
         process.exit(1);
       }
 
       const resetCount = parseInt(count, 10);
       if (isNaN(resetCount) || resetCount < 1) {
         logger.error('Invalid count', 'Please provide a positive number');
+        logger.space();
+        logger.info('EXAMPLES:', 'USAGE');
+        logger.info('  auto-git reset 1                  # Reset last commit (mixed)', '');
+        logger.info('  auto-git reset 2 --soft           # Reset 2 commits (soft)', '');
+        logger.info('  auto-git reset 1 --hard           # Reset 1 commit (hard)', '');
         process.exit(1);
       }
 
@@ -150,6 +272,11 @@ program
         
         if (!confirm) {
           logger.info('Reset cancelled');
+          logger.space();
+          logger.info('SAFER ALTERNATIVES:', 'OPTIONS');
+          logger.info('  auto-git reset 1 --soft           # Keep changes staged', '');
+          logger.info('  auto-git reset 1 --mixed          # Keep changes unstaged', '');
+          logger.info('  git stash                         # Temporarily save changes', '');
           return;
         }
       }
@@ -168,9 +295,20 @@ program
         
         logger.info(`Successfully reset ${resetCount} commit(s)`, 'COMPLETE');
         
+        logger.space();
+        logger.info('NEXT STEPS:', 'GUIDE');
+        logger.info('  git status                        # Check current state', '');
+        logger.info('  auto-git commit                   # Make new commit', '');
+        logger.info('  auto-git watch                    # Resume watching', '');
+        
       } catch (error) {
         logger.failSpinner('Reset failed');
         logger.error('Git reset error', error.message);
+        logger.space();
+        logger.info('TROUBLESHOOTING:', 'HELP');
+        logger.info('  git log --oneline -10             # Check commit history', '');
+        logger.info('  git status                        # Check repository state', '');
+        logger.info('  auto-git debug                    # Run diagnostics', '');
         process.exit(1);
       }
       
@@ -220,8 +358,14 @@ program
         logger.space();
         logger.warning(
           'API key not configured',
-          'Set GEMINI_API_KEY environment variable or create ~/.auto-gitrc.json'
+          'Auto-Git requires a Gemini API key to function'
         );
+        
+        logger.space();
+        logger.info('SETUP OPTIONS:', 'SETUP');
+        logger.info('  auto-git setup                    # Interactive setup guide', '');
+        logger.info('  export GEMINI_API_KEY="your-key"  # Set environment variable', '');
+        logger.info('  # Or create ~/.auto-gitrc.json with your API key', '');
       }
 
       logger.space();
@@ -230,8 +374,21 @@ program
         logger.info(`  ${pattern.toString()}`, '');
       });
       
+      logger.space();
+      logger.info('NEXT STEPS:', 'GUIDE');
+      if (!config.apiKey) {
+        logger.info('  auto-git setup                    # Complete setup first', '');
+      } else {
+        logger.info('  auto-git watch                    # Start watching files', '');
+        logger.info('  auto-git commit                   # Make one-time commit', '');
+      }
+      
     } catch (error) {
       logger.error('Failed to load configuration', error.message);
+      logger.space();
+      logger.info('TROUBLESHOOTING:', 'HELP');
+      logger.info('  auto-git debug                    # Run system diagnostics', '');
+      logger.info('  auto-git setup                    # Re-run setup guide', '');
       process.exit(1);
     }
   });
@@ -257,6 +414,25 @@ program
     logger.info('  • Error-driven AI suggestions');
     logger.info('  • Interactive recovery commands');
     logger.info('  • Built-in git reset functionality');
+    
+    logger.space();
+    logger.info('EXAMPLE CONFIG FILE (~/.auto-gitrc.json):', 'CONFIG');
+    logger.info('  {');
+    logger.info('    "apiKey": "your-gemini-api-key",');
+    logger.info('    "interactiveOnError": true,');
+    logger.info('    "enableSuggestions": true,');
+    logger.info('    "hotkeys": {');
+    logger.info('      "pause": "ctrl+p",');
+    logger.info('      "resume": "ctrl+r",');
+    logger.info('      "enterRepl": "ctrl+i"');
+    logger.info('    }');
+    logger.info('  }');
+    
+    logger.space();
+    logger.info('VERIFICATION COMMANDS:', 'TEST');
+    logger.info('  auto-git config                   # Check configuration', '');
+    logger.info('  auto-git debug                    # Run diagnostics', '');
+    logger.info('  auto-git watch --verbose          # Test with detailed output', '');
   });
 
 // Add debug command for troubleshooting
@@ -288,14 +464,40 @@ program
 
       logger.config('SYSTEM DIAGNOSTICS', diagnostics);
       
+      // Provide recommendations based on diagnostics
+      logger.space();
+      logger.info('RECOMMENDATIONS:', 'GUIDE');
+      
+      if (!config.apiKey) {
+        logger.info('  ⚠️  Set up Gemini API key: auto-git setup', '');
+      }
+      
+      if (!isRepo) {
+        logger.info('  ⚠️  Initialize Git repository: git init', '');
+      }
+      
+      if (isRepo && !remote) {
+        logger.info('  💡 Add remote for pushing: git remote add origin <url>', '');
+      }
+      
+      if (config.apiKey && isRepo) {
+        logger.info('  ✅ Ready to use: auto-git watch or auto-git commit', '');
+      }
+      
     } catch (error) {
       logger.error('Diagnostics failed', error.message);
+      logger.space();
+      logger.info('BASIC TROUBLESHOOTING:', 'HELP');
+      logger.info('  node --version                    # Check Node.js version', '');
+      logger.info('  git --version                     # Check Git installation', '');
+      logger.info('  pwd                               # Check current directory', '');
     }
   });
 
-// Show help if no command provided
+// Show styled help if no command provided
 if (process.argv.length <= 2) {
-  program.help();
+  displayStyledHelp();
+  process.exit(0);
 }
 
 program.parse(process.argv); 
