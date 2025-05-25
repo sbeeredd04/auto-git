@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import { execa } from 'execa';
-import { startWatcher, performSingleCommit } from '../lib/watcher.js';
+import { startWatcher, performSingleCommit, cleanup } from '../lib/watcher.js';
 import { getConfig, validateConfig, getInteractiveConfig } from '../lib/config.js';
 import { isGitRepository, hasRemote, getCurrentBranch } from '../lib/git.js';
 import logger from '../utils/logger.js';
@@ -161,6 +161,7 @@ program
       process.on('SIGINT', () => {
         logger.space();
         logger.info('Stopping file watcher...', 'SHUTDOWN');
+        cleanup(); // Clean up keyboard controls
         watcher.close();
         process.exit(0);
       });

@@ -1,30 +1,51 @@
 # Enhanced Git Command Support in Auto-Git v2.0
 
-## 🎯 Overview
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+  - [Universal Git Command Support](#1-universal-git-command-support)
+  - [AI-Powered Error Recovery](#2-ai-powered-error-recovery)
+  - [Educational Features](#3-educational-features)
+- [Usage Examples](#usage-examples)
+  - [Basic Git Commands](#basic-git-commands)
+  - [Auto-Detected Subcommands](#auto-detected-subcommands)
+  - [Advanced Git Operations](#advanced-git-operations)
+- [Error Recovery Examples](#error-recovery-examples)
+  - [Push Without Upstream](#example-1-push-without-upstream)
+  - [Merge Conflict Resolution](#example-2-merge-conflict-resolution)
+  - [Rebase Conflicts](#example-3-rebase-conflicts)
+- [Supported Git Commands](#supported-git-commands)
+- [AI Error Analysis Features](#ai-error-analysis-features)
+- [Technical Implementation](#technical-implementation)
+- [Educational Benefits](#educational-benefits)
+- [Future Enhancements](#future-enhancements)
+
+## Overview
 
 Auto-Git v2.0 now includes **comprehensive Git command support** in the interactive REPL with AI-powered error handling and educational features. Users can run any Git command directly in the REPL and get intelligent assistance when things go wrong.
 
-## ✨ Key Features
+## Key Features
 
-### 1. 🔧 Universal Git Command Support
+### 1. Universal Git Command Support
 - **Any Git Command**: Execute any git command directly in the REPL
 - **Auto-Detection**: Common git subcommands are automatically detected
 - **Full Argument Support**: Pass any arguments and flags to git commands
 - **Real-time Execution**: Commands run with live output and feedback
 
-### 2. 🤖 AI-Powered Error Recovery
+### 2. AI-Powered Error Recovery
 - **Automatic Error Analysis**: Failed commands are analyzed by Gemini AI
 - **Step-by-Step Solutions**: AI provides actionable troubleshooting steps
 - **Context-Aware Suggestions**: Solutions are tailored to the specific error
 - **Educational Explanations**: Optional command explanations for learning
 
-### 3. 🎓 Educational Features
+### 3. Educational Features
 - **Command Explanations**: AI explains what suggested commands do
 - **Learning Support**: Helps users understand Git concepts
 - **Pro Tips**: Contextual advice for better Git workflows
 - **Interactive Learning**: Learn by doing with immediate feedback
 
-## 🚀 Usage Examples
+## Usage Examples
 
 ### Basic Git Commands
 ```bash
@@ -75,7 +96,7 @@ auto-git> git bisect start
   status: waiting for both good and bad commits
 ```
 
-## 🛠️ Error Recovery Examples
+## Error Recovery Examples
 
 ### Example 1: Push Without Upstream
 ```bash
@@ -83,7 +104,7 @@ auto-git> push origin feature-branch
 ✗ Git command failed: push origin feature-branch
   Error: fatal: The current branch feature-branch has no upstream branch.
 
-🤖 AI Suggestion:
+AI Suggestion:
 To push the current branch and set the remote as upstream, use:
   git push --set-upstream origin feature-branch
 
@@ -94,11 +115,11 @@ This will:
 
 Would you like me to explain what these suggested commands do? (y/N) y
 
-🎓 Command Explanations:
+Command Explanations:
   git push --set-upstream origin feature-branch
     → Uploads local commits and sets up tracking between local and remote branch
 
-💡 Pro tip: You can run these commands directly in this REPL!
+Pro tip: You can run these commands directly in this REPL!
 
 auto-git> git push --set-upstream origin feature-branch
 ✓ Git command completed: push --set-upstream origin feature-branch
@@ -112,7 +133,7 @@ auto-git> merge main
   Error: CONFLICT (content): Merge conflict in src/app.js
          Automatic merge failed; fix conflicts and then commit the result.
 
-🤖 AI Suggestion:
+AI Suggestion:
 You have merge conflicts that need to be resolved manually:
 
 1. Open the conflicted file(s) and resolve conflicts:
@@ -129,7 +150,7 @@ You have merge conflicts that need to be resolved manually:
 
 Would you like me to explain what these suggested commands do? (y/N) y
 
-🎓 Command Explanations:
+Command Explanations:
   git add src/app.js
     → Stages the resolved file for commit
   git commit
@@ -157,7 +178,7 @@ auto-git> rebase main
   Error: CONFLICT (content): Merge conflict in src/utils.js
          error: could not apply abc123f... feat: add utility function
 
-🤖 AI Suggestion:
+AI Suggestion:
 You have a rebase conflict. Here's how to resolve it:
 
 1. Resolve conflicts in the affected file(s):
@@ -177,7 +198,7 @@ You have a rebase conflict. Here's how to resolve it:
 Would you like me to explain what these suggested commands do? (y/N)
 ```
 
-## 🎯 Supported Git Commands
+## Supported Git Commands
 
 ### Automatically Detected Subcommands
 The following commands can be run directly without the `git` prefix:
@@ -197,7 +218,7 @@ Any git command can be executed using the `git` prefix:
 auto-git> git <any-command> <any-arguments>
 ```
 
-## 🧠 AI Error Analysis Features
+## AI Error Analysis Features
 
 ### Error Sanitization
 - Removes sensitive information (usernames, tokens, paths)
@@ -216,7 +237,7 @@ auto-git> git <any-command> <any-arguments>
 - **Safety**: Warnings for destructive operations
 - **Learning**: Helps users understand Git concepts
 
-## 🔧 Technical Implementation
+## Technical Implementation
 
 ### Command Detection
 ```javascript
@@ -252,7 +273,7 @@ const explanations = {
 };
 ```
 
-## 🎓 Educational Benefits
+## Educational Benefits
 
 ### For Beginners
 - **Learn by Doing**: Try commands safely with AI guidance
@@ -272,7 +293,7 @@ const explanations = {
 - **Reduced Support**: Less need for senior developers to help with Git issues
 - **Onboarding**: New team members get immediate help with Git workflows
 
-## 🚀 Future Enhancements
+## Future Enhancements
 
 ### Planned Features
 - **Command History**: Remember and suggest previously used commands
@@ -289,4 +310,4 @@ const explanations = {
 
 ---
 
-**The Enhanced Git Command Support makes Auto-Git v2.0 not just an automation tool, but a comprehensive Git learning and productivity platform! 🎓🚀** 
+**The Enhanced Git Command Support makes Auto-Git v2.0 not just an automation tool, but a comprehensive Git learning and productivity platform!** 
