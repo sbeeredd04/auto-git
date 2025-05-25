@@ -1,4 +1,4 @@
-# Auto-Git v3.7.1
+# Auto-Git v3.8.0
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -8,9 +8,9 @@
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 [![GitHub Release](https://img.shields.io/github/release/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/releases)
 
-> AI-powered automatic Git commits with Gemini-generated commit messages - now with bulletproof infinite REPL looping, perfect state management across multiple pause/resume cycles, and unbreakable global keyboard controls
+> AI-powered automatic Git commits with Gemini-generated commit messages - now with enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and simplified workflow
 
-Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.7.1** introduces revolutionary state management with bulletproof infinite REPL looping, perfect handling of multiple pause/resume cycles, and unbreakable global keyboard controls that work flawlessly no matter how many times you use them.
+Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.8.0** introduces a revolutionary enhanced interactive terminal session with persistent command history, markdown-formatted AI responses, git syntax highlighting, and a completely simplified workflow.
 
 ## Table of Contents
 
@@ -19,8 +19,8 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - [Installation](#installation)
 - [Usage](#usage)
   - [Commands](#commands)
-  - [Interactive Controls](#interactive-controls)
-  - [Enhanced Git Command Support](#enhanced-git-command-support)
+  - [Enhanced Interactive Session](#enhanced-interactive-session)
+  - [Watch Mode](#watch-mode)
   - [Configuration](#configuration)
 - [Advanced Usage](#advanced-usage)
 - [Professional Logging](#professional-logging--ux)
@@ -37,7 +37,7 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 
 ### Core Features
 - **AI-Generated Commit Messages**: Uses Google Gemini to create conventional, meaningful commit messages
-- **File Watching**: Automatically detect changes and commit them recursively
+- **File Watching**: Automatically detect changes and commit them recursively (simple Ctrl+C to exit)
 - **One-Shot Commits**: Manual commit generation for current changes
 - **Professional Logging**: Clean, colorized output with styled boxes and minimal visual clutter
 - **Cross-Platform**: Works on Windows, macOS, and Linux
@@ -45,54 +45,22 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **Smart Debouncing**: Prevents spam commits during rapid file changes
 - **Zero Config**: Works out of the box with just an API key
 
-### New in v2.0: Interactive Controls & Enhanced UX
-- **Keyboard Shortcuts**: Pause/resume watching with hotkeys
-- **Interactive REPL**: On-demand command interface for manual control
-- **Error-Driven AI Suggestions**: AI analyzes Git errors and suggests solutions
+### 🚀 New in v3.8.0: Enhanced Interactive Terminal Session
+- **📚 Persistent Command History**: Commands saved across sessions with arrow key navigation
+- **🎨 Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting
+- **⌨️ Arrow Key Navigation**: Use ↑↓ to browse through command history
+- **🎯 Git Syntax Highlighting**: Enhanced display for Git commands with color coding
+- **💾 Session Persistence**: Command history automatically saved and restored
+- **🔄 Simplified Workflow**: Clean separation between watch mode and interactive mode
+- **🎮 Enhanced User Experience**: Improved prompts, better error handling, and cleaner interface
+
+### Previous Features (Simplified in v3.8.0)
+- **Simple Watch Mode**: Just Ctrl+C to exit - no complex pause/resume
+- **AI Error Analysis**: Smart suggestions for failed commands with markdown formatting
 - **Built-in Reset Commands**: Undo commits with safety checks
 - **Smart Error Recovery**: Automatic retry with user guidance
-- **Real-time Control**: Pause, resume, and interact without stopping the watcher
 - **Styled Help System**: Beautiful, organized help with clear navigation
-- **Intelligent Navigation**: Context-aware guidance and next steps
 - **Enhanced Error Handling**: Clear error messages with actionable solutions
-
-### New in v3.3.0: Intuitive Navigation Menu
-- **Simplified Controls**: Just Ctrl+P to pause and access all options
-- **Arrow Key Navigation**: Use ↑↓ arrows to navigate menu options
-- **Visual Menu System**: Clear descriptions for each option
-- **One-Key Access**: Enter to select, Escape to cancel
-- **Smart Workflow**: Seamless transitions between watching, interactive mode, and exit
-
-### New in v3.4.0: Critical Bug Fixes
-- **Fixed Navigation Menu**: Resolved duplicate menu display issue
-- **Fixed REPL Character Duplication**: No more "ggiitt" when typing "git"
-- **Added Ctrl+R Resume**: Resume watcher directly from REPL with Ctrl+R
-- **Improved Raw Mode Handling**: Better terminal compatibility and input handling
-- **Enhanced Error Recovery**: Cleaner transitions between modes
-
-### New in v3.5.0: Completely Stable REPL
-- **Fixed Character Duplication**: No more "ggiitt" when typing "git" - completely resolved
-- **Stable Input Handling**: Switched from inquirer to readline for better terminal compatibility
-- **Clear Exit Commands**: Type "resume" to resume watcher, "exit" to exit without resuming
-- **Proper Terminal State**: Clean transitions between navigation menu and REPL
-- **Reliable Experience**: No more input conflicts or terminal state issues
-
-### 🚀 New in v3.6.0: Bulletproof Interactive Experience
-- **🛡️ Bulletproof Ctrl+C Handling**: Force exit from anywhere - navigation menu, REPL, or watcher
-- **🧠 Smart Input Deduplication**: Automatically removes duplicate characters (e.g., "ggiitt" → "git")
-- **🎯 Rock-Solid Navigation**: No more stuck states - arrow keys always work perfectly
-- **⚡ Robust stdin Management**: Proper terminal state handling with automatic cleanup
-- **🔄 Enhanced Error Recovery**: Improved AI suggestions with better error handling
-- **🎮 Force Exit Everywhere**: Ctrl+C immediately exits the entire application from any state
-- **📱 Better Terminal Compatibility**: Works flawlessly across different terminal emulators
-
-### 🚀 New in v3.7.0: Revolutionary State Management
-- **🔄 Infinite REPL Looping**: REPL runs in a true infinite loop that never stops accepting commands
-- **🎯 Perfect Multiple Pause/Resume Cycles**: Can pause and resume indefinitely without any state corruption  
-- **🎮 Unbreakable Global Keyboard Controls**: Ctrl+P, Ctrl+R, and Ctrl+C work flawlessly across all states and cycles
-- **🛡️ Complete State Isolation**: Each REPL session is completely isolated with proper cleanup and restoration
-- **⚡ Bulletproof Handler Management**: Perfect cleanup of all event handlers prevents memory leaks
-- **🔧 Never-Ending Command Processing**: Commands execute and immediately return to prompt for next command
 
 ## Quick Start
 
@@ -115,11 +83,6 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 source ~/.zshrc
 nvm install node
 npm install -g @sbeeredd04/auto-git
-```
-
-**Worst case scenario - you can use sudo:**
-```bash
-sudo npm install -g @sbeeredd04/auto-git@latest
 ```
 
 ### 2. Get a Gemini API Key
@@ -150,13 +113,16 @@ npx @sbeeredd04/auto-git commit
 auto-git commit
 ```
 
-**Watch mode (continuous with interactive controls):**
+**Simple watch mode:**
 ```bash
-# With npx (no installation)
-npx @sbeeredd04/auto-git watch
-
-# With global installation
+# Simple file watching (Ctrl+C to exit)
 auto-git watch
+```
+
+**Enhanced interactive session:**
+```bash
+# Start interactive terminal with AI assistance
+auto-git interactive
 ```
 
 ## Installation
@@ -183,7 +149,7 @@ npm install -g git+https://github.com/sbeeredd04/auto-git.git
 
 ### Styled Help System
 
-Auto-Git v2.0 features a completely redesigned help system with beautiful styling and clear organization:
+Auto-Git v3.8.0 features a completely redesigned help system with beautiful styling and clear organization:
 
 ```bash
 auto-git --help
@@ -192,43 +158,30 @@ auto-git --help
 **Example Output:**
 ```
 ┌───────────────────────────────────────────────────┐
-│  Auto-Git v3.3.0                                  │
-│  AI-powered Git automation with arrow key         │
-│  navigation                                       │
+│  Auto-Git v3.8.0                                  │
+│  AI-powered Git automation with enhanced          │
+│  interactive terminal session                     │
 └───────────────────────────────────────────────────┘
 
 USAGE:
   auto-git [command] [options]
 
-╭─────────────────────────────────────────────────╮
-│  AVAILABLE COMMANDS                             │
-│                                                 │
-│  watch         Watch files and auto-commit     │
-│  commit (c)    Generate AI commit              │
-│  reset <count> Undo commits (NEW in v3.3.0)    │
-│  config        Show configuration              │
-│  setup         Interactive setup guide         │
-│  debug         Run system diagnostics          │
-│  help          Display this help               │
-╰─────────────────────────────────────────────────╯
+AVAILABLE COMMANDS:
+  watch                Watch files and auto-commit (simple Ctrl+C to exit)
+  commit (c)           Generate AI commit for current changes
+  interactive          Start enhanced interactive terminal session
+  reset <count>        Undo commits with safety checks
+  config               Show configuration
+  setup                Interactive setup guide
+  debug                Run system diagnostics
+  help                 Display this help information
 
-INTERACTIVE FEATURES (v3.3.0):
-  Ctrl+P        Pause and show navigation menu
-  ↑↓ Arrows     Navigate menu options when paused
-  Enter         Select menu option
-  Ctrl+C        Graceful shutdown
-
-EXAMPLES:
-  auto-git setup                    # First-time setup
-  auto-git watch                    # Start watching
-  auto-git commit --verbose         # One-time commit
-  auto-git reset 2 --soft           # Undo 2 commits
-
-QUICK START:
-  1. Get API key: https://aistudio.google.com/app/apikey
-  2. Set API key: export GEMINI_API_KEY="your-key"
-  3. Run setup:   auto-git setup
-  4. Start using: auto-git watch
+INTERACTIVE FEATURES:
+  Enhanced Session     Persistent command history and markdown AI responses
+  Arrow Key Navigation Browse command history with ↑↓ keys
+  Git Syntax Highlight Enhanced display for Git commands
+  Session Persistence  Command history saved across restarts
+  Ctrl+C              Exit from anywhere
 ```
 
 ### Commands
@@ -337,301 +290,19 @@ auto-git debug
 - Status-based guidance
 - Troubleshooting help
 
-### Enhanced Error Handling & Navigation
+### Enhanced Interactive Session
 
-Auto-Git v2.0 provides intelligent error handling with clear guidance:
+The new interactive session features:
 
-#### Missing API Key Error
-When you try to use Auto-Git without setting up the API key:
+- **Persistent Command History**: Commands saved across sessions with arrow key navigation
+- **Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting
+- **Git Syntax Highlighting**: Enhanced display for Git commands with color coding
+- **Session Persistence**: Command history automatically saved and restored
+- **Ctrl+C Exit**: Exit from anywhere
 
-```bash
-auto-git watch
-```
+### Watch Mode
 
-**Enhanced Error Output:**
-```
-╔═══════════════════════════════════╗
-║  ERROR                            ║
-║  Gemini API Key Required          ║
-║  API key not found or configured  ║
-╚═══════════════════════════════════╝
-
-╭─────────────────────────────────────────────────╮
-│  WARNING                                        │
-│  QUICK SETUP REQUIRED                           │
-│  Auto-Git needs a Gemini API key to function    │
-╰─────────────────────────────────────────────────╯
-
-OPTION 1 - Use Setup Guide (Recommended):
-  auto-git setup
-
-OPTION 2 - Manual Setup:
-  1. Get API key: https://aistudio.google.com/app/apikey
-  2. Set environment variable:
-     export GEMINI_API_KEY="your-api-key-here"
-  3. Or create config file:
-     echo '{"apiKey": "your-key"}' > ~/.auto-gitrc.json
-
-OPTION 3 - Test Configuration:
-  auto-git config                   # Check current setup
-  auto-git debug                    # Run diagnostics
-
-After setup, retry: auto-git watch
-```
-
-#### Invalid Command Usage
-Clear examples and guidance for incorrect usage:
-
-```bash
-auto-git reset abc
-```
-
-**Enhanced Error Output:**
-```
-╔══════════════════════════════════════╗
-║  ERROR                               ║
-║  Invalid count                       ║
-║  Please provide a positive number    ║
-╚══════════════════════════════════════╝
-
-EXAMPLES:
-  auto-git reset 1                  # Reset last commit (mixed)
-  auto-git reset 2 --soft           # Reset 2 commits (soft)
-  auto-git reset 1 --hard           # Reset 1 commit (hard)
-```
-
-### Interactive Controls
-
-#### Keyboard Shortcuts (v3.6.0 - Enhanced)
-
-| Key               | Action                                | Status |
-|-------------------|---------------------------------------|--------|
-| **Ctrl+P**        | Pause and show navigation menu        | ✅ Stable |
-| **↑↓ Arrows**     | Navigate menu options when paused     | ✅ Rock-solid |
-| **Enter**         | Select highlighted menu option        | ✅ Reliable |
-| **Escape**        | Cancel menu and resume watching       | ✅ Responsive |
-| **"resume"**      | Resume watcher from REPL              | ✅ Fixed in v3.5.0 |
-| **"exit"**        | Exit REPL without resuming            | ✅ Added in v3.5.0 |
-| **Ctrl+C**        | **Force exit from anywhere**          | 🚀 **NEW in v3.6.0** |
-
-#### 🚀 New in v3.6.0: Bulletproof Controls
-
-**Force Exit Everywhere:**
-- **Navigation Menu**: Ctrl+C immediately exits the entire application
-- **Interactive REPL**: Ctrl+C force exits without getting stuck
-- **File Watcher**: Ctrl+C cleanly shuts down with proper cleanup
-- **Any State**: No matter where you are, Ctrl+C always works
-
-**Smart Input Processing:**
-- **Automatic Deduplication**: Typing "ggiitt" becomes "git" automatically
-- **Character Cleanup**: "heelllloo" becomes "helo" for cleaner commands
-- **Preserved Spacing**: "git  status" becomes "git status" (smart space handling)
-- **Real-time Processing**: Happens instantly as you type
-
-#### Navigation Menu (Enhanced in v3.6.0)
-
-When you press **Ctrl+P**, Auto-Git shows an intuitive navigation menu:
-
-```
-⏸  Watcher Paused
-Use arrow keys to navigate, Enter to select
-
-❯ ▶  Resume watching
-  Continue monitoring files for changes
-
-  🔧 Interactive mode
-  Enter REPL for manual Git operations
-
-  🛑 Stop and exit
-  Shutdown Auto-Git completely
-
-Controls: ↑↓ Navigate • Enter Select • Esc Cancel • Ctrl+C Force Exit
-```
-
-#### Menu Options
-
-- **Resume watching**: Continue monitoring files for changes
-- **Interactive mode**: Enter REPL for manual Git operations and AI assistance  
-- **Stop and exit**: Shutdown Auto-Git completely
-- **Force Exit (Ctrl+C)**: 🚀 **NEW** - Immediately exit from anywhere
-
-#### Interactive REPL Commands (Enhanced in v3.6.0)
-
-When errors occur or when you select **Interactive mode** from the navigation menu, Auto-Git enters an interactive mode with smart input processing:
-
-```bash
-auto-git> help                    # Show available commands
-auto-git> retry                   # Retry the last failed operation
-auto-git> reset --hard HEAD~1     # Reset commits with git reset
-auto-git> status                  # Show git status (auto-deduplicates "ssttaattuuss")
-auto-git> diff                    # Show current git diff
-auto-git> commit                  # Manual commit with AI message
-auto-git> git <command>           # Execute any git command with AI error handling
-auto-git> log --oneline           # Direct git subcommands (auto-detected)
-auto-git> branch -a               # List all branches
-auto-git> stash                   # Stash current changes
-auto-git> resume                  # Resume watcher and exit REPL
-auto-git> exit                    # Exit REPL without resuming
-# Ctrl+C                          # Force exit entire application
-```
-
-#### 🧠 Smart Input Examples (v3.6.0)
-
-The new input deduplication automatically cleans up your typing:
-
-```bash
-# What you type → What gets processed
-auto-git> ggiitt ssttaattuuss      → git status
-auto-git> ccoommmmiitt            → comit
-auto-git> bbrraanncchh  --aa      → branch -a
-auto-git> llogg  ----oonneelliinnee → log -oneline
-auto-git> rreesseett  ----hhaarrdd   → reset -hard
-```
-
-### Enhanced Git Command Support
-
-The REPL now supports **any Git command** with intelligent error handling:
-
-**Direct Git Commands:**
-```bash
-auto-git> git log --oneline -10   # Show recent commits
-auto-git> git branch -a           # List all branches  
-auto-git> git stash push -m "WIP" # Stash with message
-auto-git> git pull origin main    # Pull latest changes
-auto-git> git rebase main         # Rebase current branch
-```
-
-**Auto-Detected Git Subcommands:**
-```bash
-auto-git> log --oneline           # Automatically runs: git log --oneline
-auto-git> branch -a               # Automatically runs: git branch -a
-auto-git> stash                   # Automatically runs: git stash
-auto-git> pull origin main        # Automatically runs: git pull origin main
-```
-
-**AI-Powered Error Recovery:**
-When any Git command fails, Auto-Git will:
-
-1. **Analyze the error** with AI
-2. **Provide step-by-step solutions**
-3. **Explain what commands do** (optional)
-4. **Offer to run suggested fixes**
-
-**Example Error Recovery:**
-```bash
-auto-git> push origin feature-branch
-✗ Git command failed: push origin feature-branch
-  Error: fatal: The current branch has no upstream branch
-
-┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI Suggestion                                           │
-│  Intelligent troubleshooting assistance                    │
-└─────────────────────────────────────────────────────────────┘
-
-To push the current branch and set the remote as upstream, use:
-  git push --set-upstream origin feature-branch
-
-This will:
-1. Push your local commits to the remote repository
-2. Set up tracking between your local and remote branch
-3. Allow future pushes with just 'git push'
-
-🎓 Would you like me to explain what these suggested commands do? (y/N)
-
-┌─────────────────────────────────────────────────────────────┐
-│  🎓 Command Explanations                                    │
-│  Understanding the suggested Git commands                   │
-└─────────────────────────────────────────────────────────────┘
-
-git push --set-upstream origin feature-branch
-  → Uploads local commits and sets up tracking between local and remote branch
-
-💡 Pro tip: You can run these commands directly in this REPL!
-
-auto-git> git push --set-upstream origin feature-branch
-✓ Git command completed: push --set-upstream origin feature-branch
-```
-
-#### Enhanced Interactive Experience
-
-The REPL now features **beautiful, styled output** for all interactions:
-
-**Styled Command Interface:**
-```bash
-┌─────────────────────────────────────────────────────────────┐
-│  Interactive Mode                                           │
-│  Auto-Git REPL activated - Enhanced with AI assistance     │
-└─────────────────────────────────────────────────────────────┘
-
-╭─────────────────────────────────────────────────╮
-│  AVAILABLE COMMANDS                             │
-│                                                 │
-│  retry         Retry the last failed operation │
-│  status        Show git status with colored    │
-│  git <cmd>     Execute any git command         │
-│  help          Show detailed help message      │
-│  exit          Exit REPL and continue          │
-╰─────────────────────────────────────────────────╯
-
-💡 Pro Tips:
-  • Run any git command directly (e.g., log, branch, stash)
-  • Failed commands get automatic AI analysis
-  • Ask for command explanations anytime
-
-auto-git>
-```
-
-**Styled Git Status Output:**
-```bash
-auto-git> status
-✓ Git status retrieved
-
-Repository Status:
-  M  src/app.js                     Modified
-  A  new-feature.js                 Added
-  D  old-file.js                    Deleted
-  ?? untracked.txt                  Untracked
-```
-
-**Styled Error Messages:**
-```bash
-auto-git> invalid-command
-┌─────────────────────────────────────────────────────────────┐
-│  Git Command Error                                          │
-│  Command not found: invalid-command                        │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│  💡 Basic Troubleshooting                                   │
-│  Common diagnostic commands                                 │
-└─────────────────────────────────────────────────────────────┘
-
-╭─────────────────────────────────────────────────╮
-│  DIAGNOSTIC COMMANDS                            │
-│                                                 │
-│  git status        Check repository state       │
-│  git log --oneline Check recent commits         │
-│  git remote -v     Check remote configuration   │
-│  git branch -a     Check available branches     │
-╰─────────────────────────────────────────────────╯
-```
-
-**Styled AI Commit Messages:**
-```bash
-auto-git> commit
-✓ Changes detected
-🤖 Generating AI commit message...
-✓ AI commit message generated
-
-┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI-Generated Commit Message                             │
-│  Proposed commit for your changes                          │
-└─────────────────────────────────────────────────────────────┘
-
-feat(auth): add user authentication with JWT tokens
-
-✅ Proceed with this commit message? (Y/n)
-```
+Auto-Git v3.8.0 supports simple watch mode with just Ctrl+C to exit.
 
 ### Configuration
 
@@ -1031,19 +702,20 @@ When Git errors occur:
 ### General Questions
 
 **Q: What is Auto-Git?**
-A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 3.7.1 adds bulletproof infinite REPL looping, perfect state management across multiple pause/resume cycles, and unbreakable global keyboard controls.
+A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 3.8.0 adds enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and simplified workflow.
 
 **Q: Do I need to install anything?**
 A: No! You can use `npx @sbeeredd04/auto-git` without installation, or install globally with `npm install -g @sbeeredd04/auto-git`.
 
-**Q: What's new in v3.7.1?**
-A: v3.7.1 introduces:
-- 🔄 **Infinite REPL Looping**: REPL runs in a true infinite loop that never stops accepting commands
-- 🎯 **Perfect Multiple Pause/Resume Cycles**: Can pause and resume indefinitely without any state corruption  
-- 🎮 **Unbreakable Global Keyboard Controls**: Ctrl+P, Ctrl+R, and Ctrl+C work flawlessly across all states and cycles
-- 🛡️ **Complete State Isolation**: Each REPL session is completely isolated with proper cleanup and restoration
-- ⚡ **Bulletproof Handler Management**: Perfect cleanup of all event handlers prevents memory leaks
-- 🔧 **Never-Ending Command Processing**: Commands execute and immediately return to prompt for next command
+**Q: What's new in v3.8.0?**
+A: v3.8.0 introduces:
+- 📚 **Persistent Command History**: Commands saved across sessions with arrow key navigation
+- 🎨 **Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting
+- ⌨️ **Arrow Key Navigation**: Use ↑↓ to browse through command history
+- 🎯 **Git Syntax Highlighting**: Enhanced display for Git commands with color coding
+- 💾 **Session Persistence**: Command history automatically saved and restored
+- 🔄 **Simplified Workflow**: Clean separation between watch mode and interactive mode
+- 🎮 **Enhanced User Experience**: Improved prompts, better error handling, and cleaner interface
 
 **Q: How do I force exit if something goes wrong?**
 A: Press Ctrl+C anywhere - navigation menu, REPL, or file watcher. It will immediately exit the entire application with proper cleanup.

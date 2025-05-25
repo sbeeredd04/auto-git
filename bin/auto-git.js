@@ -21,7 +21,7 @@ process.on('SIGINT', () => {
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.7.1', 'AI-powered Git automation with interactive terminal session');
+  logger.section('Auto-Git v3.8.0', 'AI-powered Git automation with enhanced interactive terminal session');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -29,9 +29,9 @@ function displayStyledHelp() {
   
   logger.space();
   const commands = {
-    'watch': 'Watch files and auto-commit with AI messages',
+    'watch': 'Watch files and auto-commit with AI messages (simple Ctrl+C to exit)',
     'commit (c)': 'Generate AI commit for current changes',
-    'interactive': 'Start interactive terminal session with AI error assistance',
+    'interactive': 'Start enhanced interactive terminal session with AI assistance',
     'reset <count>': 'Undo commits with safety checks',
     'config': 'Show configuration',
     'setup': 'Interactive setup guide for first-time users',
@@ -43,16 +43,17 @@ function displayStyledHelp() {
   
   logger.space();
   logger.info('INTERACTIVE FEATURES:', 'FEATURES');
-  logger.info('  Interactive Session  Full terminal pass-through with AI error help', '');
+  logger.info('  Enhanced Session     Persistent command history and markdown AI responses', '');
+  logger.info('  Arrow Key Navigation Browse command history with ↑↓ keys', '');
+  logger.info('  Git Syntax Highlight Enhanced display for Git commands', '');
+  logger.info('  Session Persistence  Command history saved across restarts', '');
   logger.info('  Ctrl+C              Exit from anywhere', '');
-  logger.info('  Input Sanitization  Automatic duplicate character removal', '');
-  logger.info('  AI Error Analysis   Smart suggestions for failed commands', '');
   
   logger.space();
   logger.info('EXAMPLES:', 'EXAMPLES');
   logger.info('  auto-git setup                    # First-time setup guide', '');
-  logger.info('  auto-git watch                    # Start file watching', '');
-  logger.info('  auto-git interactive              # Start interactive session', '');
+  logger.info('  auto-git watch                    # Start simple file watching', '');
+  logger.info('  auto-git interactive              # Start enhanced interactive session', '');
   logger.info('  auto-git commit --verbose         # One-time commit with details', '');
   logger.info('  auto-git reset 2 --soft           # Undo last 2 commits (soft)', '');
   logger.info('  auto-git config                   # Show current configuration', '');
@@ -99,8 +100,8 @@ function handleMissingApiKey(commandName) {
 
 program
   .name('auto-git')
-  .description('Auto-commit and push with AI-generated commit messages using Gemini - now with full terminal pass-through REPL, automatic input sanitization, and bulletproof global keyboard controls')
-  .version('3.7.1')
+  .description('Auto-commit and push with AI-generated commit messages using Gemini - now with enhanced interactive terminal session, persistent command history, and simplified workflow')
+  .version('3.8.0')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -132,7 +133,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v3.7.1', 'Initializing file monitoring system with bulletproof infinite REPL looping and perfect state management');
+      logger.section('Auto-Git Watcher v3.8.0', 'Simple file monitoring with auto-commit (Ctrl+C to exit)');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -155,13 +156,13 @@ program
       
       logger.repoStatus(branch, remote, !!config.apiKey);
       
-      // Show interactive features status
+      // Show simplified features status
       logger.space();
-      logger.info('Interactive Features:', 'FEATURES');
+      logger.info('Watch Mode Features:', 'FEATURES');
+      logger.info(`  Auto-commit: ✓ Enabled`);
+      logger.info(`  AI Messages: ${config.apiKey ? '✓ Enabled' : '✗ Disabled (no API key)'}`);
       logger.info(`  Error Recovery: ${interactiveConfig.interactiveOnError ? '✓ Enabled' : '✗ Disabled'}`);
-      logger.info(`  AI Suggestions: ${interactiveConfig.enableSuggestions ? '✓ Enabled' : '✗ Disabled'}`);
-      logger.info(`  Navigation Menu: ✓ Enabled (Ctrl+P)`);
-      logger.info(`  Arrow Key Navigation: ✓ Enabled`);
+      logger.info(`  Simple Exit: ✓ Ctrl+C only`);
       
       // Pass custom paths if provided, otherwise use default recursive watching
       const watchPaths = options.paths && options.paths.length > 0 && !options.paths.includes('.') 
@@ -442,7 +443,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v3.7.1', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.8.0', 'System health check');
     
     try {
       const config = getConfig();
@@ -452,7 +453,7 @@ program
       const remote = isRepo ? await hasRemote() : false;
       
       const diagnostics = {
-        'Auto-Git Version': '3.7.1',
+        'Auto-Git Version': '3.8.0',
         'Node.js Version': process.version,
         'Platform': process.platform,
         'Working Directory': process.cwd(),
@@ -461,7 +462,9 @@ program
         'Remote Configured': remote,
         'API Key Set': !!config.apiKey,
         'Interactive Features': interactiveConfig.interactiveOnError,
-        'AI Suggestions': interactiveConfig.enableSuggestions
+        'AI Suggestions': interactiveConfig.enableSuggestions,
+        'Session Persistence': '✓ Enabled',
+        'Markdown Formatting': '✓ Enabled'
       };
 
       logger.config('SYSTEM DIAGNOSTICS', diagnostics);
@@ -483,7 +486,7 @@ program
       }
       
       if (config.apiKey && isRepo) {
-        logger.info('  ✅ Ready to use: auto-git watch or auto-git commit', '');
+        logger.info('  ✅ Ready to use: auto-git watch or auto-git interactive', '');
       }
       
     } catch (error) {
