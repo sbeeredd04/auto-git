@@ -20,7 +20,7 @@ process.on('SIGINT', () => {
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.6.1', 'AI-powered Git automation with simplified REPL and global Ctrl+R resume');
+  logger.section('Auto-Git v3.6.2', 'AI-powered Git automation with full terminal pass-through and bulletproof controls');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -30,7 +30,7 @@ function displayStyledHelp() {
   const commands = {
     'watch': 'Watch files and auto-commit with AI messages (interactive mode)',
     'commit (c)': 'Generate AI commit for current changes',
-    'reset <count>': 'Undo commits with safety checks (STABLE in v3.6.1)',
+    'reset <count>': 'Undo commits with safety checks (STABLE in v3.6.2)',
     'config': 'Show configuration and interactive features',
     'setup': 'Interactive setup guide for first-time users',
     'debug': 'Run system diagnostics and health check',
@@ -40,12 +40,13 @@ function displayStyledHelp() {
   logger.config('AVAILABLE COMMANDS', commands);
   
   logger.space();
-  logger.info('INTERACTIVE FEATURES (v3.6.1):', 'FEATURES');
+  logger.info('INTERACTIVE FEATURES (v3.6.2):', 'FEATURES');
   logger.info('  Ctrl+P        Pause and show navigation menu', '');
   logger.info('  ↑↓ Arrows     Navigate menu options when paused', '');
   logger.info('  Enter         Select menu option', '');
   logger.info('  Ctrl+R        Global resume (works from anywhere)', '');
   logger.info('  Ctrl+C        Force exit everywhere', '');
+  logger.info('  REPL Mode     Full terminal pass-through with input sanitization', '');
   
   logger.space();
   logger.info('EXAMPLES:', 'EXAMPLES');
@@ -97,8 +98,8 @@ function handleMissingApiKey(commandName) {
 
 program
   .name('auto-git')
-  .description('Auto-commit and push with AI-generated commit messages using Gemini - now with simplified Git command pass-through REPL and global Ctrl+R resume functionality')
-  .version('3.6.1')
+  .description('Auto-commit and push with AI-generated commit messages using Gemini - now with full terminal pass-through REPL, automatic input sanitization, and bulletproof global keyboard controls')
+  .version('3.6.2')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -130,7 +131,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v3.6.1', 'Initializing file monitoring system with simplified REPL and global resume controls');
+      logger.section('Auto-Git Watcher v3.6.2', 'Initializing file monitoring system with full terminal pass-through and bulletproof controls');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -446,7 +447,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v3.6.1', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.6.2', 'System health check');
     
     try {
       const config = getConfig();
@@ -456,7 +457,7 @@ program
       const remote = isRepo ? await hasRemote() : false;
       
       const diagnostics = {
-        'Auto-Git Version': '3.6.1',
+        'Auto-Git Version': '3.6.2',
         'Node.js Version': process.version,
         'Platform': process.platform,
         'Working Directory': process.cwd(),

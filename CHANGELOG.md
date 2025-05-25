@@ -21,6 +21,39 @@ All notable changes to Auto-Git will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.2] - 2024-12-19
+
+### 🚀 Added
+- **Full Terminal Pass-Through**: REPL now executes any command directly in terminal
+- **Automatic Input Sanitization**: Built-in duplicate character removal (e.g., "ggiitt" → "git")
+- **Bulletproof Global Keyboard Controls**: Ctrl+P and Ctrl+R work consistently across all sessions
+- **Raw Terminal Input**: Direct character-by-character input handling for better control
+- **Enhanced Command Execution**: Uses spawn for real terminal pass-through
+
+### 🔧 Fixed
+- **Persistent Keyboard Controls**: Global shortcuts now work after resuming from REPL
+- **Input Duplication Issues**: Completely eliminated duplicate character problems
+- **Session State Management**: Proper cleanup and restoration of keyboard listeners
+- **Terminal State Consistency**: Raw mode properly managed across different states
+
+### 🎯 Enhanced
+- **Universal Command Support**: Any terminal command works (git, ls, pwd, etc.)
+- **AI Error Analysis**: Failed commands automatically get AI suggestions
+- **Seamless Transitions**: Smooth switching between watcher and REPL modes
+- **Better Error Handling**: Comprehensive error analysis with actionable suggestions
+
+### 📱 Technical Improvements
+- **Raw Input Processing**: Character-by-character input handling with special key support
+- **Proper Listener Management**: Specific handler tracking and cleanup
+- **Enhanced State Restoration**: Keyboard controls properly restored after REPL exit
+- **Memory Management**: Better cleanup of event listeners and resources
+
+### 🧪 User Experience
+- **No More Input Issues**: Typing works perfectly without duplicates
+- **Consistent Controls**: Ctrl+P and Ctrl+R work from any state
+- **Real Terminal Feel**: Full terminal pass-through for any command
+- **Instant Feedback**: Real-time input processing and command execution
+
 ## [3.6.1] - 2024-12-19
 
 ### 🚀 Added
