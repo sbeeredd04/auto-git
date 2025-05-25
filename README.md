@@ -1,4 +1,4 @@
-# Auto-Git 🤖 v2.0
+# Auto-Git v2.0
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -12,7 +12,28 @@
 
 Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 2.0** introduces interactive controls, error recovery, AI-powered troubleshooting, and a completely redesigned user experience.
 
-## ✨ Features
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Commands](#commands)
+  - [Interactive Controls](#interactive-controls)
+  - [Enhanced Git Command Support](#enhanced-git-command-support)
+  - [Configuration](#configuration)
+- [Advanced Usage](#advanced-usage)
+- [Professional Logging](#professional-logging--ux)
+- [How It Works](#how-it-works)
+- [Security & Privacy](#security--privacy)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [FAQ](#faq)
+- [Examples](#examples)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
 
 ### Core Features
 - **AI-Generated Commit Messages**: Uses Google Gemini to create conventional, meaningful commit messages
@@ -24,18 +45,18 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **Smart Debouncing**: Prevents spam commits during rapid file changes
 - **Zero Config**: Works out of the box with just an API key
 
-### 🆕 New in v2.0: Interactive Controls & Enhanced UX
-- **⌨️ Keyboard Shortcuts**: Pause/resume watching with hotkeys
-- **🔧 Interactive REPL**: On-demand command interface for manual control
-- **🤖 Error-Driven AI Suggestions**: AI analyzes Git errors and suggests solutions
-- **🔄 Built-in Reset Commands**: Undo commits with safety checks
-- **⚡ Smart Error Recovery**: Automatic retry with user guidance
-- **🎛️ Real-time Control**: Pause, resume, and interact without stopping the watcher
-- **🎨 Styled Help System**: Beautiful, organized help with clear navigation
-- **🧭 Intelligent Navigation**: Context-aware guidance and next steps
-- **🛠️ Enhanced Error Handling**: Clear error messages with actionable solutions
+### New in v2.0: Interactive Controls & Enhanced UX
+- **Keyboard Shortcuts**: Pause/resume watching with hotkeys
+- **Interactive REPL**: On-demand command interface for manual control
+- **Error-Driven AI Suggestions**: AI analyzes Git errors and suggests solutions
+- **Built-in Reset Commands**: Undo commits with safety checks
+- **Smart Error Recovery**: Automatic retry with user guidance
+- **Real-time Control**: Pause, resume, and interact without stopping the watcher
+- **Styled Help System**: Beautiful, organized help with clear navigation
+- **Intelligent Navigation**: Context-aware guidance and next steps
+- **Enhanced Error Handling**: Clear error messages with actionable solutions
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install Auto-Git
 
@@ -95,9 +116,29 @@ npx @sbeeredd04/auto-git watch
 auto-git watch
 ```
 
-## 📖 Usage
+## Installation
 
-### 🎨 Styled Help System
+### Option 1: Global Installation (Recommended)
+```bash
+npm install -g @sbeeredd04/auto-git
+```
+
+### Option 2: Local Development
+```bash
+git clone https://github.com/sbeeredd04/auto-git.git
+cd auto-git
+npm install
+npm link
+```
+
+### Option 3: Direct from Git
+```bash
+npm install -g git+https://github.com/sbeeredd04/auto-git.git
+```
+
+## Usage
+
+### Styled Help System
 
 Auto-Git v2.0 features a completely redesigned help system with beautiful styling and clear organization:
 
@@ -182,7 +223,7 @@ auto-git watch --no-push          # Watch and commit but don't push
 auto-git watch --verbose          # Enable detailed logging output
 ```
 
-#### 🆕 `auto-git reset`
+#### `auto-git reset`
 Undo last commits with built-in safety checks and enhanced error handling.
 
 ```bash
@@ -253,7 +294,7 @@ auto-git debug
 - Status-based guidance
 - Troubleshooting help
 
-### 🆕 Enhanced Error Handling & Navigation
+### Enhanced Error Handling & Navigation
 
 Auto-Git v2.0 provides intelligent error handling with clear guidance:
 
@@ -316,9 +357,9 @@ EXAMPLES:
   auto-git reset 1 --hard           # Reset 1 commit (hard)
 ```
 
-### 🆕 Interactive Controls & Keyboard Shortcuts
+### Interactive Controls
 
-#### Watcher Keyboard Shortcuts
+#### Keyboard Shortcuts
 
 | Key               | Action                                |
 |-------------------|---------------------------------------|
@@ -345,7 +386,7 @@ auto-git> stash                   # Stash current changes
 auto-git> exit                    # Exit REPL and continue
 ```
 
-#### 🆕 Enhanced Git Command Support
+### Enhanced Git Command Support
 
 The REPL now supports **any Git command** with intelligent error handling:
 
@@ -409,7 +450,7 @@ auto-git> git push --set-upstream origin feature-branch
 ✓ Git command completed: push --set-upstream origin feature-branch
 ```
 
-#### 🎨 Enhanced Interactive Experience
+#### Enhanced Interactive Experience
 
 The REPL now features **beautiful, styled output** for all interactions:
 
@@ -530,15 +571,15 @@ Auto-Git supports multiple configuration methods (in order of priority):
    AUTO_GIT_ENABLE_SUGGESTIONS=true
    ```
 
-### **Recursive File Watching**
+### Recursive File Watching
 
 By default, Auto-Git now watches **ALL files recursively** in your repository:
 
-- ✅ **Monitors all directories and subdirectories**
-- ✅ **Watches all file types** (code, docs, configs, etc.)
-- ✅ **Intelligent filtering** - ignores `.git`, `node_modules`, logs, temp files
-- ✅ **Customizable patterns** - use glob patterns for specific needs
-- ✅ **Performance optimized** - efficient recursive watching
+- **Monitors all directories and subdirectories**
+- **Watches all file types** (code, docs, configs, etc.)
+- **Intelligent filtering** - ignores `.git`, `node_modules`, logs, temp files
+- **Customizable patterns** - use glob patterns for specific needs
+- **Performance optimized** - efficient recursive watching
 
 **Default behavior:**
 - Watches: `**/*` (all files recursively)
@@ -553,100 +594,7 @@ export AUTO_GIT_WATCH_PATHS="**/*.js,**/*.ts,**/*.json"
 auto-git watch --paths src docs tests
 ```
 
-## 🎨 Professional Logging & UX
-
-Auto-Git v2.0 features a completely redesigned user experience:
-
-### Styled Interface
-- **Beautiful Help System**: Organized, colorful help with clear sections
-- **Styled Boxes**: Important information displayed in attractive boxes
-- **Color Coding**: Different colors for success, error, warning, and info messages
-- **Professional Output**: Clean, minimal design without clutter
-
-### Intelligent Navigation
-- **Context-Aware Guidance**: Different help based on current state
-- **Clear Next Steps**: Always know what to do next
-- **Actionable Errors**: Every error includes specific solutions
-- **Smart Recommendations**: System suggests the best course of action
-
-### Enhanced Error Messages
-- **Structured Error Display**: Clear error boxes with context
-- **Multiple Solution Options**: Different ways to resolve issues
-- **Example Commands**: Copy-paste ready solutions
-- **Troubleshooting Links**: Direct links to relevant commands
-
-**Example Professional Output:**
-```
-┌─────────────────────────────────┐
-│  REPOSITORY STATUS              │
-│                                 │
-│  Repository    ✓ Valid Git repo │
-│  Branch        main             │
-│  Remote        ✓ Configured     │
-│  API Key       ✓ Set            │
-└─────────────────────────────────┘
-
-┌─────────────────────────────────┐
-│  INTERACTIVE FEATURES (v2.0)   │
-│                                 │
-│  Error Recovery    ✓ Enabled    │
-│  AI Suggestions    ✓ Enabled    │
-│  Hotkeys          ctrl+p/r/i    │
-└─────────────────────────────────┘
-
-NEXT STEPS:
-  auto-git watch                    # Start watching files
-  auto-git commit                   # Make one-time commit
-```
-
-## 🔧 Installation Options
-
-### Option 1: Global Installation (Recommended)
-```bash
-npm install -g @sbeeredd04/auto-git
-```
-
-### Option 2: Local Development
-```bash
-git clone https://github.com/sbeeredd04/auto-git.git
-cd auto-git
-npm install
-npm link
-```
-
-### Option 3: Direct from Git
-```bash
-npm install -g git+https://github.com/sbeeredd04/auto-git.git
-```
-
-## 🎯 How It Works
-
-1. **Recursive File Detection**: Monitors file changes using `chokidar` with deep recursive watching of all repository files
-2. **Smart Filtering**: Automatically ignores common non-source files (node_modules, .git, logs, temp files)
-3. **Change Analysis**: Runs `git diff` to understand what changed across all monitored files
-4. **AI Processing**: Sends comprehensive change analysis to Gemini AI for intelligent commit message generation
-5. **Git Operations**: Automatically runs `git add .`, `git commit`, and `git push`
-6. **🆕 Error Recovery**: On failure, analyzes errors with AI and provides interactive recovery options
-7. **🆕 User Guidance**: Provides intelligent navigation and next steps based on current state
-
-### Generated Commit Messages
-
-Auto-Git generates conventional commit messages following best practices:
-
-- ✅ `feat(auth): add user login validation`
-- ✅ `fix(api): resolve null pointer exception` 
-- ✅ `docs(readme): update installation steps`
-- ✅ `refactor(utils): simplify date formatting`
-
-## 🛡️ Security & Privacy
-
-- ✅ **No secrets in repos**: API keys are never committed to your repository
-- ✅ **User-specific config**: Each user manages their own API key
-- ✅ **Local processing**: Only diffs are sent to Gemini API
-- ✅ **🆕 Error sanitization**: Sensitive information is stripped from error messages before AI analysis
-- ✅ **Optional pushing**: Can commit locally without pushing
-
-## 🎛️ Advanced Usage
+## Advanced Usage
 
 ### Verbose Mode
 Enable detailed logging for troubleshooting:
@@ -669,7 +617,7 @@ auto-git commit --verbose
 }
 ```
 
-### 🆕 Enhanced Git Command Support in REPL
+### Enhanced Git Command Support in REPL
 ```bash
 # Start interactive mode
 auto-git watch
@@ -767,18 +715,80 @@ For large repositories, optimize watching:
 }
 ```
 
-## 🚨 Important Notes
+## Professional Logging & UX
 
-- Ensure you're in a Git repository before running
-- Configure your Git user name and email: `git config --global user.name "Your Name"`
-- Test in a non-critical repository first
-- Review generated commits periodically to ensure quality
-- Use `--verbose` flag for detailed operation logs
-- **🆕 Interactive mode**: Use keyboard shortcuts for real-time control
-- **🆕 Error recovery**: Let AI help you resolve Git issues automatically
-- **🆕 Help system**: Use `auto-git --help` for beautiful, organized guidance
+Auto-Git v2.0 features a completely redesigned user experience:
 
-## 🛠️ Development
+### Styled Interface
+- **Beautiful Help System**: Organized, colorful help with clear sections
+- **Styled Boxes**: Important information displayed in attractive boxes
+- **Color Coding**: Different colors for success, error, warning, and info messages
+- **Professional Output**: Clean, minimal design without clutter
+
+### Intelligent Navigation
+- **Context-Aware Guidance**: Different help based on current state
+- **Clear Next Steps**: Always know what to do next
+- **Actionable Errors**: Every error includes specific solutions
+- **Smart Recommendations**: System suggests the best course of action
+
+### Enhanced Error Messages
+- **Structured Error Display**: Clear error boxes with context
+- **Multiple Solution Options**: Different ways to resolve issues
+- **Example Commands**: Copy-paste ready solutions
+- **Troubleshooting Links**: Direct links to relevant commands
+
+**Example Professional Output:**
+```
+┌─────────────────────────────────┐
+│  REPOSITORY STATUS              │
+│                                 │
+│  Repository    ✓ Valid Git repo │
+│  Branch        main             │
+│  Remote        ✓ Configured     │
+│  API Key       ✓ Set            │
+└─────────────────────────────────┘
+
+┌─────────────────────────────────┐
+│  INTERACTIVE FEATURES (v2.0)   │
+│                                 │
+│  Error Recovery    ✓ Enabled    │
+│  AI Suggestions    ✓ Enabled    │
+│  Hotkeys          ctrl+p/r/i    │
+└─────────────────────────────────┘
+
+NEXT STEPS:
+  auto-git watch                    # Start watching files
+  auto-git commit                   # Make one-time commit
+```
+
+## How It Works
+
+1. **Recursive File Detection**: Monitors file changes using `chokidar` with deep recursive watching of all repository files
+2. **Smart Filtering**: Automatically ignores common non-source files (node_modules, .git, logs, temp files)
+3. **Change Analysis**: Runs `git diff` to understand what changed across all monitored files
+4. **AI Processing**: Sends comprehensive change analysis to Gemini AI for intelligent commit message generation
+5. **Git Operations**: Automatically runs `git add .`, `git commit`, and `git push`
+6. **Error Recovery**: On failure, analyzes errors with AI and provides interactive recovery options
+7. **User Guidance**: Provides intelligent navigation and next steps based on current state
+
+### Generated Commit Messages
+
+Auto-Git generates conventional commit messages following best practices:
+
+- `feat(auth): add user login validation`
+- `fix(api): resolve null pointer exception` 
+- `docs(readme): update installation steps`
+- `refactor(utils): simplify date formatting`
+
+## Security & Privacy
+
+- **No secrets in repos**: API keys are never committed to your repository
+- **User-specific config**: Each user manages their own API key
+- **Local processing**: Only diffs are sent to Gemini API
+- **Error sanitization**: Sensitive information is stripped from error messages before AI analysis
+- **Optional pushing**: Can commit locally without pushing
+
+## Development
 
 ### Project Structure
 ```
@@ -789,8 +799,8 @@ auto-git/
 │   ├── gemini.js        # Gemini API integration
 │   ├── git.js           # Git operations
 │   ├── watcher.js       # File watching logic
-│   ├── repl.js          # 🆕 Interactive REPL
-│   └── errorHandler.js  # 🆕 Error recovery system
+│   ├── repl.js          # Interactive REPL
+│   └── errorHandler.js  # Error recovery system
 ├── utils/
 │   └── logger.js        # Centralized logging utility
 ├── package.json
@@ -820,48 +830,36 @@ auto-git --help
 auto-git setup
 ```
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📝 License
-
-MIT License - see LICENSE file for details.
-
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
 **"Not a git repository"**
 - Ensure you're running the command inside a Git repository
 - Run `git init` if needed
-- **🆕 Enhanced guidance**: Auto-Git now provides clear setup steps
+- **Enhanced guidance**: Auto-Git now provides clear setup steps
 
 **"GEMINI_API_KEY not found"**
 - Set your API key: `export GEMINI_API_KEY="your-key"`
 - Or create `~/.auto-gitrc.json` with your key
-- **🆕 Intelligent setup**: Use `auto-git setup` for guided configuration
+- **Intelligent setup**: Use `auto-git setup` for guided configuration
 
 **"Failed to push"**
 - Ensure you have a remote configured: `git remote -v`
 - Set up upstream: `git push --set-upstream origin main`
-- **🆕 Smart diagnostics**: Run `auto-git debug` for recommendations
+- **Smart diagnostics**: Run `auto-git debug` for recommendations
 
 **Too many commits**
 - Increase debounce time in config
 - Use `--no-push` to commit locally only
-- **🆕 Reset functionality**: Use `auto-git reset` to undo commits
+- **Reset functionality**: Use `auto-git reset` to undo commits
 
-**🆕 Interactive features not working**
+**Interactive features not working**
 - Ensure your terminal supports raw mode
 - Check hotkey configuration in `~/.auto-gitrc.json`
 - Try running with `--verbose` for debugging
 
-### 🆕 Enhanced Debug Information
+### Enhanced Debug Information
 ```bash
 # Get detailed system information with recommendations
 auto-git debug
@@ -879,7 +877,7 @@ auto-git --help
 auto-git setup
 ```
 
-### 🆕 Error Recovery
+### Error Recovery
 When Git errors occur:
 1. Auto-Git will automatically analyze the error
 2. AI suggestions will be displayed
@@ -887,7 +885,95 @@ When Git errors occur:
 4. Use `retry` command to attempt the operation again
 5. Clear next steps provided for every scenario
 
-## 🎉 Examples
+## FAQ
+
+### General Questions
+
+**Q: What is Auto-Git?**
+A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 2.0 adds interactive controls, error recovery, and AI-powered troubleshooting.
+
+**Q: Do I need to install anything?**
+A: No! You can use `npx @sbeeredd04/auto-git` without installation, or install globally with `npm install -g @sbeeredd04/auto-git`.
+
+**Q: Is it free to use?**
+A: Auto-Git itself is free and open-source. You'll need a free Gemini API key from Google AI Studio.
+
+### Setup & Configuration
+
+**Q: How do I get a Gemini API key?**
+A: Visit [Google AI Studio](https://aistudio.google.com/app/apikey), create a new API key, and set it as an environment variable: `export GEMINI_API_KEY="your-key"`
+
+**Q: Where should I put my API key?**
+A: You can set it as an environment variable, create a `~/.auto-gitrc.json` config file, or use a `.env` file in your project.
+
+**Q: Can I use Auto-Git without an API key?**
+A: No, Auto-Git requires a Gemini API key to generate commit messages. However, setup is quick and the API is free to use.
+
+### Usage & Features
+
+**Q: What files does Auto-Git watch?**
+A: By default, Auto-Git watches all files recursively in your repository, excluding common non-source files like `node_modules`, `.git`, logs, and temp files.
+
+**Q: Can I customize which files are watched?**
+A: Yes! Use `--paths` flag, set `AUTO_GIT_WATCH_PATHS` environment variable, or configure `watchPaths` in your config file.
+
+**Q: What are the keyboard shortcuts?**
+A: Ctrl+P (pause), Ctrl+R (resume), Ctrl+I (interactive REPL), Ctrl+C (exit).
+
+**Q: How do I undo commits made by Auto-Git?**
+A: Use `auto-git reset <count>` with optional `--soft`, `--mixed`, or `--hard` flags.
+
+### Interactive Features
+
+**Q: What is the interactive REPL?**
+A: The REPL (Read-Eval-Print Loop) is an interactive command interface where you can run git commands, get AI help, and recover from errors.
+
+**Q: How do I access the REPL?**
+A: Press Ctrl+I during watch mode, or it will automatically activate when errors occur (if enabled in config).
+
+**Q: Can I run any git command in the REPL?**
+A: Yes! The REPL supports any git command with AI-powered error handling.
+
+### AI & Error Handling
+
+**Q: How does AI error recovery work?**
+A: When git commands fail, Auto-Git sends the error to Gemini AI for analysis and receives step-by-step troubleshooting suggestions.
+
+**Q: Is my code sent to AI?**
+A: No, only git diffs and error messages are sent. Error messages are sanitized to remove sensitive information.
+
+**Q: What if AI suggestions don't work?**
+A: Auto-Git provides fallback troubleshooting commands and you can always use the interactive REPL for manual resolution.
+
+### Troubleshooting
+
+**Q: Auto-Git says "Not a git repository"**
+A: Make sure you're in a directory that has been initialized with `git init` and has a `.git` folder.
+
+**Q: I'm getting permission errors on installation**
+A: Use Node Version Manager (nvm) or fix npm permissions. See the installation section for detailed instructions.
+
+**Q: The watcher isn't detecting my file changes**
+A: Check if your files are in ignored patterns, try `--verbose` mode, or run `auto-git debug` for diagnostics.
+
+**Q: How do I stop Auto-Git?**
+A: Press Ctrl+C for graceful shutdown, or use the `exit` command in the REPL.
+
+### Advanced Usage
+
+**Q: Can I use Auto-Git in CI/CD?**
+A: Auto-Git is designed for development use. For CI/CD, consider using the commit command in non-interactive mode.
+
+**Q: How do I configure Auto-Git for a team?**
+A: Each team member should set their own API key. Share configuration files without API keys, and use environment variables for sensitive data.
+
+**Q: Can I customize the commit message format?**
+A: Currently, Auto-Git uses conventional commit format. Custom formats may be added in future versions.
+
+**Q: How do I report bugs or request features?**
+A: Visit our [GitHub Issues](https://github.com/sbeeredd04/auto-git/issues) page to report bugs or request features.
+
+## Examples
 
 ### Basic Workflow
 ```bash
@@ -910,7 +996,7 @@ auto-git watch
 # → Automatically commits future changes
 ```
 
-### 🆕 Enhanced User Experience
+### Enhanced User Experience
 ```bash
 # Beautiful help system
 auto-git --help
@@ -929,7 +1015,7 @@ auto-git setup
 # → Provides example config and verification steps
 ```
 
-### 🆕 Interactive Error Recovery
+### Interactive Error Recovery
 ```bash
 # Start watching
 auto-git watch
@@ -965,6 +1051,18 @@ export AUTO_GIT_ENABLE_SUGGESTIONS="true"
 auto-git commit --verbose
 ```
 
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
+
 ---
 
-**Happy coding with Auto-Git v2.0! 🚀**
+**Happy coding with Auto-Git v2.0!**

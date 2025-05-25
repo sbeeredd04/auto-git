@@ -1,12 +1,30 @@
 # Auto-Git v2.0 - Complete Feature Summary
 
-## 🎉 Major Release Overview
+## Table of Contents
+
+- [Major Release Overview](#major-release-overview)
+- [New Features Implemented](#new-features-implemented)
+  - [Styled Help System & Enhanced UX](#1-styled-help-system--enhanced-ux)
+  - [Intelligent Error Handling & Navigation](#2-intelligent-error-handling--navigation)
+  - [Interactive Controls & Keyboard Shortcuts](#3-interactive-controls--keyboard-shortcuts)
+  - [Error-Driven AI Suggestions](#4-error-driven-ai-suggestions)
+  - [Built-in Reset Command](#5-built-in-reset-command)
+  - [Enhanced Configuration & Diagnostics](#6-enhanced-configuration--diagnostics)
+  - [Enhanced Setup Process](#7-enhanced-setup-process)
+- [Technical Implementation](#technical-implementation)
+- [User Experience Improvements](#user-experience-improvements)
+- [Key Benefits](#key-benefits)
+- [Migration & Compatibility](#migration--compatibility)
+- [Feature Comparison](#feature-comparison)
+- [Conclusion](#conclusion)
+
+## Major Release Overview
 
 Auto-Git v2.0 represents a complete transformation from a simple file watcher to a comprehensive, intelligent Git automation platform with interactive controls, error recovery, and a beautiful user experience.
 
-## ✨ New Features Implemented
+## New Features Implemented
 
-### 1. 🎨 Styled Help System & Enhanced UX
+### 1. Styled Help System & Enhanced UX
 
 #### Beautiful, Organized Help Interface
 - **Styled Boxes**: Professional bordered sections for clear information hierarchy
@@ -35,7 +53,7 @@ Auto-Git v2.0 represents a complete transformation from a simple file watcher to
 ╰─────────────────────────────────────────────────╯
 ```
 
-### 2. 🧭 Intelligent Error Handling & Navigation
+### 2. Intelligent Error Handling & Navigation
 
 #### Missing API Key Error
 When users try to use Auto-Git without proper setup:
@@ -86,7 +104,7 @@ EXAMPLES:
   auto-git reset 1 --hard           # Reset 1 commit (hard)
 ```
 
-### 3. ⌨️ Interactive Controls & Keyboard Shortcuts
+### 3. Interactive Controls & Keyboard Shortcuts
 
 #### Real-Time Watcher Control
 - **Ctrl+P**: Pause file watching without stopping the process
@@ -109,7 +127,7 @@ auto-git> stash                   # Stash current changes
 auto-git> exit                    # Exit REPL and continue
 ```
 
-#### 🆕 Enhanced Git Command Support
+#### Enhanced Git Command Support
 The REPL now supports **any Git command** with intelligent error handling:
 
 **Direct Git Commands:**
@@ -136,7 +154,7 @@ When any Git command fails, Auto-Git will:
 3. **Explain what commands do** (optional)
 4. **Offer educational context** for learning
 
-#### 🎨 Enhanced Interactive Experience
+#### Enhanced Interactive Experience
 
 The REPL now features **beautiful, styled output** for all interactions:
 
@@ -151,13 +169,16 @@ The REPL now features **beautiful, styled output** for all interactions:
 │  AVAILABLE COMMANDS                             │
 │                                                 │
 │  retry         Retry the last failed operation │
-│  status        Show git status with colored    │
+│  reset <args>  Reset commits with safety       │
+│  status        Show git status with colors     │
+│  diff          Show current diff               │
+│  commit        Manual commit with AI message   │
 │  git <cmd>     Execute any git command         │
 │  help          Show detailed help message      │
 │  exit          Exit REPL and continue          │
 ╰─────────────────────────────────────────────────╯
 
-💡 Pro Tips:
+Pro Tips:
   • Run any git command directly (e.g., log, branch, stash)
   • Failed commands get automatic AI analysis
   • Ask for command explanations anytime
@@ -172,24 +193,24 @@ auto-git> push origin feature
   Error: fatal: The current branch has no upstream branch
 
 ┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI Suggestion                                           │
+│  AI Suggestion                                              │
 │  Intelligent troubleshooting assistance                    │
 └─────────────────────────────────────────────────────────────┘
 
 To push the current branch and set the remote as upstream, use:
   git push --set-upstream origin feature
 
-🎓 Would you like me to explain what these suggested commands do? (y/N)
+Would you like me to explain what these suggested commands do? (y/N)
 
 ┌─────────────────────────────────────────────────────────────┐
-│  🎓 Command Explanations                                    │
+│  Command Explanations                                       │
 │  Understanding the suggested Git commands                   │
 └─────────────────────────────────────────────────────────────┘
 
 git push --set-upstream origin feature
   → Uploads local commits and sets up tracking between local and remote branch
 
-💡 Pro tip: You can run these commands directly in this REPL!
+Pro tip: You can run these commands directly in this REPL!
 ```
 
 **Styled Status and Commit Messages:**
@@ -204,16 +225,16 @@ Repository Status:
 
 auto-git> commit
 ┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI-Generated Commit Message                             │
+│  AI-Generated Commit Message                               │
 │  Proposed commit for your changes                          │
 └─────────────────────────────────────────────────────────────┘
 
 feat(auth): add user authentication with JWT tokens
 
-✅ Proceed with this commit message? (Y/n)
+Proceed with this commit message? (Y/n)
 ```
 
-### 4. 🤖 Error-Driven AI Suggestions
+### 4. Error-Driven AI Suggestions
 
 #### Intelligent Error Analysis
 - **Error Sanitization**: Removes sensitive information before AI analysis
@@ -229,16 +250,16 @@ auto-git detects change → attempt commit
   ↓
 [ERROR: merge conflict detected]
   ↓
-🤖 AI Suggestion: "Resolve conflicts manually in src/app.js, then run: git add . && git commit"
+AI Suggestion: "Resolve conflicts manually in src/app.js, then run: git add . && git commit"
   ↓
 auto-git> status                  # Check what files have conflicts
 auto-git> reset --mixed HEAD~1    # Undo the problematic commit
 auto-git> retry                   # Try the operation again
   ↓
-✅ commit & push succeed
+✓ commit & push succeed
 ```
 
-### 5. 🔄 Built-in Reset Command
+### 5. Built-in Reset Command
 
 #### Safe Git Reset Operations
 ```bash
@@ -258,7 +279,7 @@ auto-git reset 1 --hard
 - **Clear Next Steps**: Guidance after successful reset operations
 - **Troubleshooting Help**: Specific guidance when reset operations fail
 
-### 6. 📊 Enhanced Configuration & Diagnostics
+### 6. Enhanced Configuration & Diagnostics
 
 #### Smart Configuration Display
 ```
@@ -303,10 +324,10 @@ NEXT STEPS:
 └─────────────────────────────────────────────────────────────┘
 
 RECOMMENDATIONS:
-  ✅ Ready to use: auto-git watch or auto-git commit
+  Ready to use: auto-git watch or auto-git commit
 ```
 
-### 7. 🛠️ Enhanced Setup Process
+### 7. Enhanced Setup Process
 
 #### Interactive Setup Guide with Examples
 ```
@@ -339,7 +360,7 @@ VERIFICATION COMMANDS:
   auto-git watch --verbose          # Test with detailed output
 ```
 
-## 🔧 Technical Implementation
+## Technical Implementation
 
 ### New Modules Created
 
@@ -377,7 +398,7 @@ VERIFICATION COMMANDS:
 - **`inquirer`**: Interactive prompts and REPL interface
 - **`keypress`**: Keyboard shortcut handling for real-time control
 
-## 📈 User Experience Improvements
+## User Experience Improvements
 
 ### Before v2.0
 - Basic error messages
@@ -395,7 +416,7 @@ VERIFICATION COMMANDS:
 - **Enhanced error handling** with multiple solution options
 - **Professional logging** with structured output
 
-## 🎯 Key Benefits
+## Key Benefits
 
 ### For New Users
 - **Guided Setup**: Interactive setup process with examples
@@ -415,7 +436,7 @@ VERIFICATION COMMANDS:
 - **Better Onboarding**: Clear setup process for new team members
 - **Improved Productivity**: Faster problem resolution with interactive tools
 
-## 🚀 Migration & Compatibility
+## Migration & Compatibility
 
 ### Backward Compatibility
 - **100% Compatible**: All v1.x functionality works unchanged
@@ -430,7 +451,7 @@ VERIFICATION COMMANDS:
 4. **Explore REPL**: Use `Ctrl+I` during watch mode
 5. **Leverage AI Suggestions**: Enable error-driven AI assistance
 
-## 📊 Feature Comparison
+## Feature Comparison
 
 | Feature | v1.x | v2.0 |
 |---------|------|------|
@@ -445,7 +466,7 @@ VERIFICATION COMMANDS:
 | Configuration Display | Plain text | Styled boxes with guidance |
 | Navigation | None | Intelligent next steps |
 
-## 🎉 Conclusion
+## Conclusion
 
 Auto-Git v2.0 transforms a simple file watcher into a comprehensive, intelligent Git automation platform. The combination of interactive controls, AI-powered error recovery, and a beautiful user interface creates an entirely new level of user experience that makes Git automation accessible, powerful, and enjoyable.
 
@@ -453,4 +474,4 @@ The implementation maintains 100% backward compatibility while introducing cutti
 
 ---
 
-**Auto-Git v2.0: Where AI meets beautiful UX in Git automation! 🚀** 
+**Auto-Git v2.0: Where AI meets beautiful UX in Git automation!** 

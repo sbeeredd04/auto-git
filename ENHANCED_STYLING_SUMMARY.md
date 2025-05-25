@@ -1,12 +1,28 @@
 # Enhanced Styling in Auto-Git v2.0 Interactive Mode
 
-## 🎨 Overview
+## Table of Contents
+
+- [Overview](#overview)
+- [Styling Enhancements Implemented](#styling-enhancements-implemented)
+  - [Styled Command Interface](#1-styled-command-interface)
+  - [Styled AI Interactions](#2-styled-ai-interactions)
+  - [Styled Error Handling](#3-styled-error-handling)
+  - [Styled Git Operations](#4-styled-git-operations)
+  - [Styled Commit Process](#5-styled-commit-process)
+  - [Styled Help System](#6-styled-help-system)
+  - [Interactive Prompts](#7-interactive-prompts)
+- [Technical Implementation](#technical-implementation)
+- [User Experience Benefits](#user-experience-benefits)
+- [Impact on User Experience](#impact-on-user-experience)
+- [Conclusion](#conclusion)
+
+## Overview
 
 Auto-Git v2.0 now features **beautiful, styled output** throughout the interactive REPL experience. Every interaction has been enhanced with professional styling, clear visual hierarchy, and intuitive color coding for an exceptional user experience.
 
-## ✨ Styling Enhancements Implemented
+## Styling Enhancements Implemented
 
-### 1. 🎯 Styled Command Interface
+### 1. Styled Command Interface
 
 #### Welcome Screen
 ```bash
@@ -28,7 +44,7 @@ Auto-Git v2.0 now features **beautiful, styled output** throughout the interacti
 │  exit          Exit REPL and continue          │
 ╰─────────────────────────────────────────────────╯
 
-💡 Pro Tips:
+Pro Tips:
   • Run any git command directly (e.g., log, branch, stash)
   • Failed commands get automatic AI analysis
   • Ask for command explanations anytime
@@ -36,12 +52,12 @@ Auto-Git v2.0 now features **beautiful, styled output** throughout the interacti
 auto-git>
 ```
 
-### 2. 🤖 Styled AI Interactions
+### 2. Styled AI Interactions
 
 #### AI Suggestion Display
 ```bash
 ┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI Suggestion                                           │
+│  AI Suggestion                                              │
 │  Intelligent troubleshooting assistance                    │
 └─────────────────────────────────────────────────────────────┘
 
@@ -53,13 +69,13 @@ This will:
 2. Set up tracking between your local and remote branch
 3. Allow future pushes with just 'git push'
 
-🎓 Would you like me to explain what these suggested commands do? (y/N)
+Would you like me to explain what these suggested commands do? (y/N)
 ```
 
 #### Command Explanations
 ```bash
 ┌─────────────────────────────────────────────────────────────┐
-│  🎓 Command Explanations                                    │
+│  Command Explanations                                       │
 │  Understanding the suggested Git commands                   │
 └─────────────────────────────────────────────────────────────┘
 
@@ -72,10 +88,10 @@ git add src/app.js
 git commit
   → Creates a merge commit with the resolved conflicts
 
-💡 Pro tip: You can run these commands directly in this REPL!
+Pro tip: You can run these commands directly in this REPL!
 ```
 
-### 3. 🚨 Styled Error Handling
+### 3. Styled Error Handling
 
 #### Error Display
 ```bash
@@ -91,7 +107,7 @@ git commit
 #### Fallback Troubleshooting
 ```bash
 ┌─────────────────────────────────────────────────────────────┐
-│  💡 Basic Troubleshooting                                   │
+│  Basic Troubleshooting                                      │
 │  Common diagnostic commands                                 │
 └─────────────────────────────────────────────────────────────┘
 
@@ -105,7 +121,7 @@ git commit
 ╰─────────────────────────────────────────────────╯
 ```
 
-### 4. 📊 Styled Git Operations
+### 4. Styled Git Operations
 
 #### Git Status with Color Coding
 ```bash
@@ -145,23 +161,23 @@ def456g fix: resolve login bug
 ghi789h docs: update README with examples
 ```
 
-### 5. 💬 Styled Commit Process
+### 5. Styled Commit Process
 
 #### AI Commit Message Generation
 ```bash
 auto-git> commit
 ✓ Changes detected
-🤖 Generating AI commit message...
+Generating AI commit message...
 ✓ AI commit message generated
 
 ┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI-Generated Commit Message                             │
+│  AI-Generated Commit Message                               │
 │  Proposed commit for your changes                          │
 └─────────────────────────────────────────────────────────────┘
 
 feat(auth): add user authentication with JWT tokens
 
-✅ Proceed with this commit message? (Y/n)
+Proceed with this commit message? (Y/n)
 ```
 
 #### Commit Success
@@ -177,7 +193,7 @@ feat(auth): add user authentication with JWT tokens
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 6. 📚 Styled Help System
+### 6. Styled Help System
 
 #### Comprehensive Help Display
 ```bash
@@ -215,7 +231,7 @@ auto-git> help
 ╰─────────────────────────────────────────────────╯
 
 ┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI Features                                             │
+│  AI Features                                                │
 │  Intelligent assistance and learning                       │
 └─────────────────────────────────────────────────────────────┘
 
@@ -224,32 +240,32 @@ auto-git> help
 • Error analysis helps you understand and fix issues
 • Educational explanations for learning Git concepts
 
-💡 Pro Tips:
+Pro Tips:
 • Type any git command directly (auto-detected)
 • Use "git <command>" for explicit git commands
 • Ask for explanations when AI suggests fixes
 • All output is beautifully styled for better readability
 ```
 
-### 7. 🎛️ Interactive Prompts
+### 7. Interactive Prompts
 
 #### Enhanced Prompts
 ```bash
-🎓 Would you like me to explain what these suggested commands do? (y/N)
-✅ Proceed with this commit message? (Y/n)
-❌ Commit cancelled - You can try again or modify changes
+Would you like me to explain what these suggested commands do? (y/N)
+Proceed with this commit message? (Y/n)
+Commit cancelled - You can try again or modify changes
 ```
 
 #### Status Indicators
 ```bash
 ✓ Git command completed: log --oneline
 ✗ Git command failed: push origin feature
-🤖 Analyzing error with AI...
-🎓 Command explanations available
-💡 Pro tip: You can run these commands directly!
+Analyzing error with AI...
+Command explanations available
+Pro tip: You can run these commands directly!
 ```
 
-## 🔧 Technical Implementation
+## Technical Implementation
 
 ### Styling Components Used
 
@@ -276,7 +292,7 @@ auto-git> help
 3. **Tertiary**: Regular info messages with icons
 4. **Details**: Indented explanations and examples
 
-## 🎯 User Experience Benefits
+## User Experience Benefits
 
 ### Enhanced Readability
 - **Clear Visual Separation**: Boxed sections prevent information overload
@@ -296,7 +312,7 @@ auto-git> help
 - **Attention to Detail**: Carefully crafted spacing and alignment
 - **Accessibility**: High contrast and clear typography
 
-## 🚀 Impact on User Experience
+## Impact on User Experience
 
 ### Before Enhancement
 - Plain text output
@@ -309,9 +325,8 @@ auto-git> help
 - **Professional appearance** that inspires confidence
 - **Easy information scanning** with proper spacing and colors
 - **Contextual guidance** with styled tips and explanations
-- **Consistent experience** across all interactions
 
-## 🎉 Conclusion
+## Conclusion
 
 The enhanced styling in Auto-Git v2.0's interactive mode transforms the user experience from a basic command-line interface to a **professional, beautiful, and intuitive** Git automation platform. Every interaction is now visually appealing, easy to understand, and provides clear guidance for users at all skill levels.
 
