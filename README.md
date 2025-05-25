@@ -1,4 +1,4 @@
-# Auto-Git v3.3.0
+# Auto-Git v3.4.0
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -8,9 +8,9 @@
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 [![GitHub Release](https://img.shields.io/github/release/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/releases)
 
-> AI-powered automatic Git commits with Gemini-generated commit messages - now with intuitive arrow key navigation menu
+> AI-powered automatic Git commits with Gemini-generated commit messages - now with stable navigation menu and REPL
 
-Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.3.0** introduces an intuitive navigation menu system with arrow key controls, making it easier than ever to manage your Git automation workflow.
+Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.4.0** fixes critical issues with the navigation menu and REPL character duplication, providing a smooth and reliable user experience.
 
 ## Table of Contents
 
@@ -62,6 +62,13 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **Visual Menu System**: Clear descriptions for each option
 - **One-Key Access**: Enter to select, Escape to cancel
 - **Smart Workflow**: Seamless transitions between watching, interactive mode, and exit
+
+### New in v3.4.0: Critical Bug Fixes
+- **Fixed Navigation Menu**: Resolved duplicate menu display issue
+- **Fixed REPL Character Duplication**: No more "ggiitt" when typing "git"
+- **Added Ctrl+R Resume**: Resume watcher directly from REPL with Ctrl+R
+- **Improved Raw Mode Handling**: Better terminal compatibility and input handling
+- **Enhanced Error Recovery**: Cleaner transitions between modes
 
 ## Quick Start
 
@@ -379,6 +386,7 @@ EXAMPLES:
 | **↑↓ Arrows**     | Navigate menu options when paused     |
 | **Enter**         | Select highlighted menu option        |
 | **Escape**        | Cancel menu and resume watching       |
+| **Ctrl+R**        | Resume watcher from REPL (NEW in v3.4.0) |
 | **Ctrl+C**        | Stop and exit                         |
 
 #### Navigation Menu

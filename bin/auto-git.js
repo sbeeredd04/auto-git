@@ -11,7 +11,7 @@ const program = new Command();
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.3.0', 'AI-powered Git automation with arrow key navigation');
+  logger.section('Auto-Git v3.4.0', 'AI-powered Git automation with fixed navigation and REPL');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -21,7 +21,7 @@ function displayStyledHelp() {
   const commands = {
     'watch': 'Watch files and auto-commit with AI messages (interactive mode)',
     'commit (c)': 'Generate AI commit for current changes',
-    'reset <count>': 'Undo commits with safety checks (NEW in v3.3.0)',
+    'reset <count>': 'Undo commits with safety checks (FIXED in v3.4.0)',
     'config': 'Show configuration and interactive features',
     'setup': 'Interactive setup guide for first-time users',
     'debug': 'Run system diagnostics and health check',
@@ -31,10 +31,11 @@ function displayStyledHelp() {
   logger.config('AVAILABLE COMMANDS', commands);
   
   logger.space();
-  logger.info('INTERACTIVE FEATURES (v3.3.0):', 'FEATURES');
+  logger.info('INTERACTIVE FEATURES (v3.4.0):', 'FEATURES');
   logger.info('  Ctrl+P        Pause and show navigation menu', '');
   logger.info('  ↑↓ Arrows     Navigate menu options when paused', '');
   logger.info('  Enter         Select menu option', '');
+  logger.info('  Ctrl+R        Resume watcher from REPL (NEW)', '');
   logger.info('  Ctrl+C        Graceful shutdown', '');
   
   logger.space();
@@ -88,7 +89,7 @@ function handleMissingApiKey(commandName) {
 program
   .name('auto-git')
   .description('Auto-commit and push with AI-generated commit messages using Gemini - now with interactive controls')
-  .version('3.3.0')
+  .version('3.4.0')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -120,7 +121,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v3.3.0', 'Initializing file monitoring system with cross-platform hotkeys');
+      logger.section('Auto-Git Watcher v3.4.0', 'Initializing file monitoring system with cross-platform hotkeys');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -348,7 +349,7 @@ program
         'Menu Options': 'Resume, Interactive, Exit'
       };
 
-      logger.config('INTERACTIVE FEATURES (NEW IN v3.3.0)', interactiveItems);
+      logger.config('INTERACTIVE FEATURES (NEW IN v3.4.0)', interactiveItems);
       
       logger.space();
       logger.info('Configuration sources (in order of priority):');
@@ -411,7 +412,7 @@ program
     logger.setup(steps);
     
     logger.space();
-    logger.info('New in v3.3.0 - Interactive Features:', 'FEATURES');
+    logger.info('New in v3.4.0 - Interactive Features:', 'FEATURES');
     logger.info('  • Simplified navigation with Ctrl+P pause menu');
     logger.info('  • Arrow key navigation for menu options');
     logger.info('  • Visual menu with descriptions for each option');
@@ -442,7 +443,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v3.3.0', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.4.0', 'System health check');
     
     try {
       const config = getConfig();
@@ -452,7 +453,7 @@ program
       const remote = isRepo ? await hasRemote() : false;
       
       const diagnostics = {
-        'Auto-Git Version': '3.3.0',
+        'Auto-Git Version': '3.4.0',
         'Node.js Version': process.version,
         'Platform': process.platform,
         'Working Directory': process.cwd(),
