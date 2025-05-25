@@ -14,13 +14,14 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 
 ## ✨ Features
 
-- 🤖 **AI-Generated Commit Messages**: Uses Google Gemini to create conventional, meaningful commit messages
-- 👀 **File Watching**: Automatically detect changes and commit them
-- 🚀 **One-Shot Commits**: Manual commit generation for current changes
-- 🔧 **Cross-Platform**: Works on Windows, macOS, and Linux
-- ⚙️ **Configurable**: Environment variables and user config support
-- 🎯 **Smart Debouncing**: Prevents spam commits during rapid file changes
-- 📦 **Zero Config**: Works out of the box with just an API key
+- **AI-Generated Commit Messages**: Uses Google Gemini to create conventional, meaningful commit messages
+- **File Watching**: Automatically detect changes and commit them recursively
+- **One-Shot Commits**: Manual commit generation for current changes
+- **Professional Logging**: Clean, colorized output with styled boxes and minimal visual clutter
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Configurable**: Environment variables and user config support
+- **Smart Debouncing**: Prevents spam commits during rapid file changes
+- **Zero Config**: Works out of the box with just an API key
 
 ## 🚀 Quick Start
 
@@ -62,6 +63,7 @@ Generates an AI commit message for current changes and commits/pushes them.
 ```bash
 auto-git commit                 # Commit and push current changes
 auto-git commit --no-push       # Commit but don't push
+auto-git commit --verbose       # Enable detailed logging
 auto-git commit --dry-run       # Preview what would be committed (coming soon)
 ```
 
@@ -72,20 +74,28 @@ Starts file watching mode - automatically commits changes when files are modifie
 auto-git watch                    # Watch ALL files recursively (default)
 auto-git watch --paths src lib    # Watch specific directories only
 auto-git watch --no-push          # Watch and commit but don't push
+auto-git watch --verbose          # Enable detailed logging output
 ```
 
 #### `auto-git config`
-Shows current configuration and setup status.
+Shows current configuration and setup status with styled output.
 
 ```bash
 auto-git config
 ```
 
 #### `auto-git setup`
-Interactive setup guide.
+Interactive setup guide with step-by-step instructions.
 
 ```bash
 auto-git setup
+```
+
+#### `auto-git debug`
+Run system diagnostics to troubleshoot issues.
+
+```bash
+auto-git debug
 ```
 
 ### Configuration
@@ -117,7 +127,7 @@ Auto-Git supports multiple configuration methods (in order of priority):
    GEMINI_API_KEY=your-key
    ```
 
-### 🔍 **Recursive File Watching**
+### **Recursive File Watching**
 
 By default, Auto-Git now watches **ALL files recursively** in your repository:
 
@@ -138,6 +148,29 @@ export AUTO_GIT_WATCH_PATHS="**/*.js,**/*.ts,**/*.json"
 
 # Watch specific directories
 auto-git watch --paths src docs tests
+```
+
+## 🎨 Professional Logging
+
+Auto-Git now features a professional logging system with:
+
+- **Styled Boxes**: Important information displayed in colorful boxes
+- **Minimal Emojis**: Clean, professional output without clutter
+- **Color Coding**: Different colors for success, error, warning, and info messages
+- **Spinners**: Loading indicators for long operations
+- **Structured Output**: Clear sections and organized information display
+- **Verbose Mode**: Detailed debugging information when needed
+
+**Example Output:**
+```
+┌─────────────────────────────────┐
+│  REPOSITORY STATUS              │
+│                                 │
+│  Repository    ✓ Valid Git repo │
+│  Branch        main             │
+│  Remote        ✓ Configured     │
+│  API Key       ✓ Set            │
+└─────────────────────────────────┘
 ```
 
 ## 🔧 Installation Options
@@ -186,6 +219,13 @@ Auto-Git generates conventional commit messages following best practices:
 
 ## 🎛️ Advanced Usage
 
+### Verbose Mode
+Enable detailed logging for troubleshooting:
+```bash
+auto-git watch --verbose
+auto-git commit --verbose
+```
+
 ### Recursive Watch Patterns
 ```bash
 # Default: Watch all files recursively
@@ -198,7 +238,7 @@ auto-git watch
 # Watch specific directories and their subdirectories
 auto-git watch --paths src tests docs
 
-# Watch with custom ignore patterns
+# Watch with custom ignore patterns in config file
 ```
 
 ### Advanced Configuration
@@ -231,7 +271,7 @@ Create `~/.auto-gitrc.json` for sophisticated setups:
 # Development - watch source files only
 export GEMINI_API_KEY="dev-key"
 export AUTO_GIT_WATCH_PATHS="src/**,tests/**,docs/**"
-auto-git watch
+auto-git watch --verbose
 
 # Production - commit manually with all files
 export GEMINI_API_KEY="prod-key" 
@@ -257,6 +297,7 @@ For large repositories, optimize watching:
 - Configure your Git user name and email: `git config --global user.name "Your Name"`
 - Test in a non-critical repository first
 - Review generated commits periodically to ensure quality
+- Use `--verbose` flag for detailed operation logs
 
 ## 🛠️ Development
 
@@ -269,6 +310,8 @@ auto-git/
 │   ├── gemini.js        # Gemini API integration
 │   ├── git.js           # Git operations
 │   └── watcher.js       # File watching logic
+├── utils/
+│   └── logger.js        # Centralized logging utility
 ├── package.json
 └── README.md
 ```
@@ -281,9 +324,10 @@ npm install
 # Link for local testing
 npm link
 
-# Test commands
+# Test commands with verbose output
 auto-git config
-auto-git commit
+auto-git debug
+auto-git commit --verbose
 ```
 
 ## 🤝 Contributing
@@ -318,9 +362,14 @@ MIT License - see LICENSE file for details.
 - Increase debounce time in config
 - Use `--no-push` to commit locally only
 
-### Debug Mode
+### Debug Information
 ```bash
-DEBUG=auto-git* auto-git watch
+# Get detailed system information
+auto-git debug
+
+# Enable verbose logging
+auto-git watch --verbose
+auto-git commit --verbose
 ```
 
 ## 🎉 Examples
@@ -333,12 +382,14 @@ export GEMINI_API_KEY="your-key"
 # 2. Start coding...
 echo "console.log('Hello World');" > app.js
 
-# 3. Auto commit
+# 3. Auto commit with professional output
 auto-git commit
-# → Generated: "feat(app): add hello world console output"
+# → Shows: [SUCCESS] Committed and Pushed
+#          feat(app): add hello world console output
 
 # 4. Or start watching
 auto-git watch
+# → Shows configuration in styled boxes
 # → Automatically commits future changes
 ```
 
@@ -348,11 +399,11 @@ Each team member sets their own API key, no shared secrets needed:
 ```bash
 # Alice
 export GEMINI_API_KEY="alice-key"
-auto-git watch
+auto-git watch --verbose
 
 # Bob  
 export GEMINI_API_KEY="bob-key"
-auto-git commit
+auto-git commit --verbose
 ```
 
 ---

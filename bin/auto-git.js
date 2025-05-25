@@ -11,7 +11,7 @@ const program = new Command();
 program
   .name('auto-git')
   .description('Auto-commit and push with AI-generated commit messages using Gemini')
-  .version('1.0.0');
+  .version('1.1.0');
 
 program
   .command('watch')
