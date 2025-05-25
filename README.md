@@ -10,7 +10,7 @@
 
 > AI-powered automatic Git commits with Gemini-generated commit messages - now with interactive controls and error-driven AI suggestions
 
-Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 2.0** introduces interactive controls, error recovery, and AI-powered troubleshooting.
+Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 2.0** introduces interactive controls, error recovery, AI-powered troubleshooting, and a completely redesigned user experience.
 
 ## ✨ Features
 
@@ -24,13 +24,16 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **Smart Debouncing**: Prevents spam commits during rapid file changes
 - **Zero Config**: Works out of the box with just an API key
 
-### 🆕 New in v2.0: Interactive Controls & Error Recovery
+### 🆕 New in v2.0: Interactive Controls & Enhanced UX
 - **⌨️ Keyboard Shortcuts**: Pause/resume watching with hotkeys
 - **🔧 Interactive REPL**: On-demand command interface for manual control
 - **🤖 Error-Driven AI Suggestions**: AI analyzes Git errors and suggests solutions
 - **🔄 Built-in Reset Commands**: Undo commits with safety checks
 - **⚡ Smart Error Recovery**: Automatic retry with user guidance
 - **🎛️ Real-time Control**: Pause, resume, and interact without stopping the watcher
+- **🎨 Styled Help System**: Beautiful, organized help with clear navigation
+- **🧭 Intelligent Navigation**: Context-aware guidance and next steps
+- **🛠️ Enhanced Error Handling**: Clear error messages with actionable solutions
 
 ## 🚀 Quick Start
 
@@ -67,6 +70,13 @@ export GEMINI_API_KEY="your-api-key-here"
 
 ### 3. Use Auto-Git
 
+**Get help with styled interface:**
+```bash
+# Beautiful, organized help system
+auto-git --help
+auto-git help
+```
+
 **One-time commit:**
 ```bash
 # With npx (no installation)
@@ -86,6 +96,56 @@ auto-git watch
 ```
 
 ## 📖 Usage
+
+### 🎨 Styled Help System
+
+Auto-Git v2.0 features a completely redesigned help system with beautiful styling and clear organization:
+
+```bash
+auto-git --help
+```
+
+**Example Output:**
+```
+┌───────────────────────────────────────────────────┐
+│  Auto-Git v2.0                                    │
+│  AI-powered Git automation with interactive       │
+│  controls                                         │
+└───────────────────────────────────────────────────┘
+
+USAGE:
+  auto-git [command] [options]
+
+╭─────────────────────────────────────────────────╮
+│  AVAILABLE COMMANDS                             │
+│                                                 │
+│  watch         Watch files and auto-commit     │
+│  commit (c)    Generate AI commit              │
+│  reset <count> Undo commits (NEW in v2.0)      │
+│  config        Show configuration              │
+│  setup         Interactive setup guide         │
+│  debug         Run system diagnostics          │
+│  help          Display this help               │
+╰─────────────────────────────────────────────────╯
+
+INTERACTIVE FEATURES (v2.0):
+  Ctrl+P        Pause file watching
+  Ctrl+R        Resume file watching
+  Ctrl+I        Enter interactive REPL mode
+  Ctrl+C        Graceful shutdown
+
+EXAMPLES:
+  auto-git setup                    # First-time setup
+  auto-git watch                    # Start watching
+  auto-git commit --verbose         # One-time commit
+  auto-git reset 2 --soft           # Undo 2 commits
+
+QUICK START:
+  1. Get API key: https://aistudio.google.com/app/apikey
+  2. Set API key: export GEMINI_API_KEY="your-key"
+  3. Run setup:   auto-git setup
+  4. Start using: auto-git watch
+```
 
 ### Commands
 
@@ -123,7 +183,7 @@ auto-git watch --verbose          # Enable detailed logging output
 ```
 
 #### 🆕 `auto-git reset`
-Undo last commits with built-in safety checks.
+Undo last commits with built-in safety checks and enhanced error handling.
 
 ```bash
 # Reset last commit (mixed mode - keeps changes unstaged)
@@ -132,12 +192,18 @@ auto-git reset 1
 # Reset last 2 commits with soft reset (keeps changes staged)
 auto-git reset 2 --soft
 
-# Hard reset (WARNING: destroys changes)
+# Hard reset with safety confirmation (WARNING: destroys changes)
 auto-git reset 1 --hard
 ```
 
+**Enhanced Error Handling:**
+- Invalid input shows helpful examples
+- Hard reset requires confirmation
+- Clear next steps after successful reset
+- Troubleshooting guidance on failure
+
 #### `auto-git config`
-Shows current configuration and setup status with styled output, including new interactive features.
+Shows current configuration and setup status with styled output, including new interactive features and **intelligent navigation**.
 
 ```bash
 # With npx
@@ -147,8 +213,14 @@ npx @sbeeredd04/auto-git config
 auto-git config
 ```
 
+**Enhanced Features:**
+- Shows interactive features status
+- Provides setup guidance for missing API key
+- Clear next steps based on current state
+- Troubleshooting links
+
 #### `auto-git setup`
-Interactive setup guide with step-by-step instructions.
+Interactive setup guide with step-by-step instructions and **example configuration**.
 
 ```bash
 # With npx
@@ -158,8 +230,14 @@ npx @sbeeredd04/auto-git setup
 auto-git setup
 ```
 
+**New in v2.0:**
+- Example configuration file
+- Interactive features explanation
+- Verification commands
+- Clear next steps
+
 #### `auto-git debug`
-Run system diagnostics to troubleshoot issues.
+Run system diagnostics with **intelligent recommendations**.
 
 ```bash
 # With npx
@@ -167,6 +245,75 @@ npx @sbeeredd04/auto-git debug
 
 # With global installation
 auto-git debug
+```
+
+**Enhanced Features:**
+- Smart recommendations based on system state
+- Clear action items
+- Status-based guidance
+- Troubleshooting help
+
+### 🆕 Enhanced Error Handling & Navigation
+
+Auto-Git v2.0 provides intelligent error handling with clear guidance:
+
+#### Missing API Key Error
+When you try to use Auto-Git without setting up the API key:
+
+```bash
+auto-git watch
+```
+
+**Enhanced Error Output:**
+```
+╔═══════════════════════════════════╗
+║  ERROR                            ║
+║  Gemini API Key Required          ║
+║  API key not found or configured  ║
+╚═══════════════════════════════════╝
+
+╭─────────────────────────────────────────────────╮
+│  WARNING                                        │
+│  QUICK SETUP REQUIRED                           │
+│  Auto-Git needs a Gemini API key to function    │
+╰─────────────────────────────────────────────────╯
+
+OPTION 1 - Use Setup Guide (Recommended):
+  auto-git setup
+
+OPTION 2 - Manual Setup:
+  1. Get API key: https://aistudio.google.com/app/apikey
+  2. Set environment variable:
+     export GEMINI_API_KEY="your-api-key-here"
+  3. Or create config file:
+     echo '{"apiKey": "your-key"}' > ~/.auto-gitrc.json
+
+OPTION 3 - Test Configuration:
+  auto-git config                   # Check current setup
+  auto-git debug                    # Run diagnostics
+
+After setup, retry: auto-git watch
+```
+
+#### Invalid Command Usage
+Clear examples and guidance for incorrect usage:
+
+```bash
+auto-git reset abc
+```
+
+**Enhanced Error Output:**
+```
+╔══════════════════════════════════════╗
+║  ERROR                               ║
+║  Invalid count                       ║
+║  Please provide a positive number    ║
+╚══════════════════════════════════════╝
+
+EXAMPLES:
+  auto-git reset 1                  # Reset last commit (mixed)
+  auto-git reset 2 --soft           # Reset 2 commits (soft)
+  auto-git reset 1 --hard           # Reset 1 commit (hard)
 ```
 
 ### 🆕 Interactive Controls & Keyboard Shortcuts
@@ -212,10 +359,10 @@ auto-git detects change → attempt commit
   ↓
 [ERROR: merge conflict detected]
   ↓
-🤖 AI Suggestion: "Resolve conflicts manually, then run: git add . && git commit"
+🤖 AI Suggestion: "Resolve conflicts manually in src/app.js, then run: git add . && git commit"
   ↓
-auto-git> status                  # Check current state
-auto-git> reset --mixed HEAD~1    # Undo problematic commit
+auto-git> status                  # Check what files have conflicts
+auto-git> reset --mixed HEAD~1    # Undo the problematic commit
 auto-git> retry                   # Try the operation again
   ↓
 ✅ commit & push succeed
@@ -284,18 +431,29 @@ export AUTO_GIT_WATCH_PATHS="**/*.js,**/*.ts,**/*.json"
 auto-git watch --paths src docs tests
 ```
 
-## 🎨 Professional Logging
+## 🎨 Professional Logging & UX
 
-Auto-Git now features a professional logging system with:
+Auto-Git v2.0 features a completely redesigned user experience:
 
-- **Styled Boxes**: Important information displayed in colorful boxes
-- **Minimal Emojis**: Clean, professional output without clutter
+### Styled Interface
+- **Beautiful Help System**: Organized, colorful help with clear sections
+- **Styled Boxes**: Important information displayed in attractive boxes
 - **Color Coding**: Different colors for success, error, warning, and info messages
-- **Spinners**: Loading indicators for long operations
-- **Structured Output**: Clear sections and organized information display
-- **Verbose Mode**: Detailed debugging information when needed
+- **Professional Output**: Clean, minimal design without clutter
 
-**Example Output:**
+### Intelligent Navigation
+- **Context-Aware Guidance**: Different help based on current state
+- **Clear Next Steps**: Always know what to do next
+- **Actionable Errors**: Every error includes specific solutions
+- **Smart Recommendations**: System suggests the best course of action
+
+### Enhanced Error Messages
+- **Structured Error Display**: Clear error boxes with context
+- **Multiple Solution Options**: Different ways to resolve issues
+- **Example Commands**: Copy-paste ready solutions
+- **Troubleshooting Links**: Direct links to relevant commands
+
+**Example Professional Output:**
 ```
 ┌─────────────────────────────────┐
 │  REPOSITORY STATUS              │
@@ -313,6 +471,10 @@ Auto-Git now features a professional logging system with:
 │  AI Suggestions    ✓ Enabled    │
 │  Hotkeys          ctrl+p/r/i    │
 └─────────────────────────────────┘
+
+NEXT STEPS:
+  auto-git watch                    # Start watching files
+  auto-git commit                   # Make one-time commit
 ```
 
 ## 🔧 Installation Options
@@ -343,6 +505,7 @@ npm install -g git+https://github.com/sbeeredd04/auto-git.git
 4. **AI Processing**: Sends comprehensive change analysis to Gemini AI for intelligent commit message generation
 5. **Git Operations**: Automatically runs `git add .`, `git commit`, and `git push`
 6. **🆕 Error Recovery**: On failure, analyzes errors with AI and provides interactive recovery options
+7. **🆕 User Guidance**: Provides intelligent navigation and next steps based on current state
 
 ### Generated Commit Messages
 
@@ -467,13 +630,14 @@ For large repositories, optimize watching:
 - Use `--verbose` flag for detailed operation logs
 - **🆕 Interactive mode**: Use keyboard shortcuts for real-time control
 - **🆕 Error recovery**: Let AI help you resolve Git issues automatically
+- **🆕 Help system**: Use `auto-git --help` for beautiful, organized guidance
 
 ## 🛠️ Development
 
 ### Project Structure
 ```
 auto-git/
-├── bin/auto-git.js      # CLI entrypoint
+├── bin/auto-git.js      # CLI entrypoint with styled help
 ├── lib/
 │   ├── config.js        # Configuration management
 │   ├── gemini.js        # Gemini API integration
@@ -504,6 +668,10 @@ auto-git commit --verbose
 auto-git watch --verbose
 # Press Ctrl+I to enter REPL
 # Press Ctrl+P to pause, Ctrl+R to resume
+
+# Test styled help system
+auto-git --help
+auto-git setup
 ```
 
 ## 🤝 Contributing
@@ -525,27 +693,31 @@ MIT License - see LICENSE file for details.
 **"Not a git repository"**
 - Ensure you're running the command inside a Git repository
 - Run `git init` if needed
+- **🆕 Enhanced guidance**: Auto-Git now provides clear setup steps
 
 **"GEMINI_API_KEY not found"**
 - Set your API key: `export GEMINI_API_KEY="your-key"`
 - Or create `~/.auto-gitrc.json` with your key
+- **🆕 Intelligent setup**: Use `auto-git setup` for guided configuration
 
 **"Failed to push"**
 - Ensure you have a remote configured: `git remote -v`
 - Set up upstream: `git push --set-upstream origin main`
+- **🆕 Smart diagnostics**: Run `auto-git debug` for recommendations
 
 **Too many commits**
 - Increase debounce time in config
 - Use `--no-push` to commit locally only
+- **🆕 Reset functionality**: Use `auto-git reset` to undo commits
 
 **🆕 Interactive features not working**
 - Ensure your terminal supports raw mode
 - Check hotkey configuration in `~/.auto-gitrc.json`
 - Try running with `--verbose` for debugging
 
-### Debug Information
+### 🆕 Enhanced Debug Information
 ```bash
-# Get detailed system information
+# Get detailed system information with recommendations
 auto-git debug
 
 # Enable verbose logging
@@ -555,6 +727,10 @@ auto-git commit --verbose
 # Test interactive features
 auto-git watch
 # Press Ctrl+I to test REPL
+
+# Get styled help
+auto-git --help
+auto-git setup
 ```
 
 ### 🆕 Error Recovery
@@ -563,6 +739,7 @@ When Git errors occur:
 2. AI suggestions will be displayed
 3. Interactive REPL will open for manual resolution
 4. Use `retry` command to attempt the operation again
+5. Clear next steps provided for every scenario
 
 ## 🎉 Examples
 
@@ -585,6 +762,25 @@ auto-git watch
 # → Use Ctrl+P/R to pause/resume
 # → Use Ctrl+I for interactive mode
 # → Automatically commits future changes
+```
+
+### 🆕 Enhanced User Experience
+```bash
+# Beautiful help system
+auto-git --help
+# → Shows organized, styled help with clear sections
+
+# Intelligent error handling
+auto-git watch  # (without API key)
+# → Shows clear setup options with multiple paths
+
+# Smart configuration guidance
+auto-git config
+# → Shows current state with next steps
+
+# Enhanced setup process
+auto-git setup
+# → Provides example config and verification steps
 ```
 
 ### 🆕 Interactive Error Recovery
