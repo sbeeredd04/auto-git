@@ -1,3 +1,7 @@
+## v3.0.0 - 2025-05-25
+
+Bug fixes and improvements
+
 ## v1.2.0 - 2025-05-25
 
 Bug fixes and improvements
