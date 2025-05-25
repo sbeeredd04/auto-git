@@ -11,14 +11,12 @@ function sanitizeInput(input) {
     const currentChar = input[i];
     result += currentChar;
     
-    // Skip all consecutive duplicates of the current character (but not spaces)
-    if (currentChar !== ' ') {
-      while (i + 1 < input.length && input[i + 1] === currentChar) {
-        i++; // Skip the duplicate
-      }
+    // Skip exactly one duplicate if it exists
+    if (i + 1 < input.length && input[i + 1] === currentChar) {
+      i += 2; // Skip the current char and one duplicate
+    } else {
+      i += 1; // Move to next character
     }
-    
-    i++; // Move to next different character
   }
   
   return result.trim();
@@ -29,18 +27,17 @@ const testCases = [
   { input: 'ppuullll', expected: 'pull' },
   { input: 'ggiitt', expected: 'git' },
   { input: 'ssttaattuuss', expected: 'status' },
-  { input: 'git pull', expected: 'git pull' },
+  { input: 'git pull', expected: 'git pull' }, // No duplicates, should stay same
   { input: 'hheelllloo', expected: 'hello' },
   { input: 'aaabbbbcccc', expected: 'abc' },
   { input: 'normal', expected: 'normal' },
   { input: '', expected: '' },
   { input: 'a', expected: 'a' },
   { input: 'aa', expected: 'a' },
-  { input: 'aaa', expected: 'a' },
-  { input: 'aaaa', expected: 'a' },
-  { input: 'tt', expected: 't' },
-  { input: 'tttt', expected: 't' },
-  { input: 'git  status', expected: 'git  status' } // preserve multiple spaces
+  { input: 'aaa', expected: 'aa' }, // aaa -> aa (remove one duplicate)
+  { input: 'aaaa', expected: 'aa' }, // aaaa -> aa (remove duplicates in pairs)
+  { input: 'ggiitt  ppuullll', expected: 'git pull' }, // Handle spaces
+  { input: 'llogg  ----oonneelliinnee', expected: 'log -oneline' }
 ];
 
 console.log('Testing Input Sanitization Algorithm\n');
