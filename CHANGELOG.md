@@ -21,6 +21,35 @@ All notable changes to Auto-Git will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.3] - 2024-12-19
+
+### 🔧 Fixed
+- **REPL Looping Issue**: Fixed critical bug where REPL would stop accepting commands after first execution
+- **Input Handling State**: Properly managed input state to prevent command processing conflicts
+- **Keyboard Control Restoration**: Enhanced keyboard control restoration after REPL exits with timeout
+- **Command Execution Flow**: Fixed async command execution to properly return to input prompt
+
+### 🎯 Enhanced
+- **Smart Duplicate Removal**: Improved algorithm to remove exactly one duplicate per character
+  - `aa` → `a`
+  - `ggiitt ppuull` → `git pul` 
+  - `ggiitt ppuullll` → `git pull`
+  - `hheelllloo` → `hello`
+- **Input State Management**: Added proper input waiting state to prevent interference during command execution
+- **Better Error Handling**: Enhanced error handling during command execution with proper state restoration
+
+### 📱 Technical Improvements
+- **Async Command Processing**: Properly managed async command execution without breaking input loop
+- **State Synchronization**: Added input waiting flag to prevent race conditions
+- **Handler Cleanup**: Improved cleanup of input handlers with specific handler tracking
+- **Timeout-based Restoration**: Added timeout for keyboard control restoration to ensure proper state
+
+### 🧪 User Experience
+- **Continuous Operation**: REPL now continues accepting commands indefinitely
+- **Perfect Input Processing**: Duplicate characters are intelligently removed
+- **Seamless Transitions**: Smooth switching between command execution and input
+- **Consistent Controls**: Global keyboard shortcuts work reliably after any operation
+
 ## [3.6.2] - 2024-12-19
 
 ### 🚀 Added
