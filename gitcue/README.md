@@ -1,6 +1,6 @@
 # GitCue - AI-Powered Git Automation for VS Code
 
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 > 🤖 **GitCue** — Your intelligent Git companion for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.
@@ -20,11 +20,13 @@ GitCue brings the power of [Auto-Git CLI](https://www.npmjs.com/package/@sbeered
 - **Quick Cancel**: Press 'c' or click to cancel pending commits
 - **Seamless Resume**: Watch mode continues after cancellation
 
-### 🎯 Modern Dashboard
-- **Clean Interface**: Redesigned with modern, professional styling
-- **Real-time Status**: Live monitoring of system status and configuration
-- **Quick Actions**: One-click access to all GitCue functions
-- **Responsive Design**: Works perfectly on all screen sizes
+### 🎯 Modern Dashboard (v0.1.0)
+- **Redesigned Interface**: Complete UI overhaul with clean, professional styling matching VS Code design language
+- **Fixed Stability Issues**: Dashboard no longer disappears unexpectedly with improved error handling
+- **Real-time Status**: Live monitoring of system status and configuration with optimized state management
+- **Intuitive Controls**: Simplified checkbox-style toggle for watching mode and streamlined action buttons
+- **Enhanced Visual Feedback**: Clear status indicators with color-coded badges and smooth animations
+- **Responsive Design**: Works perfectly on all screen sizes with mobile-friendly layout
 
 ### 🔧 Smart Configuration
 - **File Watching**: Customizable glob patterns for file monitoring

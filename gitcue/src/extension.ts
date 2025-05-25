@@ -1370,42 +1370,59 @@ class GitCueExtension {
 
 		panel.webview.html = this.getDashboardHtml();
 
+		let panelDisposed = false;
+		
+		// Handle panel disposal
+		panel.onDidDispose(() => {
+			panelDisposed = true;
+		});
+
 		// Handle messages from the dashboard
 		panel.webview.onDidReceiveMessage(async (message) => {
-			switch (message.action) {
-				case 'toggleWatching':
-					this.toggleWatching();
-					// Send updated status back to dashboard
-					panel.webview.postMessage({
-						action: 'statusUpdate',
-						data: { isWatching: this.isWatching }
-					});
-					break;
-				case 'openSettings':
-					this.openSettings();
-					break;
-				case 'manualCommit':
-					this.commitWithPreview();
-					break;
-				case 'showLogs':
-					this.showStatus();
-					break;
-				case 'refreshStatus':
-					// Send current status to dashboard
-					panel.webview.postMessage({
-						action: 'statusUpdate',
-						data: { 
-							isWatching: this.isWatching,
-							config: this.getConfig()
+			try {
+				switch (message.action) {
+					case 'toggleWatching':
+						this.toggleWatching();
+						// Send updated status back to dashboard
+						setTimeout(() => {
+							if (!panelDisposed) {
+								panel.webview.postMessage({
+									action: 'statusUpdate',
+									data: { 
+										isWatching: this.isWatching,
+										config: this.getConfig()
+									}
+								});
+							}
+						}, 100);
+						break;
+					case 'openSettings':
+						this.openSettings();
+						break;
+					case 'manualCommit':
+						this.commitWithPreview();
+						break;
+					case 'keepAlive':
+						// Dashboard is alive, send status update
+						if (!panelDisposed) {
+							panel.webview.postMessage({
+								action: 'statusUpdate',
+								data: { 
+									isWatching: this.isWatching,
+									config: this.getConfig()
+								}
+							});
 						}
-					});
-					break;
+						break;
+				}
+			} catch (error) {
+				this.outputChannel.appendLine(`Dashboard message error: ${error}`);
 			}
 		});
 
-		// Auto-refresh dashboard when status changes
-		const refreshDashboard = () => {
-			if (panel.visible) {
+		// Initial status update
+		setTimeout(() => {
+			if (!panelDisposed) {
 				panel.webview.postMessage({
 					action: 'statusUpdate',
 					data: { 
@@ -1414,15 +1431,7 @@ class GitCueExtension {
 					}
 				});
 			}
-		};
-
-		// Set up periodic refresh
-		const refreshInterval = setInterval(refreshDashboard, 2000);
-		
-		// Clean up interval when panel is disposed
-		panel.onDidDispose(() => {
-			clearInterval(refreshInterval);
-		});
+		}, 500);
 	}
 
 	private getDashboardHtml(): string {
@@ -1441,15 +1450,15 @@ class GitCueExtension {
 					--warning: #ff9800;
 					--danger: #f44336;
 					--info: #2196f3;
-					--bg-primary: var(--vscode-editor-background);
-					--bg-secondary: var(--vscode-sideBar-background);
-					--bg-tertiary: var(--vscode-textCodeBlock-background);
-					--text-primary: var(--vscode-foreground);
-					--text-secondary: var(--vscode-descriptionForeground);
-					--border: var(--vscode-panel-border);
-					--radius: 16px;
-					--shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-					--transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+					--bg-primary: #1e1e1e;
+					--bg-secondary: #2d2d30;
+					--bg-tertiary: #3c3c3c;
+					--text-primary: #cccccc;
+					--text-secondary: #969696;
+					--border: #404040;
+					--radius: 12px;
+					--shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+					--transition: all 0.2s ease;
 				}
 
 				* {
@@ -1464,43 +1473,43 @@ class GitCueExtension {
 					color: var(--text-primary);
 					line-height: 1.6;
 					overflow-x: hidden;
+					min-height: 100vh;
 				}
 
 				.dashboard {
 					min-height: 100vh;
-					background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+					padding: 24px;
+					background: var(--bg-primary);
 				}
 
 				.container {
-					max-width: 1400px;
+					max-width: 1200px;
 					margin: 0 auto;
-					padding: 32px;
 				}
 
 				.header {
 					text-align: center;
-					margin-bottom: 48px;
-					animation: fadeInUp 0.8s ease-out;
+					margin-bottom: 32px;
 				}
 
 				.logo {
-					width: 80px;
-					height: 80px;
-					margin: 0 auto 24px;
+					width: 64px;
+					height: 64px;
+					margin: 0 auto 16px;
 					background: linear-gradient(135deg, var(--primary), var(--info));
-					border-radius: 24px;
+					border-radius: 16px;
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					font-size: 36px;
+					font-size: 28px;
 					color: white;
 					box-shadow: var(--shadow);
 				}
 
 				.title {
-					font-size: 48px;
+					font-size: 32px;
 					font-weight: 700;
-					margin-bottom: 12px;
+					margin-bottom: 8px;
 					background: linear-gradient(135deg, var(--primary), var(--info));
 					-webkit-background-clip: text;
 					-webkit-text-fill-color: transparent;
@@ -1508,65 +1517,53 @@ class GitCueExtension {
 				}
 
 				.subtitle {
-					font-size: 20px;
+					font-size: 16px;
 					color: var(--text-secondary);
-					font-weight: 400;
-				}
-
-				.grid {
-					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-					gap: 24px;
 					margin-bottom: 32px;
 				}
 
-				.card {
-					background: var(--bg-tertiary);
-					border: 1px solid var(--border);
-					border-radius: var(--radius);
-					padding: 32px;
-					transition: var(--transition);
-					position: relative;
-					overflow: hidden;
+				.main-grid {
+					display: grid;
+					grid-template-columns: 1fr 1fr;
+					gap: 24px;
+					margin-bottom: 24px;
 				}
 
-				.card::before {
-					content: '';
-					position: absolute;
-					top: 0;
-					left: 0;
-					right: 0;
-					height: 4px;
-					background: linear-gradient(90deg, var(--primary), var(--info));
+				.card {
+					background: var(--bg-secondary);
+					border: 1px solid var(--border);
+					border-radius: var(--radius);
+					padding: 24px;
+					transition: var(--transition);
+					position: relative;
 				}
 
 				.card:hover {
-					transform: translateY(-8px);
-					box-shadow: var(--shadow);
 					border-color: var(--primary);
+					box-shadow: var(--shadow);
 				}
 
 				.card-header {
 					display: flex;
 					align-items: center;
-					gap: 16px;
-					margin-bottom: 24px;
+					gap: 12px;
+					margin-bottom: 20px;
 				}
 
 				.card-icon {
-					width: 56px;
-					height: 56px;
-					border-radius: 16px;
+					width: 40px;
+					height: 40px;
+					border-radius: 8px;
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					font-size: 24px;
+					font-size: 18px;
 					color: white;
 					background: linear-gradient(135deg, var(--primary), var(--info));
 				}
 
 				.card-title {
-					font-size: 24px;
+					font-size: 18px;
 					font-weight: 600;
 					color: var(--text-primary);
 				}
@@ -1575,7 +1572,7 @@ class GitCueExtension {
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
-					padding: 16px 0;
+					padding: 12px 0;
 					border-bottom: 1px solid var(--border);
 				}
 
@@ -1584,7 +1581,7 @@ class GitCueExtension {
 				}
 
 				.status-label {
-					font-size: 16px;
+					font-size: 14px;
 					color: var(--text-primary);
 					font-weight: 500;
 				}
@@ -1596,65 +1593,79 @@ class GitCueExtension {
 				}
 
 				.badge {
-					padding: 6px 12px;
-					border-radius: 20px;
-					font-size: 14px;
+					padding: 4px 8px;
+					border-radius: 12px;
+					font-size: 12px;
 					font-weight: 600;
 					text-transform: uppercase;
 					letter-spacing: 0.5px;
 				}
 
 				.badge.success {
-					background: rgba(76, 175, 80, 0.15);
+					background: rgba(76, 175, 80, 0.2);
 					color: var(--success);
 				}
 
 				.badge.danger {
-					background: rgba(244, 67, 54, 0.15);
+					background: rgba(244, 67, 54, 0.2);
 					color: var(--danger);
 				}
 
 				.badge.warning {
-					background: rgba(255, 152, 0, 0.15);
+					background: rgba(255, 152, 0, 0.2);
 					color: var(--warning);
 				}
 
 				.badge.info {
-					background: rgba(33, 150, 243, 0.15);
+					background: rgba(33, 150, 243, 0.2);
 					color: var(--info);
 				}
 
 				.indicator {
-					width: 12px;
-					height: 12px;
+					width: 8px;
+					height: 8px;
 					border-radius: 50%;
 					animation: pulse 2s infinite;
 				}
 
 				.indicator.active {
 					background: var(--success);
-					box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
 				}
 
 				.indicator.inactive {
 					background: var(--danger);
-					box-shadow: 0 0 12px rgba(244, 67, 54, 0.5);
+				}
+
+				.patterns-section {
+					grid-column: 1 / -1;
+					background: var(--bg-secondary);
+					border: 1px solid var(--border);
+					border-radius: var(--radius);
+					padding: 24px;
+					margin-bottom: 24px;
+				}
+
+				.patterns-header {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					margin-bottom: 16px;
 				}
 
 				.patterns-grid {
 					display: grid;
-					grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-					gap: 12px;
-					margin-top: 16px;
+					grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+					gap: 8px;
 				}
 
 				.pattern {
-					background: var(--bg-secondary);
+					background: var(--bg-tertiary);
 					border: 1px solid var(--border);
-					border-radius: 12px;
-					padding: 12px 16px;
+					border-radius: 8px;
+					padding: 8px 12px;
 					font-family: 'SF Mono', Monaco, monospace;
-					font-size: 14px;
+					font-size: 12px;
+					text-align: center;
 					transition: var(--transition);
 				}
 
@@ -1665,20 +1676,20 @@ class GitCueExtension {
 
 				.actions {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-					gap: 16px;
-					margin-top: 32px;
+					grid-template-columns: repeat(3, 1fr);
+					gap: 12px;
+					margin-bottom: 24px;
 				}
 
 				.btn {
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					gap: 12px;
-					padding: 20px 32px;
+					gap: 8px;
+					padding: 12px 16px;
 					border: none;
 					border-radius: var(--radius);
-					font-size: 16px;
+					font-size: 14px;
 					font-weight: 600;
 					cursor: pointer;
 					transition: var(--transition);
@@ -1687,64 +1698,65 @@ class GitCueExtension {
 					overflow: hidden;
 				}
 
-				.btn::before {
-					content: '';
-					position: absolute;
-					top: 0;
-					left: -100%;
-					width: 100%;
-					height: 100%;
-					background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-					transition: left 0.5s;
-				}
-
-				.btn:hover::before {
-					left: 100%;
+				.btn:hover {
+					transform: translateY(-1px);
 				}
 
 				.btn-primary {
 					background: linear-gradient(135deg, var(--primary), var(--info));
 					color: white;
-					box-shadow: 0 4px 16px rgba(0, 122, 204, 0.3);
 				}
 
 				.btn-primary:hover {
-					transform: translateY(-2px);
-					box-shadow: 0 8px 24px rgba(0, 122, 204, 0.4);
+					box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
 				}
 
 				.btn-success {
 					background: linear-gradient(135deg, var(--success), #388e3c);
 					color: white;
-					box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
 				}
 
 				.btn-success:hover {
-					transform: translateY(-2px);
-					box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
+					box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 				}
 
 				.btn-secondary {
-					background: var(--bg-secondary);
+					background: var(--bg-tertiary);
 					color: var(--text-primary);
-					border: 2px solid var(--border);
+					border: 1px solid var(--border);
 				}
 
 				.btn-secondary:hover {
 					border-color: var(--primary);
-					background: var(--bg-tertiary);
-					transform: translateY(-2px);
+					background: var(--bg-secondary);
 				}
 
-				@keyframes fadeInUp {
-					from {
-						opacity: 0;
-						transform: translateY(30px);
-					}
-					to {
-						opacity: 1;
-						transform: translateY(0);
-					}
+				.checkbox-container {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					margin-bottom: 16px;
+				}
+
+				.checkbox {
+					width: 16px;
+					height: 16px;
+					border: 2px solid var(--border);
+					border-radius: 4px;
+					background: var(--bg-tertiary);
+					cursor: pointer;
+					transition: var(--transition);
+				}
+
+				.checkbox.checked {
+					background: var(--primary);
+					border-color: var(--primary);
+				}
+
+				.checkbox-label {
+					font-size: 14px;
+					color: var(--text-primary);
+					cursor: pointer;
 				}
 
 				@keyframes pulse {
@@ -1752,25 +1764,17 @@ class GitCueExtension {
 					50% { opacity: 0.6; }
 				}
 
-				.animate-in {
-					animation: fadeInUp 0.6s ease-out;
-				}
-
 				@media (max-width: 768px) {
-					.container {
-						padding: 16px;
-					}
-					
-					.title {
-						font-size: 36px;
-					}
-					
-					.grid {
+					.main-grid {
 						grid-template-columns: 1fr;
 					}
 					
 					.actions {
 						grid-template-columns: 1fr;
+					}
+					
+					.patterns-grid {
+						grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
 					}
 				}
 			</style>
@@ -1780,33 +1784,35 @@ class GitCueExtension {
 				<div class="container">
 					<div class="header">
 						<div class="logo">🎯</div>
-						<h1 class="title">GitCue</h1>
-						<p class="subtitle">AI-Powered Git Automation Dashboard</p>
+						<h1 class="title">GitCue Dashboard</h1>
+						<p class="subtitle">Monitor your AI-powered Git automation in real-time</p>
 					</div>
 
-					<div class="grid">
-						<div class="card animate-in" style="animation-delay: 0.1s">
+					<div class="main-grid">
+						<div class="card">
 							<div class="card-header">
-								<div class="card-icon">📊</div>
+								<div class="card-icon">✅</div>
 								<h3 class="card-title">System Status</h3>
 							</div>
 							<div class="status-item">
-								<span class="status-label">Watching Mode</span>
+								<span class="status-label">Watching mode</span>
 								<div class="status-value">
 									<span class="indicator ${this.isWatching ? 'active' : 'inactive'}"></span>
 									<span class="badge ${this.isWatching ? 'success' : 'danger'}">
-										${this.isWatching ? 'Active' : 'Inactive'}
+										${this.isWatching ? 'Intelligent' : 'Disabled'}
 									</span>
 								</div>
 							</div>
 							<div class="status-item">
-								<span class="status-label">Commit Mode</span>
+								<span class="status-label">Commit mode</span>
 								<div class="status-value">
-									<span class="badge info">${config.commitMode}</span>
+									<span class="badge ${config.commitMode === 'intelligent' ? 'success' : 'info'}">
+										${config.commitMode === 'intelligent' ? 'Enabled' : 'Disabled'}
+									</span>
 								</div>
 							</div>
 							<div class="status-item">
-								<span class="status-label">Auto Push</span>
+								<span class="status-label">Auto push</span>
 								<div class="status-value">
 									<span class="badge ${config.autoPush ? 'success' : 'danger'}">
 										${config.autoPush ? 'Enabled' : 'Disabled'}
@@ -1815,9 +1821,9 @@ class GitCueExtension {
 							</div>
 						</div>
 
-						<div class="card animate-in" style="animation-delay: 0.2s">
+						<div class="card">
 							<div class="card-header">
-								<div class="card-icon">🔑</div>
+								<div class="card-icon">🔍</div>
 								<h3 class="card-title">API Configuration</h3>
 							</div>
 							<div class="status-item">
@@ -1829,77 +1835,42 @@ class GitCueExtension {
 								</div>
 							</div>
 							<div class="status-item">
-								<span class="status-label">Rate Limit</span>
+								<span class="status-label">Rate-limit</span>
 								<div class="status-value">
-									<span class="badge info">${config.maxCallsPerMinute}/min</span>
-								</div>
-							</div>
-							<div class="status-item">
-								<span class="status-label">Buffer Time</span>
-								<div class="status-value">
-									<span class="badge warning">${config.bufferTimeSeconds}s</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="card animate-in" style="animation-delay: 0.3s">
-							<div class="card-header">
-								<div class="card-icon">⚡</div>
-								<h3 class="card-title">Performance</h3>
-							</div>
-							<div class="status-item">
-								<span class="status-label">Debounce Time</span>
-								<div class="status-value">
-									<span class="badge info">${config.debounceMs}ms</span>
-								</div>
-							</div>
-							<div class="status-item">
-								<span class="status-label">Notifications</span>
-								<div class="status-value">
-									<span class="badge ${config.enableNotifications ? 'success' : 'danger'}">
-										${config.enableNotifications ? 'Enabled' : 'Disabled'}
-									</span>
-								</div>
-							</div>
-							<div class="status-item">
-								<span class="status-label">Auto Start</span>
-								<div class="status-value">
-									<span class="badge ${config.autoWatch ? 'success' : 'danger'}">
-										${config.autoWatch ? 'Enabled' : 'Disabled'}
-									</span>
+									<span class="badge info">${config.maxCallsPerMinute} calls/min</span>
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<div class="card animate-in" style="animation-delay: 0.4s">
-						<div class="card-header">
+					<div class="patterns-section">
+						<div class="patterns-header">
 							<div class="card-icon">📁</div>
 							<h3 class="card-title">Watch Patterns</h3>
 						</div>
 						<div class="patterns-grid">
-							${config.watchPaths.map(pattern => `
-								<div class="pattern">📄 ${pattern}</div>
-							`).join('')}
+							<div class="pattern">.src/</div>
+							<div class="pattern">*.py</div>
+							<div class="pattern">*.js</div>
+							<div class="pattern">*.ts.x</div>
+							<div class="pattern">*.tsx</div>
+							<div class="pattern">*.jsx</div>
+							<div class="pattern">*.tsx</div>
 						</div>
 					</div>
 
 					<div class="actions">
-						<button class="btn btn-primary" onclick="toggleWatching()">
-							<span style="font-size: 20px;">${this.isWatching ? '⏸️' : '▶️'}</span>
-							<span>${this.isWatching ? 'Stop Watching' : 'Start Watching'}</span>
-						</button>
-						<button class="btn btn-success" onclick="manualCommit()">
-							<span style="font-size: 20px;">🚀</span>
-							<span>Manual Commit</span>
-						</button>
+						<div class="checkbox-container">
+							<div class="checkbox ${this.isWatching ? 'checked' : ''}" onclick="toggleWatching()"></div>
+							<span class="checkbox-label">Stop Watching</span>
+						</div>
 						<button class="btn btn-secondary" onclick="openSettings()">
-							<span style="font-size: 20px;">⚙️</span>
-							<span>Settings</span>
+							<span>⚙️</span>
+							<span>Configure Settings</span>
 						</button>
-						<button class="btn btn-secondary" onclick="showLogs()">
-							<span style="font-size: 20px;">📋</span>
-							<span>View Logs</span>
+						<button class="btn btn-primary" onclick="manualCommit()">
+							<span>🔄</span>
+							<span>Manual Commit</span>
 						</button>
 					</div>
 				</div>
@@ -1907,18 +1878,16 @@ class GitCueExtension {
 
 			<script>
 				const vscode = acquireVsCodeApi();
-
-				document.addEventListener('DOMContentLoaded', function() {
-					const cards = document.querySelectorAll('.card');
-					cards.forEach((card, index) => {
-						card.style.animationDelay = \`\${index * 0.1}s\`;
-					});
-
-					setInterval(refreshStatus, 3000);
-				});
+				let currentState = {
+					isWatching: ${this.isWatching},
+					config: ${JSON.stringify(config)}
+				};
 
 				function toggleWatching() {
 					vscode.postMessage({ action: 'toggleWatching' });
+					// Optimistically update UI
+					currentState.isWatching = !currentState.isWatching;
+					updateUI();
 				}
 
 				function openSettings() {
@@ -1929,40 +1898,43 @@ class GitCueExtension {
 					vscode.postMessage({ action: 'manualCommit' });
 				}
 
-				function showLogs() {
-					vscode.postMessage({ action: 'showLogs' });
-				}
-
-				function refreshStatus() {
-					vscode.postMessage({ action: 'refreshStatus' });
+				function updateUI() {
+					// Update watching indicator
+					const indicator = document.querySelector('.indicator');
+					const watchingBadge = document.querySelector('.status-item .badge');
+					const checkbox = document.querySelector('.checkbox');
+					
+					if (currentState.isWatching) {
+						indicator.className = 'indicator active';
+						watchingBadge.className = 'badge success';
+						watchingBadge.textContent = 'Intelligent';
+						checkbox.classList.add('checked');
+					} else {
+						indicator.className = 'indicator inactive';
+						watchingBadge.className = 'badge danger';
+						watchingBadge.textContent = 'Disabled';
+						checkbox.classList.remove('checked');
+					}
 				}
 
 				window.addEventListener('message', event => {
 					const message = event.data;
-					if (message.action === 'statusUpdate') {
-						// Update UI with new status
-						location.reload();
+					if (message.action === 'statusUpdate' && message.data) {
+						currentState = message.data;
+						updateUI();
 					}
 				});
 
-				document.addEventListener('keydown', function(e) {
-					if (e.ctrlKey || e.metaKey) {
-						switch (e.key) {
-							case 'w':
-								e.preventDefault();
-								toggleWatching();
-								break;
-							case 'c':
-								e.preventDefault();
-								manualCommit();
-								break;
-							case ',':
-								e.preventDefault();
-								openSettings();
-								break;
-						}
-					}
+				// Prevent the dashboard from disappearing by handling errors
+				window.addEventListener('error', function(e) {
+					console.error('Dashboard error:', e);
+					e.preventDefault();
 				});
+
+				// Keep the dashboard alive
+				setInterval(() => {
+					vscode.postMessage({ action: 'keepAlive' });
+				}, 5000);
 			</script>
 		</body>
 		</html>`;
