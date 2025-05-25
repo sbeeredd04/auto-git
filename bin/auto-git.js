@@ -6,6 +6,7 @@ import { startWatcher, performSingleCommit, cleanup } from '../lib/watcher.js';
 import { getConfig, validateConfig, getInteractiveConfig } from '../lib/config.js';
 import { isGitRepository, hasRemote, getCurrentBranch } from '../lib/git.js';
 import { forceExit } from '../lib/utils.js';
+import { startInteractiveSession } from '../lib/repl.js';
 import logger from '../utils/logger.js';
 
 const program = new Command();
@@ -20,7 +21,7 @@ process.on('SIGINT', () => {
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.7.1', 'AI-powered Git automation with bulletproof infinite REPL looping and perfect state management');
+  logger.section('Auto-Git v3.7.1', 'AI-powered Git automation with interactive terminal session');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -28,10 +29,11 @@ function displayStyledHelp() {
   
   logger.space();
   const commands = {
-    'watch': 'Watch files and auto-commit with AI messages (interactive mode)',
+    'watch': 'Watch files and auto-commit with AI messages',
     'commit (c)': 'Generate AI commit for current changes',
-    'reset <count>': 'Undo commits with safety checks (STABLE in v3.7.1)',
-    'config': 'Show configuration and interactive features',
+    'interactive': 'Start interactive terminal session with AI error assistance',
+    'reset <count>': 'Undo commits with safety checks',
+    'config': 'Show configuration',
     'setup': 'Interactive setup guide for first-time users',
     'debug': 'Run system diagnostics and health check',
     'help': 'Display this help information'
@@ -40,18 +42,17 @@ function displayStyledHelp() {
   logger.config('AVAILABLE COMMANDS', commands);
   
   logger.space();
-  logger.info('INTERACTIVE FEATURES (v3.7.1):', 'FEATURES');
-  logger.info('  Ctrl+P        Pause and show navigation menu', '');
-  logger.info('  ↑↓ Arrows     Navigate menu options when paused', '');
-  logger.info('  Enter         Select menu option', '');
-  logger.info('  Ctrl+R        Global resume (works from anywhere)', '');
-  logger.info('  Ctrl+C        Force exit everywhere', '');
-  logger.info('  REPL Mode     Full terminal pass-through with input sanitization', '');
+  logger.info('INTERACTIVE FEATURES:', 'FEATURES');
+  logger.info('  Interactive Session  Full terminal pass-through with AI error help', '');
+  logger.info('  Ctrl+C              Exit from anywhere', '');
+  logger.info('  Input Sanitization  Automatic duplicate character removal', '');
+  logger.info('  AI Error Analysis   Smart suggestions for failed commands', '');
   
   logger.space();
   logger.info('EXAMPLES:', 'EXAMPLES');
   logger.info('  auto-git setup                    # First-time setup guide', '');
-  logger.info('  auto-git watch                    # Start interactive watching', '');
+  logger.info('  auto-git watch                    # Start file watching', '');
+  logger.info('  auto-git interactive              # Start interactive session', '');
   logger.info('  auto-git commit --verbose         # One-time commit with details', '');
   logger.info('  auto-git reset 2 --soft           # Undo last 2 commits (soft)', '');
   logger.info('  auto-git config                   # Show current configuration', '');
@@ -61,7 +62,7 @@ function displayStyledHelp() {
   logger.info('  1. Get API key: https://aistudio.google.com/app/apikey', '');
   logger.info('  2. Set API key: export GEMINI_API_KEY="your-key"', '');
   logger.info('  3. Run setup:   auto-git setup', '');
-  logger.info('  4. Start using: auto-git watch', '');
+  logger.info('  4. Start using: auto-git watch or auto-git interactive', '');
   
   logger.space();
   logger.info('For detailed help on any command, use: auto-git [command] --help', 'HELP');
@@ -346,14 +347,13 @@ program
       // Show interactive features
       logger.space();
       const interactiveItems = {
-        'Interactive Error Recovery': interactiveConfig.interactiveOnError ? '✓ Enabled' : '✗ Disabled',
+        'Interactive Session': '✓ Available (auto-git interactive)',
         'AI Error Suggestions': interactiveConfig.enableSuggestions ? '✓ Enabled' : '✗ Disabled',
-        'Navigation Menu': '✓ Enabled (Ctrl+P)',
-        'Arrow Key Navigation': '✓ Enabled',
-        'Menu Options': 'Resume, Interactive, Exit'
+        'Input Sanitization': '✓ Enabled',
+        'Terminal Pass-through': '✓ Enabled'
       };
 
-      logger.config('INTERACTIVE FEATURES (NEW IN v3.7.1)', interactiveItems);
+      logger.config('INTERACTIVE FEATURES', interactiveItems);
       
       logger.space();
       logger.info('Configuration sources (in order of priority):');
@@ -387,6 +387,7 @@ program
         logger.info('  auto-git setup                    # Complete setup first', '');
       } else {
         logger.info('  auto-git watch                    # Start watching files', '');
+        logger.info('  auto-git interactive              # Start interactive session', '');
         logger.info('  auto-git commit                   # Make one-time commit', '');
       }
       
@@ -408,38 +409,32 @@ program
       'Get a Gemini API key from: https://aistudio.google.com/app/apikey',
       'Set your API key: export GEMINI_API_KEY="your-key"',
       'Or create config file: echo \'{"apiKey": "your-key"}\' > ~/.auto-gitrc.json',
-      'Configure interactive features in ~/.auto-gitrc.json (optional)',
       'Test the setup: auto-git config',
-      'Start using: auto-git commit (one-time) or auto-git watch (continuous)'
+      'Start using: auto-git watch (continuous) or auto-git interactive (manual)'
     ];
 
     logger.setup(steps);
     
     logger.space();
-    logger.info('New in v3.7.1 - Enhanced Interactive Features:', 'FEATURES');
-    logger.info('  • Bulletproof Ctrl+C handling - force exit from anywhere');
-    logger.info('  • Smart input deduplication - removes duplicate characters');
-    logger.info('  • Rock-solid navigation - no more stuck states');
-    logger.info('  • Robust stdin management - proper terminal state handling');
-    logger.info('  • Enhanced error recovery with AI suggestions');
-    logger.info('  • Built-in git reset functionality');
+    logger.info('Interactive Session Features:', 'FEATURES');
+    logger.info('  • Full terminal pass-through - run any command');
+    logger.info('  • AI error analysis for failed commands');
+    logger.info('  • Automatic input sanitization');
+    logger.info('  • Simple Ctrl+C to exit');
+    logger.info('  • Git command suggestions');
     
     logger.space();
     logger.info('EXAMPLE CONFIG FILE (~/.auto-gitrc.json):', 'CONFIG');
     logger.info('  {');
     logger.info('    "apiKey": "your-gemini-api-key",');
-    logger.info('    "interactiveOnError": true,');
-    logger.info('    "enableSuggestions": true,');
-    logger.info('    "hotkeys": {');
-    logger.info('      "pause": "ctrl+p"');
-    logger.info('    }');
+    logger.info('    "enableSuggestions": true');
     logger.info('  }');
     
     logger.space();
     logger.info('VERIFICATION COMMANDS:', 'TEST');
     logger.info('  auto-git config                   # Check configuration', '');
     logger.info('  auto-git debug                    # Run diagnostics', '');
-    logger.info('  auto-git watch --verbose          # Test with detailed output', '');
+    logger.info('  auto-git interactive              # Test interactive session', '');
   });
 
 // Add debug command for troubleshooting
@@ -499,6 +494,13 @@ program
       logger.info('  git --version                     # Check Git installation', '');
       logger.info('  pwd                               # Check current directory', '');
     }
+  });
+
+program
+  .command('interactive')
+  .description('Start interactive terminal session with AI error assistance')
+  .action(() => {
+    startInteractiveSession();
   });
 
 // Show styled help if no command provided
