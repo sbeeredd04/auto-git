@@ -1,4 +1,4 @@
-# GitCue - VS Code Extension
+# GitCue - AI-Powered Git Automation for VS Code
 
 [![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -9,90 +9,83 @@ GitCue brings the power of [Auto-Git CLI](https://www.npmjs.com/package/@sbeered
 
 ## ✨ Features
 
-### 🧠 AI-Powered Commits
-- **Smart Commit Messages**: Generate conventional commit messages using Google's Gemini AI
-- **Commit Preview**: Review and edit AI-generated messages before committing
-- **Intelligent Analysis**: AI analyzes your changes and suggests appropriate commit types
+### 🤖 AI-Powered Commits
+- **Smart Commit Messages**: Generate meaningful commit messages using Google's Gemini AI
+- **Intelligent Mode**: AI decides when to commit based on code changes
+- **Periodic Mode**: Time-based commits with customizable intervals
 
-### 👁️ Auto-Watch Mode
-- **File Watching**: Automatically detect file changes and trigger commits
-- **Intelligent Mode**: AI decides when changes are significant enough to commit
-- **Periodic Mode**: Traditional time-based commits
-- **Debounced Processing**: Configurable delay to batch related changes
+### ⏰ Buffer Period Protection
+- **Commit Buffer**: 30-second cancellation window before commits are executed
+- **Visual Countdown**: Beautiful timer interface with progress indicators
+- **Quick Cancel**: Press 'c' or click to cancel pending commits
+- **Seamless Resume**: Watch mode continues after cancellation
 
-### 🎛️ Intuitive Controls
-- **Status Bar Integration**: One-click toggle for watching mode
-- **Command Palette**: Access all features via `Ctrl+Shift+P`
-- **Keyboard Shortcuts**: Quick access with customizable hotkeys
-- **Context Menus**: Right-click integration in editor and SCM views
+### 🎯 Modern Dashboard
+- **Clean Interface**: Redesigned with modern, professional styling
+- **Real-time Status**: Live monitoring of system status and configuration
+- **Quick Actions**: One-click access to all GitCue functions
+- **Responsive Design**: Works perfectly on all screen sizes
 
-### 📊 Dashboard & Monitoring
-- **Real-time Status**: Monitor watching state, commit mode, and configuration
-- **Output Channel**: Detailed logging for debugging and monitoring
-- **Tree View**: Quick status overview in the SCM panel
+### 🔧 Smart Configuration
+- **File Watching**: Customizable glob patterns for file monitoring
+- **Rate Limiting**: Built-in API call limits to prevent overuse
+- **Auto-Push**: Optional automatic pushing to remote repositories
+- **Notifications**: Configurable status updates and alerts
 
-### ⚙️ Flexible Configuration
-- **VS Code Settings**: Configure everything through VS Code's settings UI
-- **Environment Variables**: Support for existing Auto-Git configurations
-- **Per-workspace Settings**: Different configurations for different projects
+## 🚀 Getting Started
 
-## 🚀 Quick Start
+### Prerequisites
+- VS Code 1.96.0 or higher
+- Git repository
+- Gemini API key (get one from [Google AI Studio](https://makersuite.google.com/app/apikey))
 
-### 1. Install the Extension
+### Installation
+1. Install the extension from the VS Code marketplace
+2. Open a Git repository in VS Code
+3. Configure your Gemini API key in settings
+4. Start using GitCue!
 
-**Option A: VS Code Marketplace**
-1. Open VS Code
-2. Go to Extensions (`Ctrl+Shift+X`)
-3. Search for "GitCue"
-4. Click Install
+### Quick Setup
+1. **Set API Key**: `Ctrl+Shift+P` → "GitCue: Configure Settings"
+2. **Start Watching**: `Ctrl+Alt+W` or click the GitCue status bar item
+3. **Open Dashboard**: Click the GitCue status bar or use `Ctrl+Shift+P` → "GitCue: Open Dashboard"
 
-**Option B: Command Line**
-```bash
-code --install-extension sbeeredd04.gitcue
-```
+## 🎮 Usage
 
-### 2. Configure Your API Key
+### Commands
+- `Ctrl+Alt+C` - Manual AI commit
+- `Ctrl+Alt+W` - Toggle file watching
+- `Ctrl+Alt+X` - Cancel pending commit
+- `Ctrl+Shift+P` → "GitCue" - Access all commands
 
-1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Open VS Code Settings (`Ctrl+,`)
-3. Search for "GitCue"
-4. Set your API key in `GitCue: Gemini Api Key`
+### Dashboard Features
+- **System Status**: Monitor watching mode, commit mode, and auto-push settings
+- **API Configuration**: Check API key status, rate limits, and buffer time
+- **Performance Metrics**: View debounce time, notifications, and auto-start settings
+- **Watch Patterns**: See which file patterns are being monitored
+- **Quick Actions**: Start/stop watching, manual commit, settings, and logs
 
-### 3. Start Using GitCue
-
-- **Manual Commit**: `Ctrl+Alt+C` (or `Cmd+Alt+C` on Mac)
-- **Toggle Auto-Watch**: `Ctrl+Alt+W` (or `Cmd+Alt+W` on Mac)
-- **Open Dashboard**: Command Palette → "GitCue: Open Dashboard"
-
-## 📋 Commands
-
-| Command | Shortcut | Description |
-|---------|----------|-------------|
-| `GitCue: AI Commit` | `Ctrl+Alt+C` | Generate AI commit message and preview |
-| `GitCue: Toggle Auto-Watch` | `Ctrl+Alt+W` | Start/stop automatic file watching |
-| `GitCue: Open Dashboard` | - | Open the GitCue status dashboard |
-| `GitCue: Reset Commits` | - | Interactive commit reset with safety checks |
-| `GitCue: Configure Settings` | - | Open GitCue settings |
-| `GitCue: Show Status` | - | Show detailed status in output channel |
+### Buffer Period System
+When GitCue is about to commit:
+1. **Buffer Notification**: A countdown timer appears
+2. **Cancellation Window**: 30 seconds (configurable) to cancel
+3. **Visual Feedback**: Progress bar and timer show remaining time
+4. **Quick Cancel**: Press 'c' key or click cancel button
+5. **Auto-Resume**: Watching continues seamlessly after cancellation
 
 ## ⚙️ Configuration
 
-### Basic Settings
-
+### Settings
 ```json
 {
   "gitcue.geminiApiKey": "your-api-key-here",
   "gitcue.commitMode": "intelligent",
   "gitcue.autoPush": true,
+  "gitcue.bufferTimeSeconds": 30,
+  "gitcue.debounceMs": 30000,
+  "gitcue.maxCallsPerMinute": 15,
   "gitcue.enableNotifications": true,
-  "gitcue.autoWatch": false
-}
-```
-
-### Advanced Settings
-
-```json
-{
+  "gitcue.autoWatch": false,
   "gitcue.watchPaths": [
     "src/**",
     "lib/**",
@@ -101,137 +94,92 @@ code --install-extension sbeeredd04.gitcue
     "*.jsx",
     "*.tsx",
     "*.py"
-  ],
-  "gitcue.debounceMs": 30000,
-  "gitcue.bufferTimeSeconds": 30,
-  "gitcue.maxCallsPerMinute": 15
+  ]
 }
 ```
 
-### Setting Descriptions
+### Commit Modes
+- **Intelligent**: AI analyzes changes and decides when to commit
+- **Periodic**: Time-based commits after file changes
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `geminiApiKey` | string | "" | Your Gemini API key for AI-powered commits |
-| `commitMode` | enum | "intelligent" | Commit mode: "periodic" or "intelligent" |
-| `autoPush` | boolean | true | Automatically push commits to remote |
-| `watchPaths` | array | ["src/**", "lib/**", ...] | File patterns to watch |
-| `debounceMs` | number | 30000 | Delay before processing file changes |
-| `bufferTimeSeconds` | number | 30 | Time to cancel commits in intelligent mode |
-| `maxCallsPerMinute` | number | 15 | API rate limiting |
-| `enableNotifications` | boolean | true | Show VS Code notifications |
-| `autoWatch` | boolean | false | Start watching when VS Code opens |
+### Watch Patterns
+Configure which files to monitor using glob patterns:
+- `src/**` - All files in src directory
+- `*.js` - All JavaScript files
+- `**/*.ts` - All TypeScript files recursively
 
-## 🎯 Usage Examples
+## 🛡️ Safety Features
 
-### Manual Commit Workflow
+### Buffer Period Protection
+- **Cancellation Window**: Always get time to review before commits
+- **Visual Countdown**: Clear indication of remaining time
+- **Multiple Cancel Methods**: Keyboard shortcut or button click
+- **No Accidental Commits**: Built-in protection against unwanted commits
 
-1. Make changes to your files
-2. Press `Ctrl+Alt+C` or use Command Palette → "GitCue: AI Commit"
-3. Review the AI-generated commit message
-4. Edit if needed or commit directly
-5. Choose whether to push to remote
+### Rate Limiting
+- **API Protection**: Prevents excessive API calls
+- **Configurable Limits**: Set your own rate limits
+- **Smart Debouncing**: Waits for file changes to settle
 
-### Auto-Watch Workflow
+### Error Handling
+- **Graceful Fallbacks**: Continues working even if AI fails
+- **Detailed Logging**: Comprehensive error reporting
+- **Safe Defaults**: Sensible fallback commit messages
 
-1. Press `Ctrl+Alt+W` to start watching
-2. Make changes to your files
-3. GitCue automatically detects changes after the debounce period
-4. In intelligent mode, AI decides if changes warrant a commit
-5. Review and approve commits through the preview interface
+## 🎨 UI/UX Features
 
-### Dashboard Monitoring
+### Modern Dashboard
+- **Clean Design**: Professional, minimalist interface
+- **Smooth Animations**: Polished transitions and effects
+- **Responsive Layout**: Works on all screen sizes
+- **Dark Theme Support**: Follows VS Code theme
 
-1. Open Command Palette (`Ctrl+Shift+P`)
-2. Run "GitCue: Open Dashboard"
-3. Monitor real-time status, configuration, and watch patterns
-4. Quick access to all GitCue features
+### Status Indicators
+- **Real-time Updates**: Live status monitoring
+- **Visual Feedback**: Clear indicators for all states
+- **Color-coded Status**: Easy-to-understand status colors
+- **Hover Effects**: Interactive elements with smooth transitions
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
+1. **API Key Not Working**: Verify your Gemini API key in settings
+2. **No File Changes Detected**: Check your watch patterns configuration
+3. **Commits Not Happening**: Ensure you're in a Git repository
+4. **Buffer Not Showing**: Check if notifications are enabled
 
-**"Gemini API key not configured"**
-- Go to VS Code Settings → Search "GitCue" → Set your API key
-- Or use Command Palette → "GitCue: Configure Settings"
-
-**"No workspace folder found"**
-- Open a folder in VS Code (`File → Open Folder`)
-- Ensure the folder contains a Git repository (`git init` if needed)
-
-**Auto-watch not working**
-- Check that you have a valid API key configured
-- Verify watch patterns in settings match your file structure
-- Check the Output panel (View → Output → GitCue) for detailed logs
-
-**Commit preview not showing**
-- Ensure you have uncommitted changes (`git status`)
-- Check that your workspace is a valid Git repository
-- Verify API key is working by checking the output logs
-
-### Debug Information
-
-1. Open Output panel: `View → Output`
-2. Select "GitCue" from the dropdown
-3. Enable verbose logging in settings
-4. Use "GitCue: Show Status" command for configuration overview
-
-## 🛠️ Development
-
-### Building from Source
-
-```bash
-# Clone the repository
-git clone https://github.com/sbeeredd04/auto-git.git
-cd auto-git/gitcue
-
-# Install dependencies
-npm install
-
-# Compile TypeScript
-npm run compile
-
-# Package the extension
-npm run package
-```
-
-### Testing
-
-```bash
-# Run tests
-npm test
-
-# Debug in VS Code
-# Press F5 to launch Extension Development Host
-```
+### Debug Mode
+Enable detailed logging by opening the GitCue output channel:
+`View` → `Output` → Select "GitCue" from dropdown
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Test thoroughly
-5. Commit using GitCue! (`git commit -m "feat: add amazing feature"`)
-6. Push to your branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## 📄 License
+### Development Setup
+1. Clone the repository
+2. Run `npm install`
+3. Open in VS Code
+4. Press `F5` to launch extension development host
+
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🔗 Related Projects
+## 🙏 Acknowledgments
 
-- **[Auto-Git CLI](https://www.npmjs.com/package/@sbeeredd04/auto-git)** - The core CLI tool that powers this extension
-- **[Google Gemini AI](https://ai.google.dev/)** - The AI model used for generating commit messages
+- Google Gemini AI for intelligent commit message generation
+- VS Code team for the excellent extension API
+- The open-source community for inspiration and feedback
 
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/sbeeredd04/auto-git/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/sbeeredd04/auto-git/discussions)
-- **VS Code Marketplace**: [GitCue Extension](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
+- **Email**: [Support Email](mailto:support@gitcue.dev)
 
 ---
 
-**Made with ❤️ by [sbeeredd04](https://github.com/sbeeredd04)**
+**Made with ❤️ by the GitCue team**
 
 *GitCue - Making Git automation intelligent, efficient, and user-friendly in VS Code.*
