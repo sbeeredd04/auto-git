@@ -1,3 +1,55 @@
+## v3.8.0 - 2024-12-19
+
+### 🚀 Enhanced Interactive Terminal Session
+- **📚 Persistent Command History**: Commands automatically saved across sessions with arrow key navigation
+- **🎨 Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting
+- **⌨️ Arrow Key Navigation**: Use ↑↓ to browse through command history seamlessly
+- **🎯 Git Syntax Highlighting**: Enhanced display for Git commands with color coding
+- **💾 Session Persistence**: Command history automatically saved to `~/.auto-git-history.json`
+- **🔄 Simplified Workflow**: Clean separation between watch mode and interactive mode
+
+### 🎮 Enhanced User Experience
+- **Smart Prompt Display**: Shows command count in prompt (e.g., `auto-git [15]> `)
+- **History Management**: Maintains up to 100 commands with intelligent deduplication
+- **Command Redraw**: Seamless input redrawing when navigating history
+- **Version Display**: Built-in version command shows current interactive session version
+- **Enhanced Help System**: Comprehensive help with feature explanations and pro tips
+
+### 🛠️ Technical Improvements
+- **New Markdown Utility**: Created `utils/markdown.js` for rich text formatting
+- **Session File Management**: Automatic loading and saving of command history
+- **Input Sanitization**: Improved duplicate character removal algorithm
+- **Memory Management**: Efficient history management with size limits
+- **Error Handling**: Better error recovery with formatted suggestions
+
+### 🔧 Simplified Architecture
+- **Removed Pause/Resume**: Eliminated complex pause/resume functionality for cleaner UX
+- **Removed Navigation Menu**: Simplified to just Ctrl+C for exit
+- **Clean Watch Mode**: Simple file watching with just Ctrl+C to exit
+- **Dedicated Interactive Command**: New `auto-git interactive` command for enhanced session
+- **Streamlined Error Handling**: AI suggestions without complex state management
+
+### 📱 New Features
+- **Markdown AI Responses**: AI suggestions formatted with syntax highlighting and borders
+- **Git Command Highlighting**: Special formatting for Git commands with color coding
+- **Command History Display**: Built-in `history` command shows recent commands
+- **Session Statistics**: Track and display session information
+- **Enhanced Examples**: Better command examples with syntax highlighting
+
+### 🧹 Code Cleanup
+- **Removed navigationMenu.js**: Eliminated unused navigation menu functionality
+- **Updated Package Version**: Bumped to 3.8.0 with updated description
+- **Simplified Dependencies**: Cleaner dependency management
+- **Better Documentation**: Updated README and help text for new features
+- **Version Consistency**: All version references updated to 3.8.0
+
+### 🎯 User Experience Improvements
+- **Intuitive Commands**: Clear command structure with helpful examples
+- **Professional Interface**: Clean, modern terminal interface with rich formatting
+- **Persistent Sessions**: Never lose command history between sessions
+- **Smart Navigation**: Intelligent history browsing with arrow keys
+- **Enhanced Feedback**: Better visual feedback for all operations
+
 ## v3.7.1 - 2024-12-19
 
 ### 🔧 Final Polish
