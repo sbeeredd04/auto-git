@@ -83,6 +83,14 @@
     "ora": "^8.0.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "vscode": "^1.100.0"
+  },
+  "displayName": "GitCue",
+  "publisher": "sbeeredd04",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
   }
 }

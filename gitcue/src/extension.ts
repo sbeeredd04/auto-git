@@ -242,110 +242,526 @@ class GitCueExtension {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<title>GitCue Commit Preview</title>
 			<style>
+				:root {
+					--primary-color: #007acc;
+					--success-color: #4caf50;
+					--warning-color: #ff9800;
+					--danger-color: #f44336;
+					--border-radius: 8px;
+					--shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+					--transition: all 0.2s ease-in-out;
+				}
+
+				* {
+					box-sizing: border-box;
+				}
+
 				body { 
 					font-family: var(--vscode-font-family); 
-					padding: 20px; 
+					padding: 0;
+					margin: 0;
 					color: var(--vscode-foreground);
 					background: var(--vscode-editor-background);
+					line-height: 1.6;
 				}
+
+				.container {
+					max-width: 800px;
+					margin: 0 auto;
+					padding: 24px;
+				}
+
 				.header { 
-					border-bottom: 1px solid var(--vscode-panel-border); 
-					padding-bottom: 15px; 
-					margin-bottom: 20px; 
+					text-align: center;
+					padding: 24px 0;
+					border-bottom: 2px solid var(--vscode-panel-border);
+					margin-bottom: 32px;
+					background: linear-gradient(135deg, var(--vscode-textCodeBlock-background), var(--vscode-editor-background));
+					border-radius: var(--border-radius);
+					box-shadow: var(--shadow);
 				}
-				.commit-message { 
-					background: var(--vscode-textCodeBlock-background); 
-					padding: 15px; 
-					border-radius: 5px; 
-					margin: 15px 0; 
-					font-family: var(--vscode-editor-font-family);
-					border: 1px solid var(--vscode-panel-border);
+
+				.header h1 {
+					margin: 0 0 8px 0;
+					font-size: 28px;
+					font-weight: 600;
+					background: linear-gradient(45deg, var(--primary-color), var(--success-color));
+					-webkit-background-clip: text;
+					-webkit-text-fill-color: transparent;
+					background-clip: text;
 				}
-				.changes { 
-					background: var(--vscode-textCodeBlock-background); 
-					padding: 15px; 
-					border-radius: 5px; 
-					margin: 15px 0; 
-					font-family: monospace; 
-					white-space: pre-wrap;
-					border: 1px solid var(--vscode-panel-border);
-					max-height: 300px;
-					overflow-y: auto;
+
+				.header p {
+					margin: 0;
+					opacity: 0.8;
+					font-size: 16px;
 				}
-				.buttons { 
-					margin-top: 20px; 
-					display: flex; 
-					gap: 10px; 
-					flex-wrap: wrap;
+
+				.section {
+					margin-bottom: 24px;
+					animation: slideInUp 0.3s ease-out;
 				}
-				button { 
-					padding: 8px 16px; 
-					border: none; 
-					border-radius: 3px; 
-					cursor: pointer; 
-					font-size: 13px;
-				}
-				.primary { 
-					background: var(--vscode-button-background); 
-					color: var(--vscode-button-foreground); 
-				}
-				.primary:hover { 
-					background: var(--vscode-button-hoverBackground); 
-				}
-				.secondary { 
-					background: var(--vscode-button-secondaryBackground); 
-					color: var(--vscode-button-secondaryForeground); 
-				}
-				.secondary:hover { 
-					background: var(--vscode-button-secondaryHoverBackground); 
-				}
-				.checkbox-container {
-					margin: 15px 0;
+
+				.section-title {
 					display: flex;
 					align-items: center;
 					gap: 8px;
+					font-size: 18px;
+					font-weight: 600;
+					margin-bottom: 12px;
+					color: var(--vscode-foreground);
 				}
-				input[type="checkbox"] {
+
+				.section-icon {
+					font-size: 20px;
+				}
+
+				.commit-message-container {
+					position: relative;
+					background: var(--vscode-textCodeBlock-background);
+					border: 2px solid var(--vscode-panel-border);
+					border-radius: var(--border-radius);
+					overflow: hidden;
+					box-shadow: var(--shadow);
+					transition: var(--transition);
+				}
+
+				.commit-message-container:hover {
+					border-color: var(--primary-color);
+					box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+				}
+
+				.commit-message {
+					padding: 20px;
+					font-family: var(--vscode-editor-font-family);
+					font-size: 16px;
+					line-height: 1.5;
+					min-height: 60px;
+					word-wrap: break-word;
+					position: relative;
+				}
+
+				.commit-message::before {
+					content: '';
+					position: absolute;
+					left: 0;
+					top: 0;
+					bottom: 0;
+					width: 4px;
+					background: linear-gradient(to bottom, var(--primary-color), var(--success-color));
+				}
+
+				.changes-container {
+					background: var(--vscode-textCodeBlock-background);
+					border: 2px solid var(--vscode-panel-border);
+					border-radius: var(--border-radius);
+					overflow: hidden;
+					box-shadow: var(--shadow);
+					transition: var(--transition);
+				}
+
+				.changes-header {
+					background: var(--vscode-panel-border);
+					padding: 12px 20px;
+					font-weight: 600;
+					border-bottom: 1px solid var(--vscode-panel-border);
+				}
+
+				.changes {
+					padding: 20px;
+					font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+					font-size: 14px;
+					white-space: pre-wrap;
+					max-height: 300px;
+					overflow-y: auto;
+					line-height: 1.4;
+				}
+
+				.changes::-webkit-scrollbar {
+					width: 8px;
+				}
+
+				.changes::-webkit-scrollbar-track {
+					background: var(--vscode-scrollbarSlider-background);
+				}
+
+				.changes::-webkit-scrollbar-thumb {
+					background: var(--vscode-scrollbarSlider-hoverBackground);
+					border-radius: 4px;
+				}
+
+				.options-section {
+					background: var(--vscode-textCodeBlock-background);
+					border: 2px solid var(--vscode-panel-border);
+					border-radius: var(--border-radius);
+					padding: 20px;
+					box-shadow: var(--shadow);
+				}
+
+				.checkbox-container {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					padding: 16px;
+					background: var(--vscode-input-background);
+					border-radius: var(--border-radius);
+					border: 1px solid var(--vscode-input-border);
+					transition: var(--transition);
+					cursor: pointer;
+				}
+
+				.checkbox-container:hover {
+					background: var(--vscode-list-hoverBackground);
+					border-color: var(--primary-color);
+				}
+
+				.custom-checkbox {
+					position: relative;
+					width: 20px;
+					height: 20px;
 					margin: 0;
 				}
-				.icon { margin-right: 5px; }
+
+				.custom-checkbox input {
+					opacity: 0;
+					position: absolute;
+					width: 100%;
+					height: 100%;
+					margin: 0;
+					cursor: pointer;
+				}
+
+				.checkmark {
+					position: absolute;
+					top: 0;
+					left: 0;
+					height: 20px;
+					width: 20px;
+					background: var(--vscode-input-background);
+					border: 2px solid var(--vscode-input-border);
+					border-radius: 4px;
+					transition: var(--transition);
+				}
+
+				.custom-checkbox input:checked ~ .checkmark {
+					background: var(--primary-color);
+					border-color: var(--primary-color);
+				}
+
+				.checkmark:after {
+					content: "";
+					position: absolute;
+					display: none;
+					left: 6px;
+					top: 2px;
+					width: 6px;
+					height: 10px;
+					border: solid white;
+					border-width: 0 2px 2px 0;
+					transform: rotate(45deg);
+				}
+
+				.custom-checkbox input:checked ~ .checkmark:after {
+					display: block;
+				}
+
+				.checkbox-label {
+					font-size: 16px;
+					font-weight: 500;
+					cursor: pointer;
+					user-select: none;
+				}
+
+				.actions {
+					display: flex;
+					gap: 12px;
+					justify-content: center;
+					flex-wrap: wrap;
+					margin-top: 32px;
+				}
+
+				.btn {
+					display: inline-flex;
+					align-items: center;
+					gap: 8px;
+					padding: 12px 24px;
+					border: none;
+					border-radius: var(--border-radius);
+					font-size: 16px;
+					font-weight: 600;
+					cursor: pointer;
+					transition: var(--transition);
+					text-decoration: none;
+					min-width: 140px;
+					justify-content: center;
+					position: relative;
+					overflow: hidden;
+				}
+
+				.btn::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: -100%;
+					width: 100%;
+					height: 100%;
+					background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+					transition: left 0.5s;
+				}
+
+				.btn:hover::before {
+					left: 100%;
+				}
+
+				.btn-primary {
+					background: linear-gradient(135deg, var(--primary-color), #005a9e);
+					color: white;
+					box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
+				}
+
+				.btn-primary:hover {
+					background: linear-gradient(135deg, #005a9e, var(--primary-color));
+					transform: translateY(-2px);
+					box-shadow: 0 6px 16px rgba(0, 122, 204, 0.4);
+				}
+
+				.btn-secondary {
+					background: var(--vscode-button-secondaryBackground);
+					color: var(--vscode-button-secondaryForeground);
+					border: 2px solid var(--vscode-panel-border);
+				}
+
+				.btn-secondary:hover {
+					background: var(--vscode-button-secondaryHoverBackground);
+					border-color: var(--primary-color);
+					transform: translateY(-1px);
+				}
+
+				.btn-danger {
+					background: linear-gradient(135deg, var(--danger-color), #d32f2f);
+					color: white;
+				}
+
+				.btn-danger:hover {
+					background: linear-gradient(135deg, #d32f2f, var(--danger-color));
+					transform: translateY(-2px);
+				}
+
+				.btn-icon {
+					font-size: 18px;
+				}
+
+				.stats-grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+					gap: 16px;
+					margin-bottom: 24px;
+				}
+
+				.stat-card {
+					background: var(--vscode-textCodeBlock-background);
+					border: 1px solid var(--vscode-panel-border);
+					border-radius: var(--border-radius);
+					padding: 16px;
+					text-align: center;
+					transition: var(--transition);
+				}
+
+				.stat-card:hover {
+					border-color: var(--primary-color);
+					transform: translateY(-2px);
+					box-shadow: var(--shadow);
+				}
+
+				.stat-value {
+					font-size: 24px;
+					font-weight: 700;
+					color: var(--primary-color);
+					margin-bottom: 4px;
+				}
+
+				.stat-label {
+					font-size: 14px;
+					opacity: 0.8;
+				}
+
+				@keyframes slideInUp {
+					from {
+						opacity: 0;
+						transform: translateY(20px);
+					}
+					to {
+						opacity: 1;
+						transform: translateY(0);
+					}
+				}
+
+				@keyframes pulse {
+					0%, 100% { opacity: 1; }
+					50% { opacity: 0.7; }
+				}
+
+				.loading {
+					animation: pulse 1.5s infinite;
+				}
+
+				@media (max-width: 600px) {
+					.container {
+						padding: 16px;
+					}
+					
+					.actions {
+						flex-direction: column;
+					}
+					
+					.btn {
+						width: 100%;
+					}
+					
+					.stats-grid {
+						grid-template-columns: 1fr;
+					}
+				}
 			</style>
 		</head>
 		<body>
-			<div class="header">
-				<h2>🤖 GitCue: AI-Generated Commit Preview</h2>
-				<p>Review the AI-generated commit message and changes before committing.</p>
-			</div>
-			
-			<h3>📝 Commit Message:</h3>
-			<div class="commit-message" id="commitMessage">${message}</div>
-			
-			<h3>📊 Changes to be committed:</h3>
-			<div class="changes">${status}</div>
-			
-			<div class="checkbox-container">
-				<input type="checkbox" id="shouldPush" ${config.autoPush ? 'checked' : ''}>
-				<label for="shouldPush">Push to remote repository after commit</label>
-			</div>
-			
-			<div class="buttons">
-				<button class="primary" onclick="commit()">
-					<span class="icon">✅</span>Commit${config.autoPush ? ' & Push' : ''}
-				</button>
-				<button class="secondary" onclick="editMessage()">
-					<span class="icon">✏️</span>Edit Message
-				</button>
-				<button class="secondary" onclick="cancel()">
-					<span class="icon">❌</span>Cancel
-				</button>
+			<div class="container">
+				<div class="header">
+					<h1>🤖 GitCue AI Commit</h1>
+					<p>Review your AI-generated commit message and make any final adjustments</p>
+				</div>
+
+				<div class="stats-grid">
+					<div class="stat-card">
+						<div class="stat-value">${status.split('\n').filter(line => line.trim()).length}</div>
+						<div class="stat-label">Files Changed</div>
+					</div>
+					<div class="stat-card">
+						<div class="stat-value">${config.commitMode}</div>
+						<div class="stat-label">Commit Mode</div>
+					</div>
+					<div class="stat-card">
+						<div class="stat-value">${config.autoPush ? 'Yes' : 'No'}</div>
+						<div class="stat-label">Auto Push</div>
+					</div>
+				</div>
+
+				<div class="section">
+					<div class="section-title">
+						<span class="section-icon">💬</span>
+						Commit Message
+					</div>
+					<div class="commit-message-container">
+						<div class="commit-message" id="commitMessage">${message}</div>
+					</div>
+				</div>
+
+				<div class="section">
+					<div class="section-title">
+						<span class="section-icon">📋</span>
+						Changes to Commit
+					</div>
+					<div class="changes-container">
+						<div class="changes-header">
+							Modified Files
+						</div>
+						<div class="changes">${status}</div>
+					</div>
+				</div>
+
+				<div class="section">
+					<div class="section-title">
+						<span class="section-icon">⚙️</span>
+						Options
+					</div>
+					<div class="options-section">
+						<label class="checkbox-container" for="shouldPush">
+							<div class="custom-checkbox">
+								<input type="checkbox" id="shouldPush" ${config.autoPush ? 'checked' : ''}>
+								<span class="checkmark"></span>
+							</div>
+							<span class="checkbox-label">Push to remote repository after commit</span>
+						</label>
+					</div>
+				</div>
+
+				<div class="actions">
+					<button class="btn btn-primary" onclick="commit()">
+						<span class="btn-icon">🚀</span>
+						<span>Commit & ${config.autoPush ? 'Push' : 'Save'}</span>
+					</button>
+					<button class="btn btn-secondary" onclick="editMessage()">
+						<span class="btn-icon">✏️</span>
+						<span>Edit Message</span>
+					</button>
+					<button class="btn btn-secondary btn-danger" onclick="cancel()">
+						<span class="btn-icon">❌</span>
+						<span>Cancel</span>
+					</button>
+				</div>
 			</div>
 
 			<script>
 				const vscode = acquireVsCodeApi();
 				
+				// Add smooth interactions
+				document.addEventListener('DOMContentLoaded', function() {
+					// Animate elements on load
+					const sections = document.querySelectorAll('.section');
+					sections.forEach((section, index) => {
+						section.style.animationDelay = \`\${index * 0.1}s\`;
+					});
+
+					// Add click effects to buttons
+					const buttons = document.querySelectorAll('.btn');
+					buttons.forEach(button => {
+						button.addEventListener('click', function(e) {
+							const ripple = document.createElement('span');
+							const rect = button.getBoundingClientRect();
+							const size = Math.max(rect.width, rect.height);
+							const x = e.clientX - rect.left - size / 2;
+							const y = e.clientY - rect.top - size / 2;
+							
+							ripple.style.cssText = \`
+								position: absolute;
+								width: \${size}px;
+								height: \${size}px;
+								left: \${x}px;
+								top: \${y}px;
+								background: rgba(255, 255, 255, 0.3);
+								border-radius: 50%;
+								transform: scale(0);
+								animation: ripple 0.6s linear;
+								pointer-events: none;
+							\`;
+							
+							button.appendChild(ripple);
+							setTimeout(() => ripple.remove(), 600);
+						});
+					});
+				});
+
+				// Add ripple animation
+				const style = document.createElement('style');
+				style.textContent = \`
+					@keyframes ripple {
+						to {
+							transform: scale(4);
+							opacity: 0;
+						}
+					}
+				\`;
+				document.head.appendChild(style);
+				
 				function commit() {
 					const shouldPush = document.getElementById('shouldPush').checked;
 					const commitMessage = document.getElementById('commitMessage').textContent;
+					
+					// Add loading state
+					const btn = event.target.closest('.btn');
+					btn.classList.add('loading');
+					btn.disabled = true;
+					
 					vscode.postMessage({
 						action: 'commit',
 						commitMessage: commitMessage,
@@ -369,9 +785,24 @@ class GitCueExtension {
 				window.addEventListener('message', event => {
 					const message = event.data;
 					if (message.action === 'updateMessage') {
-						document.getElementById('commitMessage').textContent = message.message;
+						const messageEl = document.getElementById('commitMessage');
+						messageEl.textContent = message.message;
+						
+						// Add update animation
+						messageEl.style.animation = 'none';
+						messageEl.offsetHeight; // Trigger reflow
+						messageEl.style.animation = 'slideInUp 0.3s ease-out';
 					}
 				});
+
+				// Auto-resize commit message area
+				const commitMessage = document.getElementById('commitMessage');
+				if (commitMessage) {
+					commitMessage.addEventListener('input', function() {
+						this.style.height = 'auto';
+						this.style.height = this.scrollHeight + 'px';
+					});
+				}
 			</script>
 		</body>
 		</html>`;
@@ -509,54 +940,599 @@ class GitCueExtension {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<title>GitCue Dashboard</title>
 			<style>
+				:root {
+					--primary-color: #007acc;
+					--success-color: #4caf50;
+					--warning-color: #ff9800;
+					--danger-color: #f44336;
+					--info-color: #2196f3;
+					--border-radius: 12px;
+					--shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+					--transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+					--gradient-primary: linear-gradient(135deg, var(--primary-color), #005a9e);
+					--gradient-success: linear-gradient(135deg, var(--success-color), #388e3c);
+				}
+
+				* {
+					box-sizing: border-box;
+				}
+
 				body { 
 					font-family: var(--vscode-font-family); 
-					padding: 20px; 
+					padding: 0;
+					margin: 0;
 					color: var(--vscode-foreground);
+					background: var(--vscode-editor-background);
+					line-height: 1.6;
 				}
+
+				.dashboard-container {
+					max-width: 1200px;
+					margin: 0 auto;
+					padding: 24px;
+				}
+
+				.dashboard-header {
+					text-align: center;
+					padding: 32px 0;
+					margin-bottom: 32px;
+					background: var(--gradient-primary);
+					border-radius: var(--border-radius);
+					color: white;
+					box-shadow: var(--shadow);
+					position: relative;
+					overflow: hidden;
+				}
+
+				.dashboard-header::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					bottom: 0;
+					background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+					opacity: 0.3;
+				}
+
+				.dashboard-header h1 {
+					margin: 0 0 8px 0;
+					font-size: 36px;
+					font-weight: 700;
+					position: relative;
+					z-index: 1;
+				}
+
+				.dashboard-header p {
+					margin: 0;
+					font-size: 18px;
+					opacity: 0.9;
+					position: relative;
+					z-index: 1;
+				}
+
+				.status-overview {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+					gap: 24px;
+					margin-bottom: 32px;
+				}
+
 				.status-card {
 					background: var(--vscode-textCodeBlock-background);
-					border: 1px solid var(--vscode-panel-border);
-					border-radius: 5px;
-					padding: 15px;
-					margin: 10px 0;
+					border: 2px solid var(--vscode-panel-border);
+					border-radius: var(--border-radius);
+					padding: 24px;
+					box-shadow: var(--shadow);
+					transition: var(--transition);
+					position: relative;
+					overflow: hidden;
 				}
-				.status-indicator {
-					display: inline-block;
-					width: 10px;
-					height: 10px;
+
+				.status-card::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					width: 4px;
+					height: 100%;
+					background: var(--primary-color);
+					transition: var(--transition);
+				}
+
+				.status-card:hover {
+					border-color: var(--primary-color);
+					transform: translateY(-4px);
+					box-shadow: 0 8px 24px rgba(0, 122, 204, 0.2);
+				}
+
+				.status-card:hover::before {
+					width: 8px;
+				}
+
+				.card-header {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					margin-bottom: 16px;
+				}
+
+				.card-icon {
+					font-size: 24px;
+					width: 48px;
+					height: 48px;
 					border-radius: 50%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					background: var(--gradient-primary);
+					color: white;
+					box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+				}
+
+				.card-title {
+					font-size: 20px;
+					font-weight: 600;
+					margin: 0;
+				}
+
+				.status-item {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 12px 0;
+					border-bottom: 1px solid var(--vscode-panel-border);
+				}
+
+				.status-item:last-child {
+					border-bottom: none;
+				}
+
+				.status-label {
+					font-weight: 500;
+					color: var(--vscode-foreground);
+				}
+
+				.status-value {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					font-weight: 600;
+				}
+
+				.status-indicator {
+					width: 12px;
+					height: 12px;
+					border-radius: 50%;
+					display: inline-block;
+					animation: pulse 2s infinite;
+				}
+
+				.status-indicator.active {
+					background: var(--success-color);
+					box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+				}
+
+				.status-indicator.inactive {
+					background: var(--danger-color);
+					box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+				}
+
+				.status-indicator.warning {
+					background: var(--warning-color);
+					box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+				}
+
+				.config-grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+					gap: 24px;
+					margin-bottom: 32px;
+				}
+
+				.config-section {
+					background: var(--vscode-textCodeBlock-background);
+					border: 2px solid var(--vscode-panel-border);
+					border-radius: var(--border-radius);
+					padding: 24px;
+					box-shadow: var(--shadow);
+					transition: var(--transition);
+				}
+
+				.config-section:hover {
+					border-color: var(--primary-color);
+					transform: translateY(-2px);
+				}
+
+				.config-item {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 12px 0;
+					border-bottom: 1px solid var(--vscode-panel-border);
+				}
+
+				.config-item:last-child {
+					border-bottom: none;
+				}
+
+				.config-label {
+					font-weight: 500;
+					color: var(--vscode-foreground);
+				}
+
+				.config-value {
+					font-weight: 600;
+					padding: 4px 12px;
+					border-radius: 20px;
+					font-size: 14px;
+				}
+
+				.config-value.success {
+					background: rgba(76, 175, 80, 0.2);
+					color: var(--success-color);
+				}
+
+				.config-value.danger {
+					background: rgba(244, 67, 54, 0.2);
+					color: var(--danger-color);
+				}
+
+				.config-value.info {
+					background: rgba(33, 150, 243, 0.2);
+					color: var(--info-color);
+				}
+
+				.watch-patterns {
+					background: var(--vscode-textCodeBlock-background);
+					border: 2px solid var(--vscode-panel-border);
+					border-radius: var(--border-radius);
+					padding: 24px;
+					box-shadow: var(--shadow);
+				}
+
+				.patterns-list {
+					display: grid;
+					grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+					gap: 12px;
+					margin-top: 16px;
+				}
+
+				.pattern-item {
+					background: var(--vscode-input-background);
+					border: 1px solid var(--vscode-input-border);
+					border-radius: 8px;
+					padding: 12px 16px;
+					font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+					font-size: 14px;
+					transition: var(--transition);
+					position: relative;
+				}
+
+				.pattern-item:hover {
+					border-color: var(--primary-color);
+					background: var(--vscode-list-hoverBackground);
+				}
+
+				.pattern-item::before {
+					content: '📁';
 					margin-right: 8px;
 				}
-				.active { background-color: #4CAF50; }
-				.inactive { background-color: #f44336; }
+
+				.actions-section {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+					gap: 16px;
+					margin-top: 32px;
+				}
+
+				.action-btn {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					padding: 16px 24px;
+					background: var(--vscode-button-background);
+					color: var(--vscode-button-foreground);
+					border: none;
+					border-radius: var(--border-radius);
+					font-size: 16px;
+					font-weight: 600;
+					cursor: pointer;
+					transition: var(--transition);
+					text-decoration: none;
+					justify-content: center;
+					box-shadow: var(--shadow);
+				}
+
+				.action-btn:hover {
+					background: var(--vscode-button-hoverBackground);
+					transform: translateY(-2px);
+					box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+				}
+
+				.action-btn.primary {
+					background: var(--gradient-primary);
+					color: white;
+				}
+
+				.action-btn.success {
+					background: var(--gradient-success);
+					color: white;
+				}
+
+				.action-icon {
+					font-size: 20px;
+				}
+
+				@keyframes pulse {
+					0%, 100% { opacity: 1; }
+					50% { opacity: 0.6; }
+				}
+
+				@keyframes slideInUp {
+					from {
+						opacity: 0;
+						transform: translateY(30px);
+					}
+					to {
+						opacity: 1;
+						transform: translateY(0);
+					}
+				}
+
+				.animate-in {
+					animation: slideInUp 0.6s ease-out;
+				}
+
+				@media (max-width: 768px) {
+					.dashboard-container {
+						padding: 16px;
+					}
+					
+					.status-overview {
+						grid-template-columns: 1fr;
+					}
+					
+					.config-grid {
+						grid-template-columns: 1fr;
+					}
+					
+					.actions-section {
+						grid-template-columns: 1fr;
+					}
+				}
 			</style>
 		</head>
 		<body>
-			<h1>🎯 GitCue Dashboard</h1>
-			
-			<div class="status-card">
-				<h3>📊 Status</h3>
-				<p><span class="status-indicator ${this.isWatching ? 'active' : 'inactive'}"></span>
-				   Watching: ${this.isWatching ? 'Active' : 'Inactive'}</p>
-				<p>Mode: ${config.commitMode}</p>
-				<p>Auto Push: ${config.autoPush ? 'Enabled' : 'Disabled'}</p>
+			<div class="dashboard-container">
+				<div class="dashboard-header animate-in">
+					<h1>🎯 GitCue Dashboard</h1>
+					<p>Monitor your AI-powered Git automation in real-time</p>
+				</div>
+
+				<div class="status-overview">
+					<div class="status-card animate-in" style="animation-delay: 0.1s">
+						<div class="card-header">
+							<div class="card-icon">📊</div>
+							<h3 class="card-title">System Status</h3>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Watching Mode</span>
+							<div class="status-value">
+								<span class="status-indicator ${this.isWatching ? 'active' : 'inactive'}"></span>
+								${this.isWatching ? 'Active' : 'Inactive'}
+							</div>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Commit Mode</span>
+							<div class="status-value">
+								<span class="config-value info">${config.commitMode}</span>
+							</div>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Auto Push</span>
+							<div class="status-value">
+								<span class="config-value ${config.autoPush ? 'success' : 'danger'}">
+									${config.autoPush ? 'Enabled' : 'Disabled'}
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="status-card animate-in" style="animation-delay: 0.2s">
+						<div class="card-header">
+							<div class="card-icon">🔑</div>
+							<h3 class="card-title">API Configuration</h3>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Gemini API Key</span>
+							<div class="status-value">
+								<span class="config-value ${config.geminiApiKey ? 'success' : 'danger'}">
+									${config.geminiApiKey ? '✅ Configured' : '❌ Not Set'}
+								</span>
+							</div>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Rate Limit</span>
+							<div class="status-value">
+								<span class="config-value info">${config.maxCallsPerMinute} calls/min</span>
+							</div>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Buffer Time</span>
+							<div class="status-value">
+								<span class="config-value info">${config.bufferTimeSeconds}s</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="status-card animate-in" style="animation-delay: 0.3s">
+						<div class="card-header">
+							<div class="card-icon">⚡</div>
+							<h3 class="card-title">Performance</h3>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Debounce Time</span>
+							<div class="status-value">
+								<span class="config-value info">${config.debounceMs}ms</span>
+							</div>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Notifications</span>
+							<div class="status-value">
+								<span class="config-value ${config.enableNotifications ? 'success' : 'danger'}">
+									${config.enableNotifications ? 'Enabled' : 'Disabled'}
+								</span>
+							</div>
+						</div>
+						<div class="status-item">
+							<span class="status-label">Auto Start</span>
+							<div class="status-value">
+								<span class="config-value ${config.autoWatch ? 'success' : 'danger'}">
+									${config.autoWatch ? 'Enabled' : 'Disabled'}
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="watch-patterns animate-in" style="animation-delay: 0.4s">
+					<div class="card-header">
+						<div class="card-icon">📁</div>
+						<h3 class="card-title">Watch Patterns</h3>
+					</div>
+					<div class="patterns-list">
+						${config.watchPaths.map(pattern => `
+							<div class="pattern-item">${pattern}</div>
+						`).join('')}
+					</div>
+				</div>
+
+				<div class="actions-section">
+					<button class="action-btn primary" onclick="toggleWatching()">
+						<span class="action-icon">${this.isWatching ? '⏸️' : '▶️'}</span>
+						<span>${this.isWatching ? 'Stop Watching' : 'Start Watching'}</span>
+					</button>
+					<button class="action-btn" onclick="openSettings()">
+						<span class="action-icon">⚙️</span>
+						<span>Configure Settings</span>
+					</button>
+					<button class="action-btn success" onclick="manualCommit()">
+						<span class="action-icon">🚀</span>
+						<span>Manual Commit</span>
+					</button>
+					<button class="action-btn" onclick="showLogs()">
+						<span class="action-icon">📋</span>
+						<span>View Logs</span>
+					</button>
+				</div>
 			</div>
-			
-			<div class="status-card">
-				<h3>⚙️ Configuration</h3>
-				<p>API Key: ${config.geminiApiKey ? '✅ Configured' : '❌ Not Set'}</p>
-				<p>Debounce: ${config.debounceMs}ms</p>
-				<p>Buffer Time: ${config.bufferTimeSeconds}s</p>
-				<p>Rate Limit: ${config.maxCallsPerMinute} calls/min</p>
-			</div>
-			
-			<div class="status-card">
-				<h3>📁 Watch Patterns</h3>
-				<ul>
-					${config.watchPaths.map(pattern => `<li>${pattern}</li>`).join('')}
-				</ul>
-			</div>
+
+			<script>
+				const vscode = acquireVsCodeApi();
+
+				// Add smooth animations on load
+				document.addEventListener('DOMContentLoaded', function() {
+					const animatedElements = document.querySelectorAll('.animate-in');
+					animatedElements.forEach((element, index) => {
+						element.style.opacity = '0';
+						element.style.transform = 'translateY(30px)';
+						
+						setTimeout(() => {
+							element.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+							element.style.opacity = '1';
+							element.style.transform = 'translateY(0)';
+						}, index * 100);
+					});
+
+					// Add hover effects to cards
+					const cards = document.querySelectorAll('.status-card, .config-section');
+					cards.forEach(card => {
+						card.addEventListener('mouseenter', function() {
+							this.style.transform = 'translateY(-4px) scale(1.02)';
+						});
+						
+						card.addEventListener('mouseleave', function() {
+							this.style.transform = 'translateY(0) scale(1)';
+						});
+					});
+
+					// Auto-refresh status every 5 seconds
+					setInterval(refreshStatus, 5000);
+				});
+
+				function toggleWatching() {
+					vscode.postMessage({ action: 'toggleWatching' });
+				}
+
+				function openSettings() {
+					vscode.postMessage({ action: 'openSettings' });
+				}
+
+				function manualCommit() {
+					vscode.postMessage({ action: 'manualCommit' });
+				}
+
+				function showLogs() {
+					vscode.postMessage({ action: 'showLogs' });
+				}
+
+				function refreshStatus() {
+					vscode.postMessage({ action: 'refreshStatus' });
+				}
+
+				// Listen for status updates
+				window.addEventListener('message', event => {
+					const message = event.data;
+					switch (message.action) {
+						case 'statusUpdate':
+							updateStatus(message.data);
+							break;
+						case 'configUpdate':
+							updateConfig(message.data);
+							break;
+					}
+				});
+
+				function updateStatus(data) {
+					// Update status indicators with smooth transitions
+					const indicators = document.querySelectorAll('.status-indicator');
+					indicators.forEach(indicator => {
+						if (data.isWatching) {
+							indicator.classList.remove('inactive');
+							indicator.classList.add('active');
+						} else {
+							indicator.classList.remove('active');
+							indicator.classList.add('inactive');
+						}
+					});
+				}
+
+				function updateConfig(data) {
+					// Update configuration values
+					// This would be implemented to update the UI when config changes
+				}
+
+				// Add keyboard shortcuts
+				document.addEventListener('keydown', function(e) {
+					if (e.ctrlKey || e.metaKey) {
+						switch (e.key) {
+							case 'w':
+								e.preventDefault();
+								toggleWatching();
+								break;
+							case 'c':
+								e.preventDefault();
+								manualCommit();
+								break;
+							case ',':
+								e.preventDefault();
+								openSettings();
+								break;
+						}
+					}
+				});
+			</script>
 		</body>
 		</html>`;
 	}

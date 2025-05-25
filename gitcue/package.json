@@ -4,6 +4,11 @@
   "description": "GitCue — your Git helper extension for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.",
   "version": "0.0.1",
   "publisher": "sbeeredd04",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.100.0"
   },
