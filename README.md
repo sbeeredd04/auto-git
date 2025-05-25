@@ -380,15 +380,28 @@ auto-git> push origin feature-branch
 ✗ Git command failed: push origin feature-branch
   Error: fatal: The current branch has no upstream branch
 
-🤖 AI Suggestion:
+┌─────────────────────────────────────────────────────────────┐
+│  🤖 AI Suggestion                                           │
+│  Intelligent troubleshooting assistance                    │
+└─────────────────────────────────────────────────────────────┘
+
 To push the current branch and set the remote as upstream, use:
   git push --set-upstream origin feature-branch
 
-Would you like me to explain what these suggested commands do? (y/N)
+This will:
+1. Push your local commits to the remote repository
+2. Set up tracking between your local and remote branch
+3. Allow future pushes with just 'git push'
 
-🎓 Command Explanations:
-  git push --set-upstream origin feature-branch
-    → Uploads local commits and sets up tracking between local and remote branch
+🎓 Would you like me to explain what these suggested commands do? (y/N)
+
+┌─────────────────────────────────────────────────────────────┐
+│  🎓 Command Explanations                                    │
+│  Understanding the suggested Git commands                   │
+└─────────────────────────────────────────────────────────────┘
+
+git push --set-upstream origin feature-branch
+  → Uploads local commits and sets up tracking between local and remote branch
 
 💡 Pro tip: You can run these commands directly in this REPL!
 
@@ -396,31 +409,85 @@ auto-git> git push --set-upstream origin feature-branch
 ✓ Git command completed: push --set-upstream origin feature-branch
 ```
 
-### 🤖 Error-Driven AI Suggestions
+#### 🎨 Enhanced Interactive Experience
 
-When a Git error occurs, Auto-Git will:
+The REPL now features **beautiful, styled output** for all interactions:
 
-1. **Sanitize and analyze** the error message
-2. **Send to Gemini AI** for intelligent troubleshooting
-3. **Display actionable suggestions** with step-by-step solutions
-4. **Drop into interactive REPL** for immediate resolution
+**Styled Command Interface:**
+```bash
+┌─────────────────────────────────────────────────────────────┐
+│  Interactive Mode                                           │
+│  Auto-Git REPL activated - Enhanced with AI assistance     │
+└─────────────────────────────────────────────────────────────┘
 
-**Example Error Recovery Flow:**
+╭─────────────────────────────────────────────────╮
+│  AVAILABLE COMMANDS                             │
+│                                                 │
+│  retry         Retry the last failed operation │
+│  status        Show git status with colored    │
+│  git <cmd>     Execute any git command         │
+│  help          Show detailed help message      │
+│  exit          Exit REPL and continue          │
+╰─────────────────────────────────────────────────╯
 
-```text
-[file saved] 
-  ↓
-auto-git detects change → attempt commit
-  ↓
-[ERROR: merge conflict detected]
-  ↓
-🤖 AI Suggestion: "Resolve conflicts manually in src/app.js, then run: git add . && git commit"
-  ↓
-auto-git> status                  # Check what files have conflicts
-auto-git> reset --mixed HEAD~1    # Undo the problematic commit
-auto-git> retry                   # Try the operation again
-  ↓
-✅ commit & push succeed
+💡 Pro Tips:
+  • Run any git command directly (e.g., log, branch, stash)
+  • Failed commands get automatic AI analysis
+  • Ask for command explanations anytime
+
+auto-git>
+```
+
+**Styled Git Status Output:**
+```bash
+auto-git> status
+✓ Git status retrieved
+
+Repository Status:
+  M  src/app.js                     Modified
+  A  new-feature.js                 Added
+  D  old-file.js                    Deleted
+  ?? untracked.txt                  Untracked
+```
+
+**Styled Error Messages:**
+```bash
+auto-git> invalid-command
+┌─────────────────────────────────────────────────────────────┐
+│  Git Command Error                                          │
+│  Command not found: invalid-command                        │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  💡 Basic Troubleshooting                                   │
+│  Common diagnostic commands                                 │
+└─────────────────────────────────────────────────────────────┘
+
+╭─────────────────────────────────────────────────╮
+│  DIAGNOSTIC COMMANDS                            │
+│                                                 │
+│  git status        Check repository state       │
+│  git log --oneline Check recent commits         │
+│  git remote -v     Check remote configuration   │
+│  git branch -a     Check available branches     │
+╰─────────────────────────────────────────────────╯
+```
+
+**Styled AI Commit Messages:**
+```bash
+auto-git> commit
+✓ Changes detected
+🤖 Generating AI commit message...
+✓ AI commit message generated
+
+┌─────────────────────────────────────────────────────────────┐
+│  🤖 AI-Generated Commit Message                             │
+│  Proposed commit for your changes                          │
+└─────────────────────────────────────────────────────────────┘
+
+feat(auth): add user authentication with JWT tokens
+
+✅ Proceed with this commit message? (Y/n)
 ```
 
 ### Configuration

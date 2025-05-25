@@ -136,6 +136,83 @@ When any Git command fails, Auto-Git will:
 3. **Explain what commands do** (optional)
 4. **Offer educational context** for learning
 
+#### 🎨 Enhanced Interactive Experience
+
+The REPL now features **beautiful, styled output** for all interactions:
+
+**Styled Command Interface:**
+```bash
+┌─────────────────────────────────────────────────────────────┐
+│  Interactive Mode                                           │
+│  Auto-Git REPL activated - Enhanced with AI assistance     │
+└─────────────────────────────────────────────────────────────┘
+
+╭─────────────────────────────────────────────────╮
+│  AVAILABLE COMMANDS                             │
+│                                                 │
+│  retry         Retry the last failed operation │
+│  status        Show git status with colored    │
+│  git <cmd>     Execute any git command         │
+│  help          Show detailed help message      │
+│  exit          Exit REPL and continue          │
+╰─────────────────────────────────────────────────╯
+
+💡 Pro Tips:
+  • Run any git command directly (e.g., log, branch, stash)
+  • Failed commands get automatic AI analysis
+  • Ask for command explanations anytime
+
+auto-git>
+```
+
+**Styled AI Error Recovery:**
+```bash
+auto-git> push origin feature
+✗ Git command failed: push origin feature
+  Error: fatal: The current branch has no upstream branch
+
+┌─────────────────────────────────────────────────────────────┐
+│  🤖 AI Suggestion                                           │
+│  Intelligent troubleshooting assistance                    │
+└─────────────────────────────────────────────────────────────┘
+
+To push the current branch and set the remote as upstream, use:
+  git push --set-upstream origin feature
+
+🎓 Would you like me to explain what these suggested commands do? (y/N)
+
+┌─────────────────────────────────────────────────────────────┐
+│  🎓 Command Explanations                                    │
+│  Understanding the suggested Git commands                   │
+└─────────────────────────────────────────────────────────────┘
+
+git push --set-upstream origin feature
+  → Uploads local commits and sets up tracking between local and remote branch
+
+💡 Pro tip: You can run these commands directly in this REPL!
+```
+
+**Styled Status and Commit Messages:**
+```bash
+auto-git> status
+✓ Git status retrieved
+
+Repository Status:
+  M  src/app.js                     Modified
+  A  new-feature.js                 Added
+  ?? untracked.txt                  Untracked
+
+auto-git> commit
+┌─────────────────────────────────────────────────────────────┐
+│  🤖 AI-Generated Commit Message                             │
+│  Proposed commit for your changes                          │
+└─────────────────────────────────────────────────────────────┘
+
+feat(auth): add user authentication with JWT tokens
+
+✅ Proceed with this commit message? (Y/n)
+```
+
 ### 4. 🤖 Error-Driven AI Suggestions
 
 #### Intelligent Error Analysis
