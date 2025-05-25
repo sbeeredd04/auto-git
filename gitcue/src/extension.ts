@@ -68,18 +68,34 @@ class GitCueExtension {
 		if (this.isWatching) {
 			this.statusBarItem.text = `$(eye) GitCue: Watching`;
 			this.statusBarItem.tooltip = 'GitCue is actively watching for file changes. Click to open dashboard.';
-			this.statusBarItem.backgroundColor = undefined; // Use default success color
+			// Clear any background/color styling for active state
+			if (this.hasBackgroundColorSupport()) {
+				this.statusBarItem.backgroundColor = undefined;
+			}
 			this.statusBarItem.color = undefined;
 		} else {
 			this.statusBarItem.text = `$(eye-closed) GitCue: Idle`;
 			this.statusBarItem.tooltip = 'GitCue is not watching. Click to open dashboard or start watching.';
-			this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-			this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
+			// Only use background colors if supported (VS Code >= 1.53.0)
+			if (this.hasBackgroundColorSupport()) {
+				this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+				this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
+			} else {
+				// Fallback for older VS Code versions - use text styling
+				this.statusBarItem.text = `$(warning) GitCue: Idle`;
+			}
 		}
 		
 		// Add command to open dashboard when clicked
 		this.statusBarItem.command = 'gitcue.openDashboard';
 		this.statusBarItem.show();
+	}
+
+	private hasBackgroundColorSupport(): boolean {
+		// backgroundColor API was added in VS Code 1.53.0
+		const version = vscode.version;
+		const [major, minor] = version.split('.').map(Number);
+		return major > 1 || (major === 1 && minor >= 53);
 	}
 
 	private registerCommands() {
