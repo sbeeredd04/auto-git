@@ -1,6 +1,6 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "3.9.1",
+  "version": "3.9.2",
   "description": "AI-powered Git automation with intelligent commit decisions using Gemini function calling, smart diff optimization, push control, and enhanced interactive terminal session with persistent command history",
   "main": "bin/auto-git.js",
   "type": "module",

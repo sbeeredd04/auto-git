@@ -513,4 +513,315 @@ When creating new releases:
    - **Deprecated** for soon-to-be removed features
    - **Removed** for now removed features
    - **Fixed** for any bug fixes
-   - **Security** for vulnerability fixes 
+   - **Security** for vulnerability fixes
+
+## [3.9.2] - 2025-01-25
+
+### 🛠️ Fixed
+- **Buffer Period Cancellation**: Fixed issue where 'c' key wouldn't cancel commits in intelligent mode
+- **Enhanced Cancellation Controls**: Added multiple ways to cancel pending commits:
+  - `c` key (backward compatibility)
+  - `x` key (alternative)
+  - `Ctrl+X` (keyboard shortcut)
+- **Unified Buffer Period**: Both intelligent and periodic modes now use the buffer period system
+- **VS Code Extension**: Updated GitCue extension to support new cancellation methods
+
+### 🎯 Improved
+- **User Experience**: More intuitive cancellation with multiple key options
+- **Safety**: Enhanced protection against accidental commits in all modes
+- **Consistency**: Unified behavior between intelligent and periodic commit modes
+- **Documentation**: Updated help messages to show all cancellation options
+
+### 📦 Dependencies
+- **GitCue Extension**: Updated to version 0.0.2 with improved buffer notifications
+- **Auto-Git Package**: Published version 3.9.2 to npm with fixes
+
+## [3.9.1] - 2025-01-24
+
+### ✨ Added
+- **GitCue VS Code Extension**: Complete VS Code integration with modern dashboard
+- **Buffer Period Protection**: 30-second cancellation window for all commits
+- **Modern Dashboard**: Redesigned UI with professional styling and animations
+- **Enhanced Safety**: Multiple cancellation methods and visual feedback
+
+### 🎨 UI/UX Improvements
+- **Clean Interface**: Professional, minimalist design
+- **Real-time Status**: Live monitoring of system configuration
+- **Responsive Layout**: Works on all screen sizes
+- **Dark Theme Support**: Seamless VS Code theme integration
+
+### 🔧 Technical Improvements
+- **VS Code API**: Full integration with VS Code extensibility API
+- **Status Bar**: Real-time indicators and quick access
+- **Command Palette**: All features accessible via Ctrl+Shift+P
+- **Keyboard Shortcuts**: Quick access to all functions
+
+## [3.9.0] - 2025-01-20
+
+### ✨ Added
+- **Intelligent Commit Mode**: AI analyzes changes and decides when to commit
+- **Enhanced Function Calling**: Improved Gemini AI integration with structured analysis
+- **Commit Significance Analysis**: AI evaluates the importance of changes
+- **Buffer Period**: Configurable cancellation window for intelligent commits
+- **Rate Limiting Improvements**: Better API call management and optimization
+
+### 🎯 Improved
+- **AI Decision Making**: More sophisticated analysis of code changes
+- **User Control**: Enhanced ability to cancel and control commits
+- **Performance**: Optimized diff processing and API usage
+- **Reliability**: Better error handling and fallback mechanisms
+
+### 🔧 Technical Changes
+- **Function Calling**: Structured AI responses for better decision making
+- **Diff Optimization**: Improved change detection and analysis
+- **Configuration**: Enhanced settings for intelligent mode
+- **Logging**: Better debugging and monitoring capabilities
+
+## [3.8.1] - 2025-01-15
+
+### 🛠️ Fixed
+- **Terminal Compatibility**: Improved cross-platform terminal support
+- **Input Handling**: Better keyboard input processing
+- **Session Persistence**: Enhanced command history management
+- **Error Recovery**: Improved error handling and user feedback
+
+### 🎯 Improved
+- **User Experience**: Smoother interactive sessions
+- **Performance**: Faster command processing and response times
+- **Reliability**: More stable operation across different environments
+- **Documentation**: Updated guides and troubleshooting information
+
+## [3.8.0] - 2025-01-10
+
+### ✨ Added
+- **Interactive Terminal Session**: Enhanced REPL with persistent command history
+- **Arrow Key Navigation**: Navigate through command history with arrow keys
+- **Syntax Highlighting**: Git command syntax highlighting in terminal
+- **Session Persistence**: Command history saved across sessions
+- **Enhanced UX**: Improved terminal interface with better formatting
+
+### 🎯 Improved
+- **Terminal Experience**: More intuitive and powerful interactive mode
+- **Command History**: Persistent storage and easy navigation
+- **Visual Feedback**: Better formatting and syntax highlighting
+- **Cross-Platform**: Improved compatibility across operating systems
+
+### 🔧 Technical Changes
+- **Input Sanitization**: Enhanced security for terminal input
+- **Memory Management**: Optimized command history storage
+- **Terminal Compatibility**: Better support for different terminal types
+- **Error Handling**: Improved error messages and recovery
+
+## [3.7.1] - 2025-01-05
+
+### 🛠️ Fixed
+- **Git Repository Detection**: Improved validation of Git repositories
+- **Error Messages**: More descriptive error reporting
+- **Configuration Loading**: Better handling of missing config files
+- **Cross-Platform**: Fixed path handling on Windows systems
+
+### 🎯 Improved
+- **Reliability**: More stable operation in various environments
+- **User Feedback**: Clearer error messages and guidance
+- **Performance**: Faster startup and operation
+- **Documentation**: Updated installation and usage guides
+
+## [3.7.0] - 2025-01-01
+
+### ✨ Added
+- **Enhanced Logging**: Comprehensive logging system with multiple levels
+- **Configuration Validation**: Automatic validation of configuration settings
+- **Improved Error Handling**: Better error recovery and user guidance
+- **Performance Monitoring**: Built-in performance tracking and optimization
+
+### 🎯 Improved
+- **User Experience**: More informative feedback and guidance
+- **Reliability**: Better error handling and recovery mechanisms
+- **Performance**: Optimized operations and reduced resource usage
+- **Maintainability**: Cleaner code structure and better documentation
+
+## [3.6.3] - 2024-12-25
+
+### 🛠️ Fixed
+- **API Rate Limiting**: Fixed rate limiting implementation
+- **Configuration Parsing**: Improved config file handling
+- **Git Operations**: Better error handling for Git commands
+- **Cross-Platform**: Fixed compatibility issues on different OS
+
+### 🎯 Improved
+- **Stability**: More reliable operation under various conditions
+- **Performance**: Optimized API calls and Git operations
+- **User Experience**: Better error messages and feedback
+- **Documentation**: Updated examples and troubleshooting guides
+
+## [3.6.2] - 2024-12-20
+
+### 🛠️ Fixed
+- **File Watching**: Improved file system event handling
+- **Memory Usage**: Optimized memory consumption during long runs
+- **Git Status**: Better handling of Git repository states
+- **Error Recovery**: Improved error handling and recovery
+
+### 🎯 Improved
+- **Performance**: Faster file change detection and processing
+- **Reliability**: More stable long-running operations
+- **Resource Usage**: Optimized CPU and memory consumption
+- **User Feedback**: Better progress indicators and status updates
+
+## [3.6.1] - 2024-12-15
+
+### 🛠️ Fixed
+- **Dependency Issues**: Resolved package dependency conflicts
+- **Installation**: Fixed npm installation issues
+- **Configuration**: Better handling of default configurations
+- **Documentation**: Updated installation and setup guides
+
+### 🎯 Improved
+- **Package Management**: Cleaner dependency tree
+- **Installation Experience**: Smoother setup process
+- **Default Settings**: Better out-of-the-box experience
+- **User Onboarding**: Improved getting started documentation
+
+## [3.6.0] - 2024-12-10
+
+### ✨ Added
+- **Advanced Configuration**: More granular control over behavior
+- **Custom Patterns**: User-defined file watching patterns
+- **Webhook Support**: Integration with external services
+- **Backup and Restore**: Configuration backup and restore functionality
+
+### 🎯 Improved
+- **Flexibility**: More customization options for different workflows
+- **Integration**: Better support for CI/CD pipelines
+- **Backup**: Safe configuration management
+- **Documentation**: Comprehensive configuration guides
+
+## [3.5.0] - 2024-12-05
+
+### ✨ Added
+- **Multi-Repository Support**: Handle multiple Git repositories
+- **Branch Awareness**: Branch-specific commit strategies
+- **Conflict Resolution**: Automatic merge conflict detection
+- **Remote Synchronization**: Enhanced remote repository handling
+
+### 🎯 Improved
+- **Workflow Support**: Better support for complex Git workflows
+- **Branch Management**: Intelligent branch-aware operations
+- **Conflict Handling**: Proactive conflict detection and resolution
+- **Remote Operations**: More reliable push and pull operations
+
+## [3.4.0] - 2024-11-30
+
+### ✨ Added
+- **Plugin System**: Extensible plugin architecture
+- **Custom Hooks**: Pre and post-commit hooks
+- **Template System**: Customizable commit message templates
+- **Integration APIs**: APIs for external tool integration
+
+### 🎯 Improved
+- **Extensibility**: Plugin system for custom functionality
+- **Customization**: Flexible commit message formatting
+- **Integration**: Better support for external tools
+- **Developer Experience**: Enhanced APIs and documentation
+
+## [3.3.0] - 2024-11-25
+
+### ✨ Added
+- **Smart Batching**: Intelligent grouping of related changes
+- **Commit Scheduling**: Time-based commit scheduling
+- **Change Analysis**: Deep analysis of code changes
+- **Quality Gates**: Automated quality checks before commits
+
+### 🎯 Improved
+- **Intelligence**: Smarter change detection and grouping
+- **Quality**: Built-in quality assurance
+- **Scheduling**: Flexible commit timing options
+- **Analysis**: Better understanding of code changes
+
+## [3.2.0] - 2024-11-20
+
+### ✨ Added
+- **Interactive Mode**: Enhanced interactive commit selection
+- **Diff Visualization**: Better diff display and analysis
+- **Commit Preview**: Preview commits before execution
+- **Rollback Support**: Easy commit rollback functionality
+
+### 🎯 Improved
+- **User Control**: More granular control over commits
+- **Visualization**: Better display of changes and diffs
+- **Safety**: Preview and rollback capabilities
+- **User Experience**: More intuitive interactive mode
+
+## [3.1.0] - 2024-11-15
+
+### ✨ Added
+- **Configuration Profiles**: Multiple configuration profiles
+- **Environment Detection**: Automatic environment-specific settings
+- **Logging Enhancements**: Structured logging with multiple outputs
+- **Performance Metrics**: Built-in performance monitoring
+
+### 🎯 Improved
+- **Flexibility**: Profile-based configuration management
+- **Adaptability**: Environment-aware behavior
+- **Observability**: Better logging and monitoring
+- **Performance**: Performance tracking and optimization
+
+## [3.0.1] - 2024-11-10
+
+### 🛠️ Fixed
+- **Initial Release Issues**: Fixed critical bugs from 3.0.0
+- **Documentation**: Updated and corrected documentation
+- **Dependencies**: Resolved dependency version conflicts
+- **Installation**: Fixed npm package installation issues
+
+### 🎯 Improved
+- **Stability**: More stable initial experience
+- **Documentation**: Clearer setup and usage instructions
+- **Package Management**: Cleaner dependency management
+- **User Onboarding**: Smoother getting started experience
+
+## [3.0.0] - 2024-11-05
+
+### 🎉 Major Release
+- **Complete Rewrite**: Rebuilt from ground up with modern architecture
+- **AI Integration**: Google Gemini AI for intelligent commit messages
+- **File Watching**: Real-time file change monitoring
+- **Interactive CLI**: Enhanced command-line interface
+- **Configuration System**: Flexible configuration management
+
+### ✨ Added
+- **Gemini AI**: AI-powered commit message generation
+- **Auto-Watch**: Automatic file change detection
+- **Interactive Mode**: Enhanced user interaction
+- **Configuration**: Comprehensive configuration system
+- **Cross-Platform**: Full Windows, macOS, and Linux support
+
+### 🎯 Improved
+- **Performance**: Significantly faster operations
+- **Reliability**: More stable and robust operation
+- **User Experience**: Intuitive and user-friendly interface
+- **Documentation**: Comprehensive guides and examples
+
+### 🔧 Technical Changes
+- **Modern Architecture**: Clean, modular codebase
+- **TypeScript**: Full TypeScript implementation
+- **Testing**: Comprehensive test suite
+- **CI/CD**: Automated testing and deployment
+
+---
+
+## Legacy Versions
+
+### [1.2.0] - 2024-10-01
+- Basic Git automation functionality
+- Simple commit message generation
+- File watching capabilities
+
+### [1.0.0] - 2024-09-01
+- Initial release
+- Basic Git operations
+- Simple CLI interface
+
+---
+
+**Note**: This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format and [Semantic Versioning](https://semver.org/spec/v2.0.0.html). 
