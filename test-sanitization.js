@@ -11,18 +11,14 @@ function sanitizeInput(input) {
     const currentChar = input[i];
     result += currentChar;
     
-    // For spaces, don't remove duplicates (preserve spacing)
-    if (currentChar === ' ') {
-      i += 1;
-      continue;
+    // Skip all consecutive duplicates of the current character (but not spaces)
+    if (currentChar !== ' ') {
+      while (i + 1 < input.length && input[i + 1] === currentChar) {
+        i++; // Skip the duplicate
+      }
     }
     
-    // Skip consecutive duplicates of the current character
-    while (i + 1 < input.length && input[i + 1] === currentChar) {
-      i += 1; // Skip the duplicate
-    }
-    
-    i += 1; // Move to next different character
+    i++; // Move to next different character
   }
   
   return result.trim();
@@ -30,11 +26,11 @@ function sanitizeInput(input) {
 
 // Test cases
 const testCases = [
-  { input: 'ppuullll', expected: 'pul' },
+  { input: 'ppuullll', expected: 'pull' },
   { input: 'ggiitt', expected: 'git' },
   { input: 'ssttaattuuss', expected: 'status' },
-  { input: 'git pull', expected: 'git pul' },
-  { input: 'hheelllloo', expected: 'helo' },
+  { input: 'git pull', expected: 'git pull' },
+  { input: 'hheelllloo', expected: 'hello' },
   { input: 'aaabbbbcccc', expected: 'abc' },
   { input: 'normal', expected: 'normal' },
   { input: '', expected: '' },
@@ -42,8 +38,9 @@ const testCases = [
   { input: 'aa', expected: 'a' },
   { input: 'aaa', expected: 'a' },
   { input: 'aaaa', expected: 'a' },
-  { input: 'git  status', expected: 'git  status' }, // preserve spaces
-  { input: 'ppuullll  --hhaarrdd', expected: 'pul  -hard' }
+  { input: 'tt', expected: 't' },
+  { input: 'tttt', expected: 't' },
+  { input: 'git  status', expected: 'git  status' } // preserve multiple spaces
 ];
 
 console.log('Testing Input Sanitization Algorithm\n');
