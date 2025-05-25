@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Seamless Transitions**: Smooth switching between command execution and input
 - **Consistent Controls**: Global keyboard shortcuts work reliably after any operation
 
-## [3.6.2] - 2024-12-19
+## [3.6.3] - 2024-12-19
 
 ### 🚀 Added
 - **Full Terminal Pass-Through**: REPL now executes any command directly in terminal
