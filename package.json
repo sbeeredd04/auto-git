@@ -1,6 +1,6 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with interactive controls and error-driven AI suggestions",
   "main": "bin/auto-git.js",
   "type": "module",
