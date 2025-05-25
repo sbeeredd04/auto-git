@@ -79,6 +79,11 @@ nvm install node
 npm install -g @sbeeredd04/auto-git
 ```
 
+**Worst case scenario - you can use sudo:**
+```bash
+sudo npm install -g @sbeeredd04/auto-git@latest
+```
+
 ### 2. Get a Gemini API Key
 
 1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
