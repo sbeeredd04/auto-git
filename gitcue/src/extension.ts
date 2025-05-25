@@ -19,6 +19,12 @@ interface GitCueConfig {
 	autoWatch: boolean;
 }
 
+interface BufferNotification {
+	panel: vscode.WebviewPanel;
+	timer: NodeJS.Timeout;
+	cancelled: boolean;
+}
+
 class GitCueExtension {
 	private statusBarItem: vscode.StatusBarItem;
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
@@ -26,6 +32,7 @@ class GitCueExtension {
 	private outputChannel: vscode.OutputChannel;
 	private statusProvider: GitCueStatusProvider;
 	private debounceTimer: NodeJS.Timeout | undefined;
+	private bufferNotification: BufferNotification | undefined;
 
 	constructor(private context: vscode.ExtensionContext) {
 		this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -68,34 +75,16 @@ class GitCueExtension {
 		if (this.isWatching) {
 			this.statusBarItem.text = `$(eye) GitCue: Watching`;
 			this.statusBarItem.tooltip = 'GitCue is actively watching for file changes. Click to open dashboard.';
-			// Clear any background/color styling for active state
-			if (this.hasBackgroundColorSupport()) {
-				this.statusBarItem.backgroundColor = undefined;
-			}
 			this.statusBarItem.color = undefined;
 		} else {
 			this.statusBarItem.text = `$(eye-closed) GitCue: Idle`;
 			this.statusBarItem.tooltip = 'GitCue is not watching. Click to open dashboard or start watching.';
-			// Only use background colors if supported (VS Code >= 1.53.0)
-			if (this.hasBackgroundColorSupport()) {
-				this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-				this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
-			} else {
-				// Fallback for older VS Code versions - use text styling
-				this.statusBarItem.text = `$(warning) GitCue: Idle`;
-			}
+			this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
 		}
 		
 		// Add command to open dashboard when clicked
 		this.statusBarItem.command = 'gitcue.openDashboard';
 		this.statusBarItem.show();
-	}
-
-	private hasBackgroundColorSupport(): boolean {
-		// backgroundColor API was added in VS Code 1.53.0
-		const version = vscode.version;
-		const [major, minor] = version.split('.').map(Number);
-		return major > 1 || (major === 1 && minor >= 53);
 	}
 
 	private registerCommands() {
@@ -105,7 +94,8 @@ class GitCueExtension {
 			vscode.commands.registerCommand('gitcue.openDashboard', () => this.openDashboard()),
 			vscode.commands.registerCommand('gitcue.reset', () => this.resetCommits()),
 			vscode.commands.registerCommand('gitcue.configure', () => this.openSettings()),
-			vscode.commands.registerCommand('gitcue.showStatus', () => this.showStatus())
+			vscode.commands.registerCommand('gitcue.showStatus', () => this.showStatus()),
+			vscode.commands.registerCommand('gitcue.cancelCommit', () => this.cancelBufferedCommit())
 		];
 
 		commands.forEach(command => this.context.subscriptions.push(command));
@@ -174,17 +164,415 @@ class GitCueExtension {
 		}
 	}
 
+	private async commitWithBuffer(workspacePath: string, config: GitCueConfig) {
+		try {
+			// Get git status and diff
+			const { stdout: status } = await execAsync('git status --porcelain', { 
+				cwd: workspacePath 
+			});
+			
+			if (!status.trim()) {
+				this.outputChannel.appendLine('No changes to commit');
+				return;
+			}
+
+			// Generate commit message
+			const commitMessage = await this.generateCommitMessage(workspacePath, config);
+			
+			// Show buffer notification
+			await this.showBufferNotification(commitMessage, status, workspacePath, config);
+
+		} catch (error) {
+			this.outputChannel.appendLine(`Error in commitWithBuffer: ${error}`);
+			if (config.enableNotifications) {
+				vscode.window.showErrorMessage(`GitCue Error: ${error}`);
+			}
+		}
+	}
+
+	private async showBufferNotification(message: string, status: string, workspacePath: string, config: GitCueConfig): Promise<void> {
+		return new Promise((resolve) => {
+			// Cancel any existing buffer notification
+			if (this.bufferNotification) {
+				this.cancelBufferedCommit();
+			}
+
+			const panel = vscode.window.createWebviewPanel(
+				'gitcueBuffer',
+				'⏰ GitCue Commit Buffer',
+				vscode.ViewColumn.Beside,
+				{
+					enableScripts: true,
+					retainContextWhenHidden: true
+				}
+			);
+
+			let timeLeft = config.bufferTimeSeconds;
+			let cancelled = false;
+
+			const updatePanel = () => {
+				panel.webview.html = this.getBufferNotificationHtml(message, status, timeLeft, config);
+			};
+
+			updatePanel();
+
+			const timer = setInterval(() => {
+				timeLeft--;
+				if (timeLeft <= 0 || cancelled) {
+					clearInterval(timer);
+					panel.dispose();
+					
+					if (!cancelled) {
+						// Proceed with commit
+						this.executeCommit(message, workspacePath, config, config.autoPush)
+							.finally(() => resolve());
+					} else {
+						resolve();
+					}
+					
+			this.bufferNotification = undefined;
+				} else {
+					updatePanel();
+				}
+			}, 1000);
+
+			// Handle messages from the buffer panel
+			panel.webview.onDidReceiveMessage((msg) => {
+				if (msg.action === 'cancel') {
+					cancelled = true;
+					clearInterval(timer);
+					panel.dispose();
+					this.bufferNotification = undefined;
+					
+					if (config.enableNotifications) {
+						vscode.window.showInformationMessage('🚫 GitCue: Commit cancelled');
+					}
+					this.outputChannel.appendLine('Commit cancelled by user');
+					resolve();
+				}
+			});
+
+			// Handle panel disposal
+			panel.onDidDispose(() => {
+				if (!cancelled && timeLeft > 0) {
+					cancelled = true;
+					clearInterval(timer);
+					this.bufferNotification = undefined;
+					resolve();
+				}
+			});
+
+			this.bufferNotification = { panel, timer, cancelled: false };
+		});
+	}
+
+	private getBufferNotificationHtml(message: string, status: string, timeLeft: number, config: GitCueConfig): string {
+		const fileCount = status.split('\n').filter(line => line.trim()).length;
+		
+		return `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>GitCue Commit Buffer</title>
+			<style>
+				:root {
+					--primary: #007acc;
+					--danger: #f44336;
+					--warning: #ff9800;
+					--success: #4caf50;
+					--bg-primary: var(--vscode-editor-background);
+					--bg-secondary: var(--vscode-sideBar-background);
+					--text-primary: var(--vscode-foreground);
+					--text-secondary: var(--vscode-descriptionForeground);
+					--border: var(--vscode-panel-border);
+					--radius: 12px;
+					--shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+				}
+
+				* {
+					margin: 0;
+					padding: 0;
+					box-sizing: border-box;
+				}
+
+				body {
+					font-family: var(--vscode-font-family);
+					background: var(--bg-primary);
+					color: var(--text-primary);
+					line-height: 1.6;
+					overflow: hidden;
+				}
+
+				.container {
+					height: 100vh;
+					display: flex;
+					flex-direction: column;
+					padding: 24px;
+					background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+				}
+
+				.header {
+					text-align: center;
+					margin-bottom: 32px;
+					animation: slideDown 0.6s ease-out;
+				}
+
+				.timer-circle {
+					width: 120px;
+					height: 120px;
+					margin: 0 auto 16px;
+					position: relative;
+					background: conic-gradient(var(--warning) ${(timeLeft / config.bufferTimeSeconds) * 360}deg, var(--border) 0deg);
+					border-radius: 50%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					animation: pulse 2s infinite;
+				}
+
+				.timer-inner {
+					width: 100px;
+					height: 100px;
+					background: var(--bg-primary);
+					border-radius: 50%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					font-size: 28px;
+					font-weight: 700;
+					color: var(--warning);
+				}
+
+				.title {
+					font-size: 24px;
+					font-weight: 600;
+					margin-bottom: 8px;
+					color: var(--text-primary);
+				}
+
+				.subtitle {
+					font-size: 16px;
+					color: var(--text-secondary);
+					margin-bottom: 24px;
+				}
+
+				.commit-info {
+					background: var(--bg-secondary);
+					border: 1px solid var(--border);
+					border-radius: var(--radius);
+					padding: 24px;
+					margin-bottom: 24px;
+					animation: slideUp 0.6s ease-out 0.2s both;
+				}
+
+				.commit-message {
+					font-size: 16px;
+					font-weight: 500;
+					margin-bottom: 16px;
+					padding: 16px;
+					background: var(--vscode-textCodeBlock-background);
+					border-radius: 8px;
+					border-left: 4px solid var(--primary);
+				}
+
+				.file-stats {
+					display: flex;
+					align-items: center;
+					gap: 16px;
+					font-size: 14px;
+					color: var(--text-secondary);
+				}
+
+				.stat {
+					display: flex;
+					align-items: center;
+					gap: 6px;
+				}
+
+				.actions {
+					margin-top: auto;
+					display: flex;
+					gap: 16px;
+					animation: slideUp 0.6s ease-out 0.4s both;
+				}
+
+				.btn {
+					flex: 1;
+					padding: 16px 24px;
+					border: none;
+					border-radius: var(--radius);
+					font-size: 16px;
+					font-weight: 600;
+					cursor: pointer;
+					transition: all 0.3s ease;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 8px;
+				}
+
+				.btn-cancel {
+					background: var(--danger);
+					color: white;
+				}
+
+				.btn-cancel:hover {
+					background: #d32f2f;
+					transform: translateY(-2px);
+					box-shadow: var(--shadow);
+				}
+
+				.progress-bar {
+					width: 100%;
+					height: 4px;
+					background: var(--border);
+					border-radius: 2px;
+					overflow: hidden;
+					margin: 16px 0;
+				}
+
+				.progress-fill {
+					height: 100%;
+					background: linear-gradient(90deg, var(--warning), var(--danger));
+					border-radius: 2px;
+					transition: width 1s linear;
+					width: ${(timeLeft / config.bufferTimeSeconds) * 100}%;
+				}
+
+				@keyframes slideDown {
+					from { opacity: 0; transform: translateY(-30px); }
+					to { opacity: 1; transform: translateY(0); }
+				}
+
+				@keyframes slideUp {
+					from { opacity: 0; transform: translateY(30px); }
+					to { opacity: 1; transform: translateY(0); }
+				}
+
+				@keyframes pulse {
+					0%, 100% { opacity: 1; }
+					50% { opacity: 0.6; }
+				}
+
+				.animate-in {
+					animation: slideUp 0.6s ease-out;
+				}
+
+				.warning-text {
+					color: var(--warning);
+					font-weight: 600;
+				}
+
+				.keyboard-hint {
+					text-align: center;
+					font-size: 14px;
+					color: var(--text-secondary);
+					margin-top: 16px;
+					opacity: 0.8;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<div class="header">
+					<div class="timer-circle">
+						<div class="timer-inner">${timeLeft}</div>
+					</div>
+					<h1 class="title">⏰ Commit Buffer Period</h1>
+					<p class="subtitle">GitCue is about to commit your changes</p>
+				</div>
+
+				<div class="commit-info">
+					<div class="commit-message">
+						💬 ${message}
+					</div>
+					<div class="file-stats">
+						<div class="stat">
+							<span>📁</span>
+							<span>${fileCount} files changed</span>
+						</div>
+						<div class="stat">
+							<span>🔄</span>
+							<span>${config.commitMode} mode</span>
+						</div>
+						<div class="stat">
+							<span>🚀</span>
+							<span>${config.autoPush ? 'Auto-push enabled' : 'No auto-push'}</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="progress-bar">
+					<div class="progress-fill"></div>
+				</div>
+
+				<p class="warning-text" style="text-align: center; margin-bottom: 16px;">
+					⚠️ Committing in ${timeLeft} seconds...
+				</p>
+
+				<div class="actions">
+					<button class="btn btn-primary" onclick="cancelCommit()">
+						<span>��</span>
+						<span>Cancel Commit</span>
+					</button>
+				</div>
+
+				<div class="keyboard-hint">
+					Press 'c' to cancel or click the button above
+				</div>
+			</div>
+
+			<script>
+				const vscode = acquireVsCodeApi();
+
+				function cancelCommit() {
+					vscode.postMessage({ action: 'cancel' });
+				}
+
+				// Listen for keyboard shortcuts
+				document.addEventListener('keydown', function(e) {
+					if (e.key.toLowerCase() === 'c') {
+						e.preventDefault();
+						cancelCommit();
+					}
+				});
+
+				// Auto-focus for keyboard input
+				document.body.focus();
+			</script>
+		</body>
+		</html>`;
+	}
+
+	private cancelBufferedCommit() {
+		if (this.bufferNotification) {
+			this.bufferNotification.cancelled = true;
+			clearInterval(this.bufferNotification.timer);
+			this.bufferNotification.panel.dispose();
+			this.bufferNotification = undefined;
+			
+			const config = this.getConfig();
+			if (config.enableNotifications) {
+				vscode.window.showInformationMessage('🚫 GitCue: Commit cancelled');
+			}
+			this.outputChannel.appendLine('Commit cancelled by user');
+		}
+	}
+
 	private async generateCommitMessage(workspacePath: string, config: GitCueConfig): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const env = {
 				...process.env,
 				GEMINI_API_KEY: config.geminiApiKey,
 				AUTO_GIT_COMMIT_MODE: config.commitMode,
-				AUTO_GIT_NO_PUSH: 'true' // Always preview first
+				AUTO_GIT_NO_PUSH: 'true', // Always preview first
+				AUTO_GIT_BUFFER_TIME: config.bufferTimeSeconds.toString()
 			};
 
-			// Use npx to run auto-git commit
-			const autoGitProcess = spawn('npx', ['@sbeeredd04/auto-git', 'commit', '--no-push'], {
+			// Use npx to run auto-git commit with buffer support
+			const autoGitProcess = spawn('npx', ['@sbeeredd04/auto-git', 'commit', '--no-push', '--buffer'], {
 				cwd: workspacePath,
 				env,
 				stdio: ['pipe', 'pipe', 'pipe']
@@ -213,8 +601,16 @@ class GitCueExtension {
 						resolve('feat: automated commit via GitCue');
 					}
 				} else {
-					reject(new Error(`Auto-git failed: ${errorOutput || output}`));
+					// Fallback to basic commit message generation
+					this.outputChannel.appendLine(`Auto-git warning: ${errorOutput || output}`);
+					resolve('feat: automated commit via GitCue');
 				}
+			});
+
+			// Handle process errors
+			autoGitProcess.on('error', (error) => {
+				this.outputChannel.appendLine(`Auto-git process error: ${error.message}`);
+				resolve('feat: automated commit via GitCue');
 			});
 		});
 	}
@@ -896,7 +1292,11 @@ class GitCueExtension {
 				if (config.commitMode === 'intelligent') {
 					this.handleIntelligentCommit();
 				} else {
-					this.commitWithPreview();
+					// For periodic mode, also use buffer notification
+					const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+					if (workspaceFolder) {
+						this.commitWithBuffer(workspaceFolder.uri.fsPath, config);
+					}
 				}
 			}, config.debounceMs);
 		};
@@ -925,6 +1325,11 @@ class GitCueExtension {
 			this.debounceTimer = undefined;
 		}
 
+		// Cancel any pending commits
+		if (this.bufferNotification) {
+			this.cancelBufferedCommit();
+		}
+
 		this.isWatching = false;
 		this.updateStatusBar();
 		
@@ -936,9 +1341,14 @@ class GitCueExtension {
 	}
 
 	private async handleIntelligentCommit() {
-		// In intelligent mode, we could implement the AI decision logic here
-		// For now, we'll just show the preview
-		this.commitWithPreview();
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+		if (!workspaceFolder) return;
+
+		const config = this.getConfig();
+		if (!config.geminiApiKey) return;
+
+		// Use buffer notification for intelligent commits
+		await this.commitWithBuffer(workspaceFolder.uri.fsPath, config);
 	}
 
 	private openDashboard() {
@@ -1020,147 +1430,147 @@ class GitCueExtension {
 			<title>GitCue Dashboard</title>
 			<style>
 				:root {
-					--primary-color: #007acc;
-					--success-color: #4caf50;
-					--warning-color: #ff9800;
-					--danger-color: #f44336;
-					--info-color: #2196f3;
-					--border-radius: 12px;
-					--shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+					--primary: #007acc;
+					--success: #4caf50;
+					--warning: #ff9800;
+					--danger: #f44336;
+					--info: #2196f3;
+					--bg-primary: var(--vscode-editor-background);
+					--bg-secondary: var(--vscode-sideBar-background);
+					--bg-tertiary: var(--vscode-textCodeBlock-background);
+					--text-primary: var(--vscode-foreground);
+					--text-secondary: var(--vscode-descriptionForeground);
+					--border: var(--vscode-panel-border);
+					--radius: 16px;
+					--shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 					--transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-					--gradient-primary: linear-gradient(135deg, var(--primary-color), #005a9e);
-					--gradient-success: linear-gradient(135deg, var(--success-color), #388e3c);
 				}
 
 				* {
+					margin: 0;
+					padding: 0;
 					box-sizing: border-box;
 				}
 
-				body { 
-					font-family: var(--vscode-font-family); 
-					padding: 0;
-					margin: 0;
-					color: var(--vscode-foreground);
-					background: var(--vscode-editor-background);
+				body {
+					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+					background: var(--bg-primary);
+					color: var(--text-primary);
 					line-height: 1.6;
+					overflow-x: hidden;
 				}
 
-				.dashboard-container {
-					max-width: 1200px;
+				.dashboard {
+					min-height: 100vh;
+					background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+				}
+
+				.container {
+					max-width: 1400px;
 					margin: 0 auto;
-					padding: 24px;
+					padding: 32px;
 				}
 
-				.dashboard-header {
+				.header {
 					text-align: center;
-					padding: 32px 0;
-					margin-bottom: 32px;
-					background: var(--gradient-primary);
-					border-radius: var(--border-radius);
+					margin-bottom: 48px;
+					animation: fadeInUp 0.8s ease-out;
+				}
+
+				.logo {
+					width: 80px;
+					height: 80px;
+					margin: 0 auto 24px;
+					background: linear-gradient(135deg, var(--primary), var(--info));
+					border-radius: 24px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					font-size: 36px;
 					color: white;
 					box-shadow: var(--shadow);
+				}
+
+				.title {
+					font-size: 48px;
+					font-weight: 700;
+					margin-bottom: 12px;
+					background: linear-gradient(135deg, var(--primary), var(--info));
+					-webkit-background-clip: text;
+					-webkit-text-fill-color: transparent;
+					background-clip: text;
+				}
+
+				.subtitle {
+					font-size: 20px;
+					color: var(--text-secondary);
+					font-weight: 400;
+				}
+
+				.grid {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+					gap: 24px;
+					margin-bottom: 32px;
+				}
+
+				.card {
+					background: var(--bg-tertiary);
+					border: 1px solid var(--border);
+					border-radius: var(--radius);
+					padding: 32px;
+					transition: var(--transition);
 					position: relative;
 					overflow: hidden;
 				}
 
-				.dashboard-header::before {
+				.card::before {
 					content: '';
 					position: absolute;
 					top: 0;
 					left: 0;
 					right: 0;
-					bottom: 0;
-					background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-					opacity: 0.3;
+					height: 4px;
+					background: linear-gradient(90deg, var(--primary), var(--info));
 				}
 
-				.dashboard-header h1 {
-					margin: 0 0 8px 0;
-					font-size: 36px;
-					font-weight: 700;
-					position: relative;
-					z-index: 1;
-				}
-
-				.dashboard-header p {
-					margin: 0;
-					font-size: 18px;
-					opacity: 0.9;
-					position: relative;
-					z-index: 1;
-				}
-
-				.status-overview {
-					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-					gap: 24px;
-					margin-bottom: 32px;
-				}
-
-				.status-card {
-					background: var(--vscode-textCodeBlock-background);
-					border: 2px solid var(--vscode-panel-border);
-					border-radius: var(--border-radius);
-					padding: 24px;
+				.card:hover {
+					transform: translateY(-8px);
 					box-shadow: var(--shadow);
-					transition: var(--transition);
-					position: relative;
-					overflow: hidden;
-				}
-
-				.status-card::before {
-					content: '';
-					position: absolute;
-					top: 0;
-					left: 0;
-					width: 4px;
-					height: 100%;
-					background: var(--primary-color);
-					transition: var(--transition);
-				}
-
-				.status-card:hover {
-					border-color: var(--primary-color);
-					transform: translateY(-4px);
-					box-shadow: 0 8px 24px rgba(0, 122, 204, 0.2);
-				}
-
-				.status-card:hover::before {
-					width: 8px;
+					border-color: var(--primary);
 				}
 
 				.card-header {
 					display: flex;
 					align-items: center;
-					gap: 12px;
-					margin-bottom: 16px;
+					gap: 16px;
+					margin-bottom: 24px;
 				}
 
 				.card-icon {
-					font-size: 24px;
-					width: 48px;
-					height: 48px;
-					border-radius: 50%;
+					width: 56px;
+					height: 56px;
+					border-radius: 16px;
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					background: var(--gradient-primary);
+					font-size: 24px;
 					color: white;
-					box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+					background: linear-gradient(135deg, var(--primary), var(--info));
 				}
 
 				.card-title {
-					font-size: 20px;
+					font-size: 24px;
 					font-weight: 600;
-					margin: 0;
+					color: var(--text-primary);
 				}
 
 				.status-item {
 					display: flex;
 					align-items: center;
 					justify-content: space-between;
-					padding: 12px 0;
-					border-bottom: 1px solid var(--vscode-panel-border);
+					padding: 16px 0;
+					border-bottom: 1px solid var(--border);
 				}
 
 				.status-item:last-child {
@@ -1168,187 +1578,159 @@ class GitCueExtension {
 				}
 
 				.status-label {
+					font-size: 16px;
+					color: var(--text-primary);
 					font-weight: 500;
-					color: var(--vscode-foreground);
 				}
 
 				.status-value {
 					display: flex;
 					align-items: center;
 					gap: 8px;
-					font-weight: 600;
 				}
 
-				.status-indicator {
+				.badge {
+					padding: 6px 12px;
+					border-radius: 20px;
+					font-size: 14px;
+					font-weight: 600;
+					text-transform: uppercase;
+					letter-spacing: 0.5px;
+				}
+
+				.badge.success {
+					background: rgba(76, 175, 80, 0.15);
+					color: var(--success);
+				}
+
+				.badge.danger {
+					background: rgba(244, 67, 54, 0.15);
+					color: var(--danger);
+				}
+
+				.badge.warning {
+					background: rgba(255, 152, 0, 0.15);
+					color: var(--warning);
+				}
+
+				.badge.info {
+					background: rgba(33, 150, 243, 0.15);
+					color: var(--info);
+				}
+
+				.indicator {
 					width: 12px;
 					height: 12px;
 					border-radius: 50%;
-					display: inline-block;
 					animation: pulse 2s infinite;
 				}
 
-				.status-indicator.active {
-					background: var(--success-color);
-					box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+				.indicator.active {
+					background: var(--success);
+					box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
 				}
 
-				.status-indicator.inactive {
-					background: var(--danger-color);
-					box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+				.indicator.inactive {
+					background: var(--danger);
+					box-shadow: 0 0 12px rgba(244, 67, 54, 0.5);
 				}
 
-				.status-indicator.warning {
-					background: var(--warning-color);
-					box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
-				}
-
-				.config-grid {
-					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-					gap: 24px;
-					margin-bottom: 32px;
-				}
-
-				.config-section {
-					background: var(--vscode-textCodeBlock-background);
-					border: 2px solid var(--vscode-panel-border);
-					border-radius: var(--border-radius);
-					padding: 24px;
-					box-shadow: var(--shadow);
-					transition: var(--transition);
-				}
-
-				.config-section:hover {
-					border-color: var(--primary-color);
-					transform: translateY(-2px);
-				}
-
-				.config-item {
-					display: flex;
-					align-items: center;
-					justify-content: space-between;
-					padding: 12px 0;
-					border-bottom: 1px solid var(--vscode-panel-border);
-				}
-
-				.config-item:last-child {
-					border-bottom: none;
-				}
-
-				.config-label {
-					font-weight: 500;
-					color: var(--vscode-foreground);
-				}
-
-				.config-value {
-					font-weight: 600;
-					padding: 4px 12px;
-					border-radius: 20px;
-					font-size: 14px;
-				}
-
-				.config-value.success {
-					background: rgba(76, 175, 80, 0.2);
-					color: var(--success-color);
-				}
-
-				.config-value.danger {
-					background: rgba(244, 67, 54, 0.2);
-					color: var(--danger-color);
-				}
-
-				.config-value.info {
-					background: rgba(33, 150, 243, 0.2);
-					color: var(--info-color);
-				}
-
-				.watch-patterns {
-					background: var(--vscode-textCodeBlock-background);
-					border: 2px solid var(--vscode-panel-border);
-					border-radius: var(--border-radius);
-					padding: 24px;
-					box-shadow: var(--shadow);
-				}
-
-				.patterns-list {
+				.patterns-grid {
 					display: grid;
 					grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 					gap: 12px;
 					margin-top: 16px;
 				}
 
-				.pattern-item {
-					background: var(--vscode-input-background);
-					border: 1px solid var(--vscode-input-border);
-					border-radius: 8px;
+				.pattern {
+					background: var(--bg-secondary);
+					border: 1px solid var(--border);
+					border-radius: 12px;
 					padding: 12px 16px;
-					font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+					font-family: 'SF Mono', Monaco, monospace;
 					font-size: 14px;
 					transition: var(--transition);
-					position: relative;
 				}
 
-				.pattern-item:hover {
-					border-color: var(--primary-color);
-					background: var(--vscode-list-hoverBackground);
+				.pattern:hover {
+					border-color: var(--primary);
+					background: var(--bg-primary);
 				}
 
-				.pattern-item::before {
-					content: '📁';
-					margin-right: 8px;
-				}
-
-				.actions-section {
+				.actions {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+					grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 					gap: 16px;
 					margin-top: 32px;
 				}
 
-				.action-btn {
+				.btn {
 					display: flex;
 					align-items: center;
+					justify-content: center;
 					gap: 12px;
-					padding: 16px 24px;
-					background: var(--vscode-button-background);
-					color: var(--vscode-button-foreground);
+					padding: 20px 32px;
 					border: none;
-					border-radius: var(--border-radius);
+					border-radius: var(--radius);
 					font-size: 16px;
 					font-weight: 600;
 					cursor: pointer;
 					transition: var(--transition);
 					text-decoration: none;
-					justify-content: center;
-					box-shadow: var(--shadow);
+					position: relative;
+					overflow: hidden;
 				}
 
-				.action-btn:hover {
-					background: var(--vscode-button-hoverBackground);
+				.btn::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: -100%;
+					width: 100%;
+					height: 100%;
+					background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+					transition: left 0.5s;
+				}
+
+				.btn:hover::before {
+					left: 100%;
+				}
+
+				.btn-primary {
+					background: linear-gradient(135deg, var(--primary), var(--info));
+					color: white;
+					box-shadow: 0 4px 16px rgba(0, 122, 204, 0.3);
+				}
+
+				.btn-primary:hover {
 					transform: translateY(-2px);
-					box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+					box-shadow: 0 8px 24px rgba(0, 122, 204, 0.4);
 				}
 
-				.action-btn.primary {
-					background: var(--gradient-primary);
+				.btn-success {
+					background: linear-gradient(135deg, var(--success), #388e3c);
 					color: white;
+					box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
 				}
 
-				.action-btn.success {
-					background: var(--gradient-success);
-					color: white;
+				.btn-success:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
 				}
 
-				.action-icon {
-					font-size: 20px;
+				.btn-secondary {
+					background: var(--bg-secondary);
+					color: var(--text-primary);
+					border: 2px solid var(--border);
 				}
 
-				@keyframes pulse {
-					0%, 100% { opacity: 1; }
-					50% { opacity: 0.6; }
+				.btn-secondary:hover {
+					border-color: var(--primary);
+					background: var(--bg-tertiary);
+					transform: translateY(-2px);
 				}
 
-				@keyframes slideInUp {
+				@keyframes fadeInUp {
 					from {
 						opacity: 0;
 						transform: translateY(30px);
@@ -1359,185 +1741,174 @@ class GitCueExtension {
 					}
 				}
 
+				@keyframes pulse {
+					0%, 100% { opacity: 1; }
+					50% { opacity: 0.6; }
+				}
+
 				.animate-in {
-					animation: slideInUp 0.6s ease-out;
+					animation: fadeInUp 0.6s ease-out;
 				}
 
 				@media (max-width: 768px) {
-					.dashboard-container {
+					.container {
 						padding: 16px;
 					}
 					
-					.status-overview {
+					.title {
+						font-size: 36px;
+					}
+					
+					.grid {
 						grid-template-columns: 1fr;
 					}
 					
-					.config-grid {
-						grid-template-columns: 1fr;
-					}
-					
-					.actions-section {
+					.actions {
 						grid-template-columns: 1fr;
 					}
 				}
 			</style>
 		</head>
 		<body>
-			<div class="dashboard-container">
-				<div class="dashboard-header animate-in">
-					<h1>🎯 GitCue Dashboard</h1>
-					<p>Monitor your AI-powered Git automation in real-time</p>
-				</div>
+			<div class="dashboard">
+				<div class="container">
+					<div class="header">
+						<div class="logo">🎯</div>
+						<h1 class="title">GitCue</h1>
+						<p class="subtitle">AI-Powered Git Automation Dashboard</p>
+					</div>
 
-				<div class="status-overview">
-					<div class="status-card animate-in" style="animation-delay: 0.1s">
+					<div class="grid">
+						<div class="card animate-in" style="animation-delay: 0.1s">
+							<div class="card-header">
+								<div class="card-icon">📊</div>
+								<h3 class="card-title">System Status</h3>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Watching Mode</span>
+								<div class="status-value">
+									<span class="indicator ${this.isWatching ? 'active' : 'inactive'}"></span>
+									<span class="badge ${this.isWatching ? 'success' : 'danger'}">
+										${this.isWatching ? 'Active' : 'Inactive'}
+									</span>
+								</div>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Commit Mode</span>
+								<div class="status-value">
+									<span class="badge info">${config.commitMode}</span>
+								</div>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Auto Push</span>
+								<div class="status-value">
+									<span class="badge ${config.autoPush ? 'success' : 'danger'}">
+										${config.autoPush ? 'Enabled' : 'Disabled'}
+									</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="card animate-in" style="animation-delay: 0.2s">
+							<div class="card-header">
+								<div class="card-icon">🔑</div>
+								<h3 class="card-title">API Configuration</h3>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Gemini API Key</span>
+								<div class="status-value">
+									<span class="badge ${config.geminiApiKey ? 'success' : 'danger'}">
+										${config.geminiApiKey ? 'Configured' : 'Not Set'}
+									</span>
+								</div>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Rate Limit</span>
+								<div class="status-value">
+									<span class="badge info">${config.maxCallsPerMinute}/min</span>
+								</div>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Buffer Time</span>
+								<div class="status-value">
+									<span class="badge warning">${config.bufferTimeSeconds}s</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="card animate-in" style="animation-delay: 0.3s">
+							<div class="card-header">
+								<div class="card-icon">⚡</div>
+								<h3 class="card-title">Performance</h3>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Debounce Time</span>
+								<div class="status-value">
+									<span class="badge info">${config.debounceMs}ms</span>
+								</div>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Notifications</span>
+								<div class="status-value">
+									<span class="badge ${config.enableNotifications ? 'success' : 'danger'}">
+										${config.enableNotifications ? 'Enabled' : 'Disabled'}
+									</span>
+								</div>
+							</div>
+							<div class="status-item">
+								<span class="status-label">Auto Start</span>
+								<div class="status-value">
+									<span class="badge ${config.autoWatch ? 'success' : 'danger'}">
+										${config.autoWatch ? 'Enabled' : 'Disabled'}
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="card animate-in" style="animation-delay: 0.4s">
 						<div class="card-header">
-							<div class="card-icon">📊</div>
-							<h3 class="card-title">System Status</h3>
+							<div class="card-icon">📁</div>
+							<h3 class="card-title">Watch Patterns</h3>
 						</div>
-						<div class="status-item">
-							<span class="status-label">Watching Mode</span>
-							<div class="status-value">
-								<span class="status-indicator ${this.isWatching ? 'active' : 'inactive'}"></span>
-								${this.isWatching ? 'Active' : 'Inactive'}
-							</div>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Commit Mode</span>
-							<div class="status-value">
-								<span class="config-value info">${config.commitMode}</span>
-							</div>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Auto Push</span>
-							<div class="status-value">
-								<span class="config-value ${config.autoPush ? 'success' : 'danger'}">
-									${config.autoPush ? 'Enabled' : 'Disabled'}
-								</span>
-							</div>
+						<div class="patterns-grid">
+							${config.watchPaths.map(pattern => `
+								<div class="pattern">📄 ${pattern}</div>
+							`).join('')}
 						</div>
 					</div>
 
-					<div class="status-card animate-in" style="animation-delay: 0.2s">
-						<div class="card-header">
-							<div class="card-icon">🔑</div>
-							<h3 class="card-title">API Configuration</h3>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Gemini API Key</span>
-							<div class="status-value">
-								<span class="config-value ${config.geminiApiKey ? 'success' : 'danger'}">
-									${config.geminiApiKey ? '✅ Configured' : '❌ Not Set'}
-								</span>
-							</div>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Rate Limit</span>
-							<div class="status-value">
-								<span class="config-value info">${config.maxCallsPerMinute} calls/min</span>
-							</div>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Buffer Time</span>
-							<div class="status-value">
-								<span class="config-value info">${config.bufferTimeSeconds}s</span>
-							</div>
-						</div>
+					<div class="actions">
+						<button class="btn btn-primary" onclick="toggleWatching()">
+							<span style="font-size: 20px;">${this.isWatching ? '⏸️' : '▶️'}</span>
+							<span>${this.isWatching ? 'Stop Watching' : 'Start Watching'}</span>
+						</button>
+						<button class="btn btn-success" onclick="manualCommit()">
+							<span style="font-size: 20px;">🚀</span>
+							<span>Manual Commit</span>
+						</button>
+						<button class="btn btn-secondary" onclick="openSettings()">
+							<span style="font-size: 20px;">⚙️</span>
+							<span>Settings</span>
+						</button>
+						<button class="btn btn-secondary" onclick="showLogs()">
+							<span style="font-size: 20px;">📋</span>
+							<span>View Logs</span>
+						</button>
 					</div>
-
-					<div class="status-card animate-in" style="animation-delay: 0.3s">
-						<div class="card-header">
-							<div class="card-icon">⚡</div>
-							<h3 class="card-title">Performance</h3>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Debounce Time</span>
-							<div class="status-value">
-								<span class="config-value info">${config.debounceMs}ms</span>
-							</div>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Notifications</span>
-							<div class="status-value">
-								<span class="config-value ${config.enableNotifications ? 'success' : 'danger'}">
-									${config.enableNotifications ? 'Enabled' : 'Disabled'}
-								</span>
-							</div>
-						</div>
-						<div class="status-item">
-							<span class="status-label">Auto Start</span>
-							<div class="status-value">
-								<span class="config-value ${config.autoWatch ? 'success' : 'danger'}">
-									${config.autoWatch ? 'Enabled' : 'Disabled'}
-								</span>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="watch-patterns animate-in" style="animation-delay: 0.4s">
-					<div class="card-header">
-						<div class="card-icon">📁</div>
-						<h3 class="card-title">Watch Patterns</h3>
-					</div>
-					<div class="patterns-list">
-						${config.watchPaths.map(pattern => `
-							<div class="pattern-item">${pattern}</div>
-						`).join('')}
-					</div>
-				</div>
-
-				<div class="actions-section">
-					<button class="action-btn primary" onclick="toggleWatching()">
-						<span class="action-icon">${this.isWatching ? '⏸️' : '▶️'}</span>
-						<span>${this.isWatching ? 'Stop Watching' : 'Start Watching'}</span>
-					</button>
-					<button class="action-btn" onclick="openSettings()">
-						<span class="action-icon">⚙️</span>
-						<span>Configure Settings</span>
-					</button>
-					<button class="action-btn success" onclick="manualCommit()">
-						<span class="action-icon">🚀</span>
-						<span>Manual Commit</span>
-					</button>
-					<button class="action-btn" onclick="showLogs()">
-						<span class="action-icon">📋</span>
-						<span>View Logs</span>
-					</button>
 				</div>
 			</div>
 
 			<script>
 				const vscode = acquireVsCodeApi();
 
-				// Add smooth animations on load
 				document.addEventListener('DOMContentLoaded', function() {
-					const animatedElements = document.querySelectorAll('.animate-in');
-					animatedElements.forEach((element, index) => {
-						element.style.opacity = '0';
-						element.style.transform = 'translateY(30px)';
-						
-						setTimeout(() => {
-							element.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-							element.style.opacity = '1';
-							element.style.transform = 'translateY(0)';
-						}, index * 100);
+					const cards = document.querySelectorAll('.card');
+					cards.forEach((card, index) => {
+						card.style.animationDelay = \`\${index * 0.1}s\`;
 					});
 
-					// Add hover effects to cards
-					const cards = document.querySelectorAll('.status-card, .config-section');
-					cards.forEach(card => {
-						card.addEventListener('mouseenter', function() {
-							this.style.transform = 'translateY(-4px) scale(1.02)';
-						});
-						
-						card.addEventListener('mouseleave', function() {
-							this.style.transform = 'translateY(0) scale(1)';
-						});
-					});
-
-					// Auto-refresh status every 5 seconds
-					setInterval(refreshStatus, 5000);
+					setInterval(refreshStatus, 3000);
 				});
 
 				function toggleWatching() {
@@ -1560,39 +1931,14 @@ class GitCueExtension {
 					vscode.postMessage({ action: 'refreshStatus' });
 				}
 
-				// Listen for status updates
 				window.addEventListener('message', event => {
 					const message = event.data;
-					switch (message.action) {
-						case 'statusUpdate':
-							updateStatus(message.data);
-							break;
-						case 'configUpdate':
-							updateConfig(message.data);
-							break;
+					if (message.action === 'statusUpdate') {
+						// Update UI with new status
+						location.reload();
 					}
 				});
 
-				function updateStatus(data) {
-					// Update status indicators with smooth transitions
-					const indicators = document.querySelectorAll('.status-indicator');
-					indicators.forEach(indicator => {
-						if (data.isWatching) {
-							indicator.classList.remove('inactive');
-							indicator.classList.add('active');
-						} else {
-							indicator.classList.remove('active');
-							indicator.classList.add('inactive');
-						}
-					});
-				}
-
-				function updateConfig(data) {
-					// Update configuration values
-					// This would be implemented to update the UI when config changes
-				}
-
-				// Add keyboard shortcuts
 				document.addEventListener('keydown', function(e) {
 					if (e.ctrlKey || e.metaKey) {
 						switch (e.key) {

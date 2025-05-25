@@ -2,7 +2,7 @@
   "name": "gitcue",
   "displayName": "GitCue",
   "description": "GitCue — your Git helper extension for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "publisher": "sbeeredd04",
   "icon": "icon.png",
   "galleryBanner": {
@@ -10,7 +10,7 @@
     "theme": "dark"
   },
   "engines": {
-    "vscode": ">=1.50.0 <2.0.0"
+    "vscode": ">=1.96.0 <2.0.0"
   },
   "categories": [
     "SCM Providers",
@@ -35,14 +35,7 @@
     "url": "https://github.com/sbeeredd04/auto-git/issues"
   },
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:gitcue.commit",
-    "onCommand:gitcue.watchToggle",
-    "onCommand:gitcue.openDashboard",
-    "onCommand:gitcue.reset",
-    "onCommand:gitcue.configure",
-    "onCommand:gitcue.showStatus",
-    "workspaceContains:.git"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -76,6 +69,11 @@
         "command": "gitcue.showStatus",
         "title": "GitCue: Show Status",
         "icon": "$(info)"
+      },
+      {
+        "command": "gitcue.cancelCommit",
+        "title": "GitCue: Cancel Pending Commit",
+        "icon": "$(close)"
       }
     ],
     "menus": {
@@ -114,6 +112,10 @@
         {
           "command": "gitcue.reset",
           "when": "scmProvider == git"
+        },
+        {
+          "command": "gitcue.cancelCommit",
+          "when": "scmProvider == git"
         }
       ]
     },
@@ -128,6 +130,12 @@
         "command": "gitcue.watchToggle",
         "key": "ctrl+alt+w",
         "mac": "cmd+alt+w",
+        "when": "scmProvider == git"
+      },
+      {
+        "command": "gitcue.cancelCommit",
+        "key": "ctrl+alt+x",
+        "mac": "cmd+alt+x",
         "when": "scmProvider == git"
       }
     ],
@@ -233,7 +241,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "@types/vscode": "^1.100.0",
+    "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.10",
