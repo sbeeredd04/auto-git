@@ -520,7 +520,7 @@ class GitCueExtension {
 				</div>
 
 				<div class="keyboard-hint">
-					Press 'c' to cancel or click the button above
+					Press 'c', 'x', or Ctrl+X to cancel, or click the button above
 				</div>
 			</div>
 
@@ -533,7 +533,13 @@ class GitCueExtension {
 
 				// Listen for keyboard shortcuts
 				document.addEventListener('keydown', function(e) {
-					if (e.key.toLowerCase() === 'c') {
+					// Handle 'c' or 'x' keys
+					if (e.key.toLowerCase() === 'c' || e.key.toLowerCase() === 'x') {
+						e.preventDefault();
+						cancelCommit();
+					}
+					// Handle Ctrl+X
+					if (e.ctrlKey && e.key.toLowerCase() === 'x') {
 						e.preventDefault();
 						cancelCommit();
 					}
