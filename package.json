@@ -1,7 +1,7 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "3.8.0",
-  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and simplified workflow",
+  "version": "3.8.1",
+  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and rock-solid multi-command support",
   "main": "bin/auto-git.js",
   "type": "module",
   "bin": {

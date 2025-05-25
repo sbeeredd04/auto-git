@@ -21,7 +21,7 @@ process.on('SIGINT', () => {
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.8.0', 'AI-powered Git automation with enhanced interactive terminal session');
+  logger.section('Auto-Git v3.8.1', 'AI-powered Git automation with enhanced interactive terminal session');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -101,7 +101,7 @@ function handleMissingApiKey(commandName) {
 program
   .name('auto-git')
   .description('Auto-commit and push with AI-generated commit messages using Gemini - now with enhanced interactive terminal session, persistent command history, and simplified workflow')
-  .version('3.8.0')
+  .version('3.8.1')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -133,7 +133,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v3.8.0', 'Simple file monitoring with auto-commit (Ctrl+C to exit)');
+      logger.section('Auto-Git Watcher v3.8.1', 'Simple file monitoring with auto-commit (Ctrl+C to exit)');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -443,7 +443,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v3.8.0', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.8.1', 'System health check');
     
     try {
       const config = getConfig();
@@ -453,9 +453,10 @@ program
       const remote = isRepo ? await hasRemote() : false;
       
       const diagnostics = {
-        'Auto-Git Version': '3.8.0',
         'Node.js Version': process.version,
         'Platform': process.platform,
+        'Architecture': process.arch,
+        'Auto-Git Version': '3.8.1',
         'Working Directory': process.cwd(),
         'Git Repository': isRepo,
         'Current Branch': branch || 'N/A',

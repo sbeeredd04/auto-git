@@ -1,4 +1,4 @@
-# Auto-Git v3.8.0
+# Auto-Git v3.8.1
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -8,9 +8,9 @@
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 [![GitHub Release](https://img.shields.io/github/release/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/releases)
 
-> AI-powered automatic Git commits with Gemini-generated commit messages - now with enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and simplified workflow
+> AI-powered automatic Git commits with Gemini-generated commit messages - now with enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and rock-solid multi-command support
 
-Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.8.0** introduces a revolutionary enhanced interactive terminal session with persistent command history, markdown-formatted AI responses, git syntax highlighting, and a completely simplified workflow.
+Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.8.1** introduces a revolutionary enhanced interactive terminal session with persistent command history, markdown-formatted AI suggestions, git syntax highlighting, and completely reliable multi-command support.
 
 ## Table of Contents
 
@@ -45,17 +45,19 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **Smart Debouncing**: Prevents spam commits during rapid file changes
 - **Zero Config**: Works out of the box with just an API key
 
-### 🚀 New in v3.8.0: Enhanced Interactive Terminal Session
+### 🚀 New in v3.8.1: Rock-Solid Interactive Session
+- **🔧 Fixed Multi-Command Support**: Interactive session now reliably continues after each command execution
+- **⚡ Improved Command Processing**: Resolved async input handler issues that caused session termination
+- **🛡️ Enhanced Terminal State Management**: Proper raw mode handling prevents input conflicts
+- **🔄 Seamless Command Flow**: Execute unlimited commands in sequence without interruption
 - **📚 Persistent Command History**: Commands saved across sessions with arrow key navigation
 - **🎨 Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting
 - **⌨️ Arrow Key Navigation**: Use ↑↓ to browse through command history
 - **🎯 Git Syntax Highlighting**: Enhanced display for Git commands with color coding
 - **💾 Session Persistence**: Command history automatically saved and restored
-- **🔄 Simplified Workflow**: Clean separation between watch mode and interactive mode
 - **🎮 Enhanced User Experience**: Improved prompts, better error handling, and cleaner interface
 
-### Previous Features (Simplified in v3.8.0)
-- **Simple Watch Mode**: Just Ctrl+C to exit - no complex pause/resume
+### Previous Features (Enhanced in v3.8.1)
 - **AI Error Analysis**: Smart suggestions for failed commands with markdown formatting
 - **Built-in Reset Commands**: Undo commits with safety checks
 - **Smart Error Recovery**: Automatic retry with user guidance
@@ -149,7 +151,7 @@ npm install -g git+https://github.com/sbeeredd04/auto-git.git
 
 ### Styled Help System
 
-Auto-Git v3.8.0 features a completely redesigned help system with beautiful styling and clear organization:
+Auto-Git v3.8.1 features a completely redesigned help system with beautiful styling and clear organization:
 
 ```bash
 auto-git --help
@@ -158,7 +160,7 @@ auto-git --help
 **Example Output:**
 ```
 ┌───────────────────────────────────────────────────┐
-│  Auto-Git v3.8.0                                  │
+│  Auto-Git v3.8.1                                  │
 │  AI-powered Git automation with enhanced          │
 │  interactive terminal session                     │
 └───────────────────────────────────────────────────┘
@@ -178,6 +180,7 @@ AVAILABLE COMMANDS:
 
 INTERACTIVE FEATURES:
   Enhanced Session     Persistent command history and markdown AI responses
+  Multi-Command Support Rock-solid execution of unlimited commands in sequence
   Arrow Key Navigation Browse command history with ↑↓ keys
   Git Syntax Highlight Enhanced display for Git commands
   Session Persistence  Command history saved across restarts
@@ -302,7 +305,7 @@ The new interactive session features:
 
 ### Watch Mode
 
-Auto-Git v3.8.0 supports simple watch mode with just Ctrl+C to exit.
+Auto-Git v3.8.1 supports simple watch mode with just Ctrl+C to exit.
 
 ### Configuration
 
@@ -702,20 +705,23 @@ When Git errors occur:
 ### General Questions
 
 **Q: What is Auto-Git?**
-A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 3.8.0 adds enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and simplified workflow.
+A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 3.8.1 adds enhanced interactive terminal session, persistent command history, markdown-formatted AI suggestions, and rock-solid multi-command support.
 
 **Q: Do I need to install anything?**
 A: No! You can use `npx @sbeeredd04/auto-git` without installation, or install globally with `npm install -g @sbeeredd04/auto-git`.
 
-**Q: What's new in v3.8.0?**
-A: v3.8.0 introduces:
-- 📚 **Persistent Command History**: Commands saved across sessions with arrow key navigation
-- 🎨 **Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting
-- ⌨️ **Arrow Key Navigation**: Use ↑↓ to browse through command history
-- 🎯 **Git Syntax Highlighting**: Enhanced display for Git commands with color coding
-- 💾 **Session Persistence**: Command history automatically saved and restored
-- 🔄 **Simplified Workflow**: Clean separation between watch mode and interactive mode
-- 🎮 **Enhanced User Experience**: Improved prompts, better error handling, and cleaner interface
+**Q: What's new in v3.8.1?**
+A: v3.8.1 introduces:
+- 🔧 **Fixed Multi-Command Support**: Interactive session now reliably continues after each command execution
+- ⚡ **Improved Command Processing**: Resolved async input handler issues that caused session termination
+- 🛡️ **Enhanced Terminal State Management**: Proper raw mode handling prevents input conflicts
+- 🔄 **Seamless Command Flow**: Execute unlimited commands in sequence without interruption
+- 📚 **Persistent Command History**: Commands saved across sessions with arrow key navigation (enhanced)
+- 🎨 **Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting (enhanced)
+- ⌨️ **Arrow Key Navigation**: Use ↑↓ to browse through command history (enhanced)
+- 🎯 **Git Syntax Highlighting**: Enhanced display for Git commands with color coding (enhanced)
+- 💾 **Session Persistence**: Command history automatically saved and restored (enhanced)
+- 🎮 **Enhanced User Experience**: Improved prompts, better error handling, and cleaner interface (enhanced)
 
 **Q: How do I force exit if something goes wrong?**
 A: Press Ctrl+C anywhere - navigation menu, REPL, or file watcher. It will immediately exit the entire application with proper cleanup.

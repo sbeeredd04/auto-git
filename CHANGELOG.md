@@ -1,3 +1,37 @@
+## v3.8.1 - 2024-12-19
+
+### 🔧 Critical Interactive Session Fixes
+- **Fixed Multi-Command Support**: Interactive session now reliably continues after each command execution
+- **Resolved Async Input Handler Issues**: Fixed async input handler causing session termination after single command
+- **Enhanced Terminal State Management**: Proper raw mode handling prevents input conflicts during command execution
+- **Improved Command Processing State**: Added `isProcessingCommand` flag to prevent input race conditions
+- **Seamless Command Flow**: Execute unlimited commands in sequence without interruption
+
+### ⚡ Technical Improvements
+- **Synchronous Input Handler**: Changed from async to synchronous input handler with proper Promise handling
+- **Terminal State Restoration**: Temporarily disable raw mode during command execution and restore afterward
+- **Better Error Recovery**: Enhanced error handling with proper state restoration on command failures
+- **Input Conflict Prevention**: Prevent input processing during command execution to avoid conflicts
+
+### 🎯 Enhanced User Experience
+- **Rock-Solid Multi-Command Support**: Interactive session continues indefinitely until explicit exit
+- **Reliable Command Execution**: Each command executes and returns to prompt for next command
+- **Consistent Session Behavior**: Session maintains state and history across unlimited command executions
+- **Professional Terminal Feel**: Smooth, uninterrupted command execution flow
+
+### 🛠️ Bug Fixes
+- **Session Termination**: Fixed issue where interactive session would exit after running one command
+- **Input Handler Race Conditions**: Resolved async conflicts that caused unpredictable session behavior
+- **Terminal State Conflicts**: Fixed stdio inheritance issues that interfered with raw input mode
+- **Command Processing Loops**: Ensured proper command processing without breaking input loop
+
+### 📱 Maintained Features
+- **Persistent Command History**: Commands saved across sessions with arrow key navigation (unchanged)
+- **Markdown-Formatted AI Responses**: Rich formatting for AI suggestions with syntax highlighting (unchanged)
+- **Git Syntax Highlighting**: Enhanced display for Git commands with color coding (unchanged)
+- **Session Persistence**: Command history automatically saved and restored (unchanged)
+- **Enhanced User Interface**: Improved prompts, better error handling, and cleaner interface (unchanged)
+
 ## v3.8.0 - 2024-12-19
 
 ### 🚀 Enhanced Interactive Terminal Session
