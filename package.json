@@ -1,7 +1,7 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "3.6.3",
-  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with perfect REPL looping, smart duplicate removal, and bulletproof global keyboard controls",
+  "version": "3.7.1",
+  "description": "Auto-commit and push with AI-generated commit messages using Gemini - now with bulletproof infinite REPL looping, perfect state management across multiple pause/resume cycles, and unbreakable global keyboard controls",
   "main": "bin/auto-git.js",
   "type": "module",
   "bin": {

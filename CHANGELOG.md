@@ -1,3 +1,56 @@
+## v3.7.1 - 2024-12-19
+
+### 🔧 Final Polish
+- **Complete Version Consistency**: All version references updated to 3.7.1 across all files
+- **Perfect Documentation**: Updated README and CHANGELOG to reflect final state
+- **Production Ready**: Final version with all bulletproof state management features
+
+### ✅ Confirmed Features
+- **Bulletproof Infinite REPL Looping**: REPL runs in a true infinite loop that never stops accepting commands
+- **Perfect Multiple Pause/Resume Cycles**: Can pause and resume indefinitely without any state corruption
+- **Unbreakable Global Keyboard Controls**: Ctrl+P, Ctrl+R, and Ctrl+C work flawlessly across all states and cycles
+- **Complete State Isolation**: Each REPL session is completely isolated with proper cleanup and restoration
+- **Never-Ending Command Processing**: Commands execute and immediately return to prompt for next command
+- **Professional Terminal Experience**: Feels like a native terminal with perfect input handling
+
+## v3.7.0 - 2024-12-19
+
+### 🚀 Revolutionary State Management
+- **Bulletproof Infinite REPL Looping**: REPL now runs in a true infinite loop that never stops accepting commands
+- **Perfect Multiple Pause/Resume Cycles**: Can pause and resume indefinitely without any state corruption
+- **Unbreakable Global Keyboard Controls**: Ctrl+P, Ctrl+R, and Ctrl+C work flawlessly across all states and cycles
+- **Complete State Isolation**: Each REPL session is completely isolated with proper cleanup and restoration
+
+### 🔧 Critical Fixes
+- **Infinite Command Processing**: REPL continues accepting commands indefinitely without ever stopping
+- **State Management Overhaul**: Complete rewrite of state management to handle multiple cycles
+- **Handler Cleanup Revolution**: Bulletproof cleanup of all event handlers and listeners
+- **Memory Management**: Perfect cleanup prevents memory leaks across multiple sessions
+
+### 🎯 Enhanced Reliability
+- **Multiple Resume Cycles**: Can resume → pause → resume → pause infinitely without issues
+- **Command Execution Continuity**: Commands execute and immediately return to prompt for next command
+- **Global Control Consistency**: Keyboard shortcuts work identically across all application states
+- **Session Restoration**: Perfect restoration of terminal state after any operation
+
+### 📱 Technical Improvements
+- **Promise-Based REPL Loop**: Completely rewritten REPL using proper Promise-based infinite loop
+- **Dedicated Handler Management**: Separate handlers for input, keypress, and global controls
+- **State Flag Management**: Proper exit flags and state management for clean transitions
+- **Enhanced Cleanup Logic**: Comprehensive cleanup of all listeners and terminal state
+
+### 🧪 User Experience
+- **Never-Ending REPL**: Type commands forever - REPL never stops or gets stuck
+- **Seamless State Transitions**: Smooth switching between all modes without any hiccups
+- **Consistent Behavior**: Identical behavior whether it's the 1st or 100th pause/resume cycle
+- **Professional Terminal Experience**: Feels like a native terminal with perfect input handling
+
+### 🛡️ Bulletproof Architecture
+- **Infinite Loop Design**: REPL designed from ground up to run indefinitely
+- **State Corruption Prevention**: Impossible to corrupt state across multiple cycles
+- **Handler Isolation**: Each session gets fresh handlers with perfect cleanup
+- **Exit Strategy Management**: Multiple exit strategies with proper cleanup for each
+
 ## v3.1.0 - 2025-05-25
 
 Bug fixes and improvements

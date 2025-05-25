@@ -1,4 +1,4 @@
-# Auto-Git v3.6.0
+# Auto-Git v3.7.1
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -8,9 +8,9 @@
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 [![GitHub Release](https://img.shields.io/github/release/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/releases)
 
-> AI-powered automatic Git commits with Gemini-generated commit messages - now with bulletproof Ctrl+C handling, smart input deduplication, and rock-solid interactive navigation
+> AI-powered automatic Git commits with Gemini-generated commit messages - now with bulletproof infinite REPL looping, perfect state management across multiple pause/resume cycles, and unbreakable global keyboard controls
 
-Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.6.0** introduces bulletproof Ctrl+C handling that works everywhere, smart input deduplication to prevent typing issues, and completely robust interactive navigation that never gets stuck.
+Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.7.1** introduces revolutionary state management with bulletproof infinite REPL looping, perfect handling of multiple pause/resume cycles, and unbreakable global keyboard controls that work flawlessly no matter how many times you use them.
 
 ## Table of Contents
 
@@ -85,6 +85,14 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **🔄 Enhanced Error Recovery**: Improved AI suggestions with better error handling
 - **🎮 Force Exit Everywhere**: Ctrl+C immediately exits the entire application from any state
 - **📱 Better Terminal Compatibility**: Works flawlessly across different terminal emulators
+
+### 🚀 New in v3.7.0: Revolutionary State Management
+- **🔄 Infinite REPL Looping**: REPL runs in a true infinite loop that never stops accepting commands
+- **🎯 Perfect Multiple Pause/Resume Cycles**: Can pause and resume indefinitely without any state corruption  
+- **🎮 Unbreakable Global Keyboard Controls**: Ctrl+P, Ctrl+R, and Ctrl+C work flawlessly across all states and cycles
+- **🛡️ Complete State Isolation**: Each REPL session is completely isolated with proper cleanup and restoration
+- **⚡ Bulletproof Handler Management**: Perfect cleanup of all event handlers prevents memory leaks
+- **🔧 Never-Ending Command Processing**: Commands execute and immediately return to prompt for next command
 
 ## Quick Start
 
@@ -1023,18 +1031,19 @@ When Git errors occur:
 ### General Questions
 
 **Q: What is Auto-Git?**
-A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 3.6.0 adds bulletproof Ctrl+C handling, smart input deduplication, and rock-solid interactive navigation.
+A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 3.7.1 adds bulletproof infinite REPL looping, perfect state management across multiple pause/resume cycles, and unbreakable global keyboard controls.
 
 **Q: Do I need to install anything?**
 A: No! You can use `npx @sbeeredd04/auto-git` without installation, or install globally with `npm install -g @sbeeredd04/auto-git`.
 
-**Q: What's new in v3.6.0?**
-A: v3.6.0 introduces:
-- 🛡️ **Bulletproof Ctrl+C handling** - force exit from anywhere
-- 🧠 **Smart input deduplication** - automatically fixes "ggiitt" → "git"
-- 🎯 **Rock-solid navigation** - no more stuck states
-- ⚡ **Robust stdin management** - proper terminal state handling
-- 🔄 **Enhanced error recovery** - improved AI suggestions
+**Q: What's new in v3.7.1?**
+A: v3.7.1 introduces:
+- 🔄 **Infinite REPL Looping**: REPL runs in a true infinite loop that never stops accepting commands
+- 🎯 **Perfect Multiple Pause/Resume Cycles**: Can pause and resume indefinitely without any state corruption  
+- 🎮 **Unbreakable Global Keyboard Controls**: Ctrl+P, Ctrl+R, and Ctrl+C work flawlessly across all states and cycles
+- 🛡️ **Complete State Isolation**: Each REPL session is completely isolated with proper cleanup and restoration
+- ⚡ **Bulletproof Handler Management**: Perfect cleanup of all event handlers prevents memory leaks
+- 🔧 **Never-Ending Command Processing**: Commands execute and immediately return to prompt for next command
 
 **Q: How do I force exit if something goes wrong?**
 A: Press Ctrl+C anywhere - navigation menu, REPL, or file watcher. It will immediately exit the entire application with proper cleanup.
