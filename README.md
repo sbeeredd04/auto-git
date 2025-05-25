@@ -394,19 +394,33 @@ EXAMPLES:
 
 ### Interactive Controls
 
-#### Keyboard Shortcuts
+#### Keyboard Shortcuts (v3.6.0 - Enhanced)
 
-| Key               | Action                                |
-|-------------------|---------------------------------------|
-| **Ctrl+P**        | Pause and show navigation menu        |
-| **↑↓ Arrows**     | Navigate menu options when paused     |
-| **Enter**         | Select highlighted menu option        |
-| **Escape**        | Cancel menu and resume watching       |
-| **"resume"**      | Resume watcher from REPL (FIXED in v3.5.0) |
-| **"exit"**        | Exit REPL without resuming (NEW in v3.5.0) |
-| **Ctrl+C**        | Stop and exit                         |
+| Key               | Action                                | Status |
+|-------------------|---------------------------------------|--------|
+| **Ctrl+P**        | Pause and show navigation menu        | ✅ Stable |
+| **↑↓ Arrows**     | Navigate menu options when paused     | ✅ Rock-solid |
+| **Enter**         | Select highlighted menu option        | ✅ Reliable |
+| **Escape**        | Cancel menu and resume watching       | ✅ Responsive |
+| **"resume"**      | Resume watcher from REPL              | ✅ Fixed in v3.5.0 |
+| **"exit"**        | Exit REPL without resuming            | ✅ Added in v3.5.0 |
+| **Ctrl+C**        | **Force exit from anywhere**          | 🚀 **NEW in v3.6.0** |
 
-#### Navigation Menu
+#### 🚀 New in v3.6.0: Bulletproof Controls
+
+**Force Exit Everywhere:**
+- **Navigation Menu**: Ctrl+C immediately exits the entire application
+- **Interactive REPL**: Ctrl+C force exits without getting stuck
+- **File Watcher**: Ctrl+C cleanly shuts down with proper cleanup
+- **Any State**: No matter where you are, Ctrl+C always works
+
+**Smart Input Processing:**
+- **Automatic Deduplication**: Typing "ggiitt" becomes "git" automatically
+- **Character Cleanup**: "heelllloo" becomes "helo" for cleaner commands
+- **Preserved Spacing**: "git  status" becomes "git status" (smart space handling)
+- **Real-time Processing**: Happens instantly as you type
+
+#### Navigation Menu (Enhanced in v3.6.0)
 
 When you press **Ctrl+P**, Auto-Git shows an intuitive navigation menu:
 
@@ -423,52 +437,48 @@ Use arrow keys to navigate, Enter to select
   🛑 Stop and exit
   Shutdown Auto-Git completely
 
-Controls: ↑↓ Navigate • Enter Select • Esc Cancel • Ctrl+C Exit
+Controls: ↑↓ Navigate • Enter Select • Esc Cancel • Ctrl+C Force Exit
 ```
 
 #### Menu Options
 
 - **Resume watching**: Continue monitoring files for changes
-- **Interactive mode**: Enter REPL for manual Git operations and AI assistance
+- **Interactive mode**: Enter REPL for manual Git operations and AI assistance  
 - **Stop and exit**: Shutdown Auto-Git completely
+- **Force Exit (Ctrl+C)**: 🚀 **NEW** - Immediately exit from anywhere
 
-#### Interactive REPL Commands
+#### Interactive REPL Commands (Enhanced in v3.6.0)
 
-When errors occur or when you select **Interactive mode** from the navigation menu, Auto-Git enters an interactive mode:
+When errors occur or when you select **Interactive mode** from the navigation menu, Auto-Git enters an interactive mode with smart input processing:
 
 ```bash
 auto-git> help                    # Show available commands
 auto-git> retry                   # Retry the last failed operation
 auto-git> reset --hard HEAD~1     # Reset commits with git reset
-auto-git> status                  # Show git status
+auto-git> status                  # Show git status (auto-deduplicates "ssttaattuuss")
 auto-git> diff                    # Show current git diff
 auto-git> commit                  # Manual commit with AI message
 auto-git> git <command>           # Execute any git command with AI error handling
 auto-git> log --oneline           # Direct git subcommands (auto-detected)
 auto-git> branch -a               # List all branches
 auto-git> stash                   # Stash current changes
-auto-git> exit                    # Exit REPL and continue
+auto-git> resume                  # Resume watcher and exit REPL
+auto-git> exit                    # Exit REPL without resuming
+# Ctrl+C                          # Force exit entire application
 ```
 
-#### Cross-Platform Hotkey Design
+#### 🧠 Smart Input Examples (v3.6.0)
 
-Auto-Git v2.0 uses **cross-platform compatible hotkeys** that work reliably on both macOS and Windows:
+The new input deduplication automatically cleans up your typing:
 
-**Primary Hotkeys (Ctrl+Shift combinations):**
-- `Ctrl+Shift+P` - Pause file watching
-- `Ctrl+Shift+R` - Resume file watching  
-- `Ctrl+Shift+1` - Enter interactive REPL mode
-
-**Alternative Number Keys (for better terminal compatibility):**
-- Press `1` - Pause file watching
-- Press `2` - Resume file watching
-- Press `3` - Enter interactive REPL mode
-
-**Why these combinations?**
-- **Ctrl+Shift** combinations avoid conflicts with common terminal shortcuts
-- **Number keys** work in terminals that don't support complex key combinations
-- **Cross-platform** compatibility ensures consistent behavior on macOS and Windows
-- **No conflicts** with Cmd+Shift+I (which opens dev tools) or other system shortcuts
+```bash
+# What you type → What gets processed
+auto-git> ggiitt ssttaattuuss      → git status
+auto-git> ccoommmmiitt            → comit
+auto-git> bbrraanncchh  --aa      → branch -a
+auto-git> llogg  ----oonneelliinnee → log -oneline
+auto-git> rreesseett  ----hhaarrdd   → reset -hard
+```
 
 ### Enhanced Git Command Support
 
@@ -925,6 +935,33 @@ auto-git setup
 
 ## Troubleshooting
 
+### v3.6.0 Specific Issues (NEW)
+
+**🚀 "Application gets stuck after interactive mode"**
+- **FIXED in v3.6.0**: This issue is completely resolved
+- Ctrl+C now force exits from anywhere
+- Terminal state is properly restored after REPL
+- Arrow keys work perfectly after returning from interactive mode
+
+**🧠 "Typing 'git' shows as 'ggiitt'"**
+- **FIXED in v3.6.0**: Smart input deduplication automatically handles this
+- Duplicate characters are automatically removed
+- Examples: "ggiitt" → "git", "ssttaattuuss" → "status"
+- Works in real-time as you type
+
+**🎯 "Ctrl+C doesn't work in navigation menu"**
+- **FIXED in v3.6.0**: Bulletproof Ctrl+C handling everywhere
+- Navigation menu: Ctrl+C immediately exits
+- Interactive REPL: Ctrl+C force exits entire application
+- File watcher: Ctrl+C cleanly shuts down
+- No more stuck states or unresponsive terminals
+
+**⚡ "Terminal becomes unresponsive"**
+- **FIXED in v3.6.0**: Robust stdin management
+- Proper cleanup and restoration of terminal state
+- Enhanced compatibility across different terminal emulators
+- Force exit option always available with Ctrl+C
+
 ### Common Issues
 
 **"Not a git repository"**
@@ -961,9 +998,11 @@ auto-git debug
 auto-git watch --verbose
 auto-git commit --verbose
 
-# Test interactive features
+# Test interactive features (v3.6.0 - now bulletproof)
 auto-git watch
-# Press Ctrl+Shift+1 to test REPL
+# Press Ctrl+P to test navigation menu
+# Select "Interactive mode" to test REPL
+# Press Ctrl+C anywhere to force exit
 
 # Get styled help
 auto-git --help
@@ -977,13 +1016,28 @@ When Git errors occur:
 3. Interactive REPL will open for manual resolution
 4. Use `retry` command to attempt the operation again
 5. Clear next steps provided for every scenario
+6. **NEW in v3.6.0**: Force exit with Ctrl+C if needed
 
 ## FAQ
 
 ### General Questions
 
 **Q: What is Auto-Git?**
-A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 2.0 adds interactive controls, error recovery, and AI-powered troubleshooting.
+A: Auto-Git is an AI-powered CLI tool that automatically generates meaningful commit messages using Google's Gemini AI and commits your changes. Version 3.6.0 adds bulletproof Ctrl+C handling, smart input deduplication, and rock-solid interactive navigation.
 
 **Q: Do I need to install anything?**
-A: No! You can use `npx @sbeeredd04/auto-git` without installation, or install globally with `
+A: No! You can use `npx @sbeeredd04/auto-git` without installation, or install globally with `npm install -g @sbeeredd04/auto-git`.
+
+**Q: What's new in v3.6.0?**
+A: v3.6.0 introduces:
+- 🛡️ **Bulletproof Ctrl+C handling** - force exit from anywhere
+- 🧠 **Smart input deduplication** - automatically fixes "ggiitt" → "git"
+- 🎯 **Rock-solid navigation** - no more stuck states
+- ⚡ **Robust stdin management** - proper terminal state handling
+- 🔄 **Enhanced error recovery** - improved AI suggestions
+
+**Q: How do I force exit if something goes wrong?**
+A: Press Ctrl+C anywhere - navigation menu, REPL, or file watcher. It will immediately exit the entire application with proper cleanup.
+
+**Q: Why does my typing get duplicated?**
+A: This was fixed in v3.6.0! The application now automatically removes duplicate characters as you type. "ggiitt ssttaattuuss" becomes "git status" automatically.

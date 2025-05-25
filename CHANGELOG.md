@@ -16,161 +16,115 @@ Bug fixes and improvements
 
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to Auto-Git will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2024-12-19
+## [3.6.0] - 2024-12-19
 
-### 🎉 Major Release: Interactive Controls & Error Recovery
+### 🚀 Added
+- **Bulletproof Ctrl+C Handling**: Force exit from anywhere - navigation menu, REPL, or file watcher
+- **Smart Input Deduplication**: Automatically removes duplicate characters (e.g., "ggiitt" → "git")
+- **Global Force Exit Handler**: Ctrl+C immediately exits the entire application from any state
+- **Enhanced Utility Functions**: New `cleanupStdin()`, `setupStdin()`, and `forceExit()` utilities
+- **Robust stdin Management**: Proper terminal state handling with automatic cleanup
 
-This is a major release that introduces interactive controls, error-driven AI suggestions, and comprehensive error recovery features.
+### 🔧 Fixed
+- **Interactive Session Stuck Issue**: Terminal no longer gets stuck after returning from REPL
+- **Navigation Arrow Keys**: Arrow keys work perfectly after interactive mode
+- **Raw Mode Restoration**: Proper terminal state restoration after REPL exits
+- **Listener Cleanup**: All keypress listeners are properly removed and restored
+- **Missing Dependencies**: Added missing `inquirer` import in REPL
+- **Syntax Errors**: Fixed switch statement syntax error in watcher.js
 
-### ✨ Added
+### 🎯 Enhanced
+- **Rock-Solid Navigation**: No more stuck states - navigation always works
+- **Better Terminal Compatibility**: Works flawlessly across different terminal emulators
+- **Enhanced Error Recovery**: Improved AI suggestions with better error handling
+- **Professional User Experience**: Seamless transitions between all modes
+- **Input Processing**: Real-time duplicate character removal as you type
 
-#### Interactive Controls
-- **Keyboard Shortcuts**: Added hotkeys for real-time control during watch mode
-  - `Ctrl+P` - Pause file watching
-  - `Ctrl+R` - Resume file watching  
-  - `Ctrl+I` - Enter interactive REPL mode
-  - `Ctrl+C` - Graceful shutdown
-- **Interactive REPL**: New command-line interface for manual control and error recovery
-  - `retry` - Retry failed operations
-  - `reset` - Git reset with various modes
-  - `status` - Show git status
-  - `diff` - Show current diff
-  - `commit` - Manual commit with AI message
-  - `help` - Show available commands
-  - `exit` - Exit REPL and continue
+### 📱 Technical Improvements
+- **Proper State Management**: Enhanced terminal state handling throughout the application
+- **Memory Management**: Better cleanup of event listeners and resources
+- **Error Handling**: More robust error handling with proper cleanup
+- **Code Organization**: Better separation of concerns with utility functions
 
-#### Error Recovery & AI Suggestions
-- **Error-Driven AI Suggestions**: Automatic analysis of Git errors with AI-generated solutions
-- **Smart Error Recovery**: Intelligent retry mechanisms with user guidance
-- **Error Sanitization**: Removes sensitive information before sending errors to AI
-- **Built-in Reset Command**: New `auto-git reset` command with safety checks
-  - Supports `--hard`, `--soft`, and `--mixed` modes
-  - Interactive confirmation for destructive operations
-  - Validates input and provides clear feedback
+### 🧪 Testing
+- **Comprehensive Tests**: Added tests for duplicate character removal function
+- **Edge Case Handling**: Proper handling of empty strings, single characters, and no duplicates
+- **Validation**: Verified all functionality works correctly across different scenarios
 
-#### Enhanced Configuration
-- **Interactive Configuration**: New config options for interactive features
-  - `interactiveOnError` - Enable/disable interactive error recovery
-  - `enableSuggestions` - Enable/disable AI error suggestions
-  - `hotkeys` - Customizable keyboard shortcuts
-- **Environment Variables**: New environment variables for configuration
-  - `AUTO_GIT_INTERACTIVE_ON_ERROR`
-  - `AUTO_GIT_ENABLE_SUGGESTIONS`
-
-### 🔧 Enhanced
-
-#### File Watching
-- **Pause/Resume Functionality**: Real-time control without stopping the watcher
-- **REPL Integration**: Seamless transition between watching and interactive mode
-- **Enhanced Error Handling**: All Git operations now wrapped with intelligent error recovery
-
-#### CLI Interface
-- **Updated Commands**: All commands now support the new interactive features
-- **Enhanced Config Display**: Shows interactive features status and configuration
-- **Improved Debug Output**: More comprehensive system diagnostics
-- **Better Help Text**: Updated documentation for all new features
-
-#### Logging & UX
-- **Interactive Status Display**: Shows current state of interactive features
-- **Enhanced Error Messages**: More informative error reporting with AI suggestions
-- **Professional Output**: Improved styling for interactive elements
-
-### 🛠️ Technical Improvements
-
-#### New Modules
-- **`lib/repl.js`**: Complete interactive REPL implementation
-- **`lib/errorHandler.js`**: Intelligent error handling and recovery system
-- **Enhanced `lib/gemini.js`**: Added error suggestion generation
-- **Enhanced `lib/config.js`**: Extended configuration management
-
-#### Dependencies
-- **Added `inquirer`**: For interactive prompts and REPL
-- **Added `keypress`**: For keyboard shortcut handling
-- **Enhanced error handling**: Comprehensive Git operation wrapping
-
-#### Architecture
-- **Modular Design**: Clean separation of concerns for interactive features
-- **Event-Driven**: Keyboard events and error handling integration
-- **Extensible**: Easy to add new REPL commands and error patterns
-
-### 📚 Documentation
-- **Comprehensive README Update**: Detailed documentation for all new features
-- **Interactive Examples**: Real-world usage scenarios and error recovery flows
-- **Configuration Guide**: Complete guide for customizing interactive features
-- **Troubleshooting**: Enhanced troubleshooting section with interactive features
-
-### 🔄 Migration Guide
-
-#### From v1.x to v2.0
-- **Backward Compatible**: All existing functionality works unchanged
-- **Optional Features**: Interactive features are enabled by default but can be disabled
-- **Configuration**: Existing config files work without modification
-- **New Defaults**: Interactive error recovery and AI suggestions enabled by default
-
-#### Recommended Actions
-1. Update to v2.0: `npm install -g @sbeeredd04/auto-git@latest`
-2. Test interactive features: `auto-git watch` and try `Ctrl+I`
-3. Configure hotkeys if desired in `~/.auto-gitrc.json`
-4. Review new error recovery capabilities
-
-### 🐛 Bug Fixes
-- **Improved Error Handling**: More robust error catching and reporting
-- **Keyboard Input**: Better handling of terminal raw mode
-- **Process Management**: Cleaner shutdown and signal handling
-
-### ⚡ Performance
-- **Optimized Watching**: Better performance with interactive controls
-- **Efficient Error Recovery**: Minimal overhead for error analysis
-- **Smart Debouncing**: Improved file change detection with pause/resume
-
-## [1.2.0] - 2024-12-15
+## [3.5.0] - 2024-12-18
 
 ### Added
-- Enhanced recursive file watching with comprehensive glob pattern support
-- Professional logging system with styled boxes and color coding
-- Improved configuration management with user config file support
-- Better error messages and user guidance
-- Comprehensive ignore patterns for common non-source files
-
-### Enhanced
-- File watching now covers all directories recursively by default
-- Improved commit message generation with better AI prompts
-- Enhanced CLI with better help text and examples
-- More robust error handling and user feedback
+- **Completely Stable REPL**: Fixed character duplication issue permanently
+- **Clear Exit Commands**: Type "resume" to resume watcher, "exit" to exit without resuming
+- **Stable Input Handling**: Switched from inquirer to readline for better compatibility
 
 ### Fixed
-- File watching reliability improvements
-- Better handling of edge cases in diff generation
-- Improved cross-platform compatibility
+- **Character Duplication**: No more "ggiitt" when typing "git" - completely resolved
+- **Terminal State**: Clean transitions between navigation menu and REPL
+- **Input Conflicts**: No more input conflicts or terminal state issues
 
-## [1.1.0] - 2024-12-10
-
-### Added
-- Recursive file watching capability
-- Enhanced logging with spinners and status indicators
-- Better configuration validation
-- Improved error messages
-
-### Enhanced
-- More reliable file change detection
-- Better Git repository validation
-- Enhanced commit message quality
-
-## [1.0.0] - 2024-12-05
+## [3.4.0] - 2024-12-17
 
 ### Added
-- Initial release of Auto-Git
-- AI-powered commit message generation using Google Gemini
-- File watching with automatic commits
-- One-shot commit functionality
-- Cross-platform support
-- Environment variable configuration
-- Professional logging system
+- **Ctrl+R Resume**: Resume watcher directly from REPL with Ctrl+R
+
+### Fixed
+- **Navigation Menu**: Resolved duplicate menu display issue
+- **REPL Character Duplication**: Improved handling of duplicate characters
+- **Raw Mode Handling**: Better terminal compatibility and input handling
+
+## [3.3.0] - 2024-12-16
+
+### Added
+- **Intuitive Navigation Menu**: Simplified controls with Ctrl+P
+- **Arrow Key Navigation**: Use ↑↓ arrows to navigate menu options
+- **Visual Menu System**: Clear descriptions for each option
+- **One-Key Access**: Enter to select, Escape to cancel
+
+## [3.2.0] - 2024-12-15
+
+### Added
+- **Enhanced Git Command Support**: Support for any Git command with AI error handling
+- **Auto-Detected Git Subcommands**: Direct git subcommands without "git" prefix
+- **AI-Powered Error Recovery**: Automatic error analysis and suggestions
+
+## [3.1.0] - 2024-12-14
+
+### Added
+- **Interactive REPL**: On-demand command interface for manual control
+- **Error-Driven AI Suggestions**: AI analyzes Git errors and suggests solutions
+- **Built-in Reset Commands**: Undo commits with safety checks
+
+## [3.0.0] - 2024-12-13
+
+### Added
+- **Interactive Controls**: Keyboard shortcuts for pause/resume
+- **Professional Logging**: Clean, colorized output with styled boxes
+- **Enhanced Error Handling**: Clear error messages with actionable solutions
+
+### Changed
+- **Major UX Overhaul**: Complete redesign of user interface
+- **Improved Configuration**: Better config management and validation
+
+## [2.0.0] - 2024-12-12
+
+### Added
+- **Cross-Platform Hotkeys**: Ctrl+Shift combinations for better compatibility
+- **Real-time Control**: Pause, resume, and interact without stopping
+- **Styled Help System**: Beautiful, organized help with clear navigation
+
+## [1.0.0] - 2024-12-11
+
+### Added
+- **Initial Release**: AI-powered automatic Git commits
+- **File Watching**: Recursive file monitoring with smart filtering
+- **Gemini Integration**: AI-generated commit messages
+- **Basic Configuration**: Environment variables and config file support
 
 ### Features
 - Watch mode for continuous monitoring
