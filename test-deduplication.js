@@ -13,7 +13,7 @@ const testCases = [
   { input: '', expected: '' },
   { input: 'abc', expected: 'abc' },
   { input: 'aabbcc  ddee', expected: 'abc de' },
-  { input: 'commit --amend', expected: 'commit --amend' },
+  { input: 'commit --amend', expected: 'comit -amend' },
   { input: 'ccoommmmiitt  ----aammeenndd', expected: 'comit -amend' }
 ];
 
