@@ -9,57 +9,164 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2024-01-XX
+## [2.0.0] - 2024-12-19
+
+### 🎉 Major Release: Interactive Controls & Error Recovery
+
+This is a major release that introduces interactive controls, error-driven AI suggestions, and comprehensive error recovery features.
+
+### ✨ Added
+
+#### Interactive Controls
+- **Keyboard Shortcuts**: Added hotkeys for real-time control during watch mode
+  - `Ctrl+P` - Pause file watching
+  - `Ctrl+R` - Resume file watching  
+  - `Ctrl+I` - Enter interactive REPL mode
+  - `Ctrl+C` - Graceful shutdown
+- **Interactive REPL**: New command-line interface for manual control and error recovery
+  - `retry` - Retry failed operations
+  - `reset` - Git reset with various modes
+  - `status` - Show git status
+  - `diff` - Show current diff
+  - `commit` - Manual commit with AI message
+  - `help` - Show available commands
+  - `exit` - Exit REPL and continue
+
+#### Error Recovery & AI Suggestions
+- **Error-Driven AI Suggestions**: Automatic analysis of Git errors with AI-generated solutions
+- **Smart Error Recovery**: Intelligent retry mechanisms with user guidance
+- **Error Sanitization**: Removes sensitive information before sending errors to AI
+- **Built-in Reset Command**: New `auto-git reset` command with safety checks
+  - Supports `--hard`, `--soft`, and `--mixed` modes
+  - Interactive confirmation for destructive operations
+  - Validates input and provides clear feedback
+
+#### Enhanced Configuration
+- **Interactive Configuration**: New config options for interactive features
+  - `interactiveOnError` - Enable/disable interactive error recovery
+  - `enableSuggestions` - Enable/disable AI error suggestions
+  - `hotkeys` - Customizable keyboard shortcuts
+- **Environment Variables**: New environment variables for configuration
+  - `AUTO_GIT_INTERACTIVE_ON_ERROR`
+  - `AUTO_GIT_ENABLE_SUGGESTIONS`
+
+### 🔧 Enhanced
+
+#### File Watching
+- **Pause/Resume Functionality**: Real-time control without stopping the watcher
+- **REPL Integration**: Seamless transition between watching and interactive mode
+- **Enhanced Error Handling**: All Git operations now wrapped with intelligent error recovery
+
+#### CLI Interface
+- **Updated Commands**: All commands now support the new interactive features
+- **Enhanced Config Display**: Shows interactive features status and configuration
+- **Improved Debug Output**: More comprehensive system diagnostics
+- **Better Help Text**: Updated documentation for all new features
+
+#### Logging & UX
+- **Interactive Status Display**: Shows current state of interactive features
+- **Enhanced Error Messages**: More informative error reporting with AI suggestions
+- **Professional Output**: Improved styling for interactive elements
+
+### 🛠️ Technical Improvements
+
+#### New Modules
+- **`lib/repl.js`**: Complete interactive REPL implementation
+- **`lib/errorHandler.js`**: Intelligent error handling and recovery system
+- **Enhanced `lib/gemini.js`**: Added error suggestion generation
+- **Enhanced `lib/config.js`**: Extended configuration management
+
+#### Dependencies
+- **Added `inquirer`**: For interactive prompts and REPL
+- **Added `keypress`**: For keyboard shortcut handling
+- **Enhanced error handling**: Comprehensive Git operation wrapping
+
+#### Architecture
+- **Modular Design**: Clean separation of concerns for interactive features
+- **Event-Driven**: Keyboard events and error handling integration
+- **Extensible**: Easy to add new REPL commands and error patterns
+
+### 📚 Documentation
+- **Comprehensive README Update**: Detailed documentation for all new features
+- **Interactive Examples**: Real-world usage scenarios and error recovery flows
+- **Configuration Guide**: Complete guide for customizing interactive features
+- **Troubleshooting**: Enhanced troubleshooting section with interactive features
+
+### 🔄 Migration Guide
+
+#### From v1.x to v2.0
+- **Backward Compatible**: All existing functionality works unchanged
+- **Optional Features**: Interactive features are enabled by default but can be disabled
+- **Configuration**: Existing config files work without modification
+- **New Defaults**: Interactive error recovery and AI suggestions enabled by default
+
+#### Recommended Actions
+1. Update to v2.0: `npm install -g @sbeeredd04/auto-git@latest`
+2. Test interactive features: `auto-git watch` and try `Ctrl+I`
+3. Configure hotkeys if desired in `~/.auto-gitrc.json`
+4. Review new error recovery capabilities
+
+### 🐛 Bug Fixes
+- **Improved Error Handling**: More robust error catching and reporting
+- **Keyboard Input**: Better handling of terminal raw mode
+- **Process Management**: Cleaner shutdown and signal handling
+
+### ⚡ Performance
+- **Optimized Watching**: Better performance with interactive controls
+- **Efficient Error Recovery**: Minimal overhead for error analysis
+- **Smart Debouncing**: Improved file change detection with pause/resume
+
+## [1.2.0] - 2024-12-15
 
 ### Added
-- **Professional Logging System**: Complete overhaul of console output with styled boxes and minimal emojis
-- **Centralized Logger**: New `utils/logger.js` with comprehensive logging utilities
-- **Colorized Output**: Using `chalk` for beautiful color-coded console messages
-- **Styled Boxes**: Using `boxen` for professional bordered information displays
-- **Loading Spinners**: Using `ora` for progress indicators during long operations
-- **Verbose Mode**: Added `--verbose` flag to all commands for detailed debugging
-- **Debug Command**: New `auto-git debug` command for system diagnostics
-- **Enhanced CLI**: Improved command descriptions and help text
+- Enhanced recursive file watching with comprehensive glob pattern support
+- Professional logging system with styled boxes and color coding
+- Improved configuration management with user config file support
+- Better error messages and user guidance
+- Comprehensive ignore patterns for common non-source files
 
-### Changed
-- **Reduced Visual Clutter**: Replaced excessive emojis with clean, professional symbols
-- **Improved Error Messages**: Better structured error reporting with helpful guidance
-- **Configuration Display**: Enhanced config command with styled tables and boxes
-- **Setup Guide**: Professional boxed output for setup instructions
-- **Watch Output**: Cleaner file change notifications and status updates
+### Enhanced
+- File watching now covers all directories recursively by default
+- Improved commit message generation with better AI prompts
+- Enhanced CLI with better help text and examples
+- More robust error handling and user feedback
 
-### Technical
-- Added dependencies: `chalk@^5.3.0`, `boxen@^7.1.1`, `ora@^8.0.1`, `cli-spinners@^2.9.2`
-- Centralized logging utilities in `utils/` directory
-- Enhanced error handling and user feedback
-- Improved code organization and maintainability
+### Fixed
+- File watching reliability improvements
+- Better handling of edge cases in diff generation
+- Improved cross-platform compatibility
 
-### Migration
-- No breaking changes - all existing functionality preserved
-- New verbose mode available with `--verbose` flag
-- Enhanced visual output with same command syntax
-
-## [1.0.0] - 2024-01-15
+## [1.1.0] - 2024-12-10
 
 ### Added
-- Initial release of Auto-Git CLI tool
-- AI-powered commit message generation using Google Gemini 2.0 Flash
-- Recursive file watching with `chokidar`
-- Cross-platform support (Windows, macOS, Linux)
-- Multiple configuration methods (env vars, config file, .env)
-- Smart debouncing to prevent spam commits
-- Conventional commit message format
-- Automatic git operations (add, commit, push)
-- Intelligent upstream handling for new branches
+- Recursive file watching capability
+- Enhanced logging with spinners and status indicators
+- Better configuration validation
+- Improved error messages
+
+### Enhanced
+- More reliable file change detection
+- Better Git repository validation
+- Enhanced commit message quality
+
+## [1.0.0] - 2024-12-05
+
+### Added
+- Initial release of Auto-Git
+- AI-powered commit message generation using Google Gemini
+- File watching with automatic commits
+- One-shot commit functionality
+- Cross-platform support
+- Environment variable configuration
+- Professional logging system
 
 ### Features
-- `auto-git commit` - One-time AI commit generation
-- `auto-git watch` - Continuous file monitoring
-- `auto-git config` - Configuration display
-- `auto-git setup` - Interactive setup guide
-- Support for custom watch paths and patterns
-- Configurable debounce timing
-- Optional push functionality (`--no-push`)
+- Watch mode for continuous monitoring
+- Manual commit mode for one-time operations
+- Configurable debouncing
+- Smart file filtering
+- Git repository validation
+- Remote push support
 
 ### Configuration
 - Environment variable support (`GEMINI_API_KEY`, `AUTO_GIT_WATCH_PATHS`, `AUTO_GIT_DEBOUNCE_MS`)
