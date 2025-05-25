@@ -21,6 +21,37 @@ All notable changes to Auto-Git will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.1] - 2024-12-19
+
+### 🚀 Added
+- **Global Ctrl+R Resume**: Works from anywhere - REPL, navigation menu, or file watcher
+- **Simplified Git Command Pass-Through**: REPL now acts as a simple pass-through for Git commands
+- **Enhanced Keyboard Controls**: Ctrl+R globally resumes watcher from any state
+
+### 🔧 Fixed
+- **Removed Input Deduplication**: Eliminated problematic duplicate character removal that was causing issues
+- **Removed Inquirer Prompts**: Eliminated blocking prompts that were stopping REPL execution
+- **Simplified REPL Flow**: Commands now execute and return to prompt immediately
+- **Better Command Processing**: Direct pass-through for Git commands without interference
+
+### 🎯 Enhanced
+- **Streamlined User Experience**: REPL continues running after commands instead of stopping
+- **Cleaner Git Integration**: Direct command execution without complex processing
+- **Better Error Handling**: AI suggestions without blocking prompts
+- **Improved Navigation**: Global resume works from any application state
+
+### 📱 Technical Improvements
+- **Removed Unused Functions**: Cleaned up `removeDuplicateChars` function from utils
+- **Simplified REPL Logic**: Removed complex input processing and inquirer dependencies
+- **Enhanced Global Controls**: Ctrl+R handler works across all application states
+- **Better State Management**: Cleaner transitions between different modes
+
+### 🧪 User Experience
+- **No More Stuck States**: REPL continues running after each command
+- **Direct Git Commands**: Type "git pull" or "pull" - both work seamlessly
+- **Instant Resume**: Ctrl+R immediately resumes watcher from anywhere
+- **Simplified Workflow**: Less complexity, more reliability
+
 ## [3.6.0] - 2024-12-19
 
 ### 🚀 Added
