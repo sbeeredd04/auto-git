@@ -1,4 +1,4 @@
-# Auto-Git v3.4.0
+# Auto-Git v3.5.0
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -8,9 +8,9 @@
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 [![GitHub Release](https://img.shields.io/github/release/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/releases)
 
-> AI-powered automatic Git commits with Gemini-generated commit messages - now with stable navigation menu and REPL
+> AI-powered automatic Git commits with Gemini-generated commit messages - now with completely stable REPL and proper input handling
 
-Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.4.0** fixes critical issues with the navigation menu and REPL character duplication, providing a smooth and reliable user experience.
+Auto-Git is a cross-platform CLI tool that watches your files and automatically generates meaningful commit messages using Google's Gemini AI, then commits and pushes your changes. **Version 3.5.0** completely fixes the REPL character duplication issue and provides a stable, reliable interactive experience.
 
 ## Table of Contents
 
@@ -69,6 +69,13 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 - **Added Ctrl+R Resume**: Resume watcher directly from REPL with Ctrl+R
 - **Improved Raw Mode Handling**: Better terminal compatibility and input handling
 - **Enhanced Error Recovery**: Cleaner transitions between modes
+
+### New in v3.5.0: Completely Stable REPL
+- **Fixed Character Duplication**: No more "ggiitt" when typing "git" - completely resolved
+- **Stable Input Handling**: Switched from inquirer to readline for better terminal compatibility
+- **Clear Exit Commands**: Type "resume" to resume watcher, "exit" to exit without resuming
+- **Proper Terminal State**: Clean transitions between navigation menu and REPL
+- **Reliable Experience**: No more input conflicts or terminal state issues
 
 ## Quick Start
 
@@ -386,7 +393,8 @@ EXAMPLES:
 | **↑↓ Arrows**     | Navigate menu options when paused     |
 | **Enter**         | Select highlighted menu option        |
 | **Escape**        | Cancel menu and resume watching       |
-| **Ctrl+R**        | Resume watcher from REPL (NEW in v3.4.0) |
+| **"resume"**      | Resume watcher from REPL (FIXED in v3.5.0) |
+| **"exit"**        | Exit REPL without resuming (NEW in v3.5.0) |
 | **Ctrl+C**        | Stop and exit                         |
 
 #### Navigation Menu
