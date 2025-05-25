@@ -27,7 +27,22 @@ Auto-Git is a cross-platform CLI tool that watches your files and automatically 
 
 ### 1. Install Auto-Git
 
+**Option 1: Use npx (Recommended - No Installation Required)**
 ```bash
+npx @sbeeredd04/auto-git setup
+```
+
+**Option 2: Global Installation**
+```bash
+npm install -g @sbeeredd04/auto-git
+```
+
+**If you get permission errors on macOS/Linux:**
+```bash
+# Fix npm permissions or use Node Version Manager
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.zshrc
+nvm install node
 npm install -g @sbeeredd04/auto-git
 ```
 
@@ -45,11 +60,19 @@ export GEMINI_API_KEY="your-api-key-here"
 
 **One-time commit:**
 ```bash
+# With npx (no installation)
+npx @sbeeredd04/auto-git commit
+
+# With global installation
 auto-git commit
 ```
 
 **Watch mode (continuous):**
 ```bash
+# With npx (no installation)
+npx @sbeeredd04/auto-git watch
+
+# With global installation
 auto-git watch
 ```
 
@@ -61,6 +84,12 @@ auto-git watch
 Generates an AI commit message for current changes and commits/pushes them.
 
 ```bash
+# With npx
+npx @sbeeredd04/auto-git commit                 # Commit and push current changes
+npx @sbeeredd04/auto-git commit --no-push       # Commit but don't push
+npx @sbeeredd04/auto-git commit --verbose       # Enable detailed logging
+
+# With global installation
 auto-git commit                 # Commit and push current changes
 auto-git commit --no-push       # Commit but don't push
 auto-git commit --verbose       # Enable detailed logging
@@ -71,6 +100,13 @@ auto-git commit --dry-run       # Preview what would be committed (coming soon)
 Starts file watching mode - automatically commits changes when files are modified **recursively throughout the entire repository**.
 
 ```bash
+# With npx
+npx @sbeeredd04/auto-git watch                    # Watch ALL files recursively (default)
+npx @sbeeredd04/auto-git watch --paths src lib    # Watch specific directories only
+npx @sbeeredd04/auto-git watch --no-push          # Watch and commit but don't push
+npx @sbeeredd04/auto-git watch --verbose          # Enable detailed logging output
+
+# With global installation
 auto-git watch                    # Watch ALL files recursively (default)
 auto-git watch --paths src lib    # Watch specific directories only
 auto-git watch --no-push          # Watch and commit but don't push
@@ -81,6 +117,10 @@ auto-git watch --verbose          # Enable detailed logging output
 Shows current configuration and setup status with styled output.
 
 ```bash
+# With npx
+npx @sbeeredd04/auto-git config
+
+# With global installation
 auto-git config
 ```
 
@@ -88,6 +128,10 @@ auto-git config
 Interactive setup guide with step-by-step instructions.
 
 ```bash
+# With npx
+npx @sbeeredd04/auto-git setup
+
+# With global installation
 auto-git setup
 ```
 
@@ -95,6 +139,10 @@ auto-git setup
 Run system diagnostics to troubleshoot issues.
 
 ```bash
+# With npx
+npx @sbeeredd04/auto-git debug
+
+# With global installation
 auto-git debug
 ```
 
