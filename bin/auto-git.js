@@ -11,7 +11,7 @@ const program = new Command();
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v2.0', 'AI-powered Git automation with interactive controls');
+  logger.section('Auto-Git v3.2.0', 'AI-powered Git automation with cross-platform hotkeys');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -21,7 +21,7 @@ function displayStyledHelp() {
   const commands = {
     'watch': 'Watch files and auto-commit with AI messages (interactive mode)',
     'commit (c)': 'Generate AI commit for current changes',
-    'reset <count>': 'Undo commits with safety checks (NEW in v2.0)',
+    'reset <count>': 'Undo commits with safety checks (NEW in v3.2.0)',
     'config': 'Show configuration and interactive features',
     'setup': 'Interactive setup guide for first-time users',
     'debug': 'Run system diagnostics and health check',
@@ -31,7 +31,7 @@ function displayStyledHelp() {
   logger.config('AVAILABLE COMMANDS', commands);
   
   logger.space();
-  logger.info('INTERACTIVE FEATURES (v2.0):', 'FEATURES');
+  logger.info('INTERACTIVE FEATURES (v3.2.0):', 'FEATURES');
   logger.info('  Ctrl+Shift+P  Pause file watching (or press "1")', '');
   logger.info('  Ctrl+Shift+R  Resume file watching (or press "2")', '');
   logger.info('  Ctrl+Shift+1  Enter interactive REPL mode (or press "3")', '');
@@ -88,7 +88,7 @@ function handleMissingApiKey(commandName) {
 program
   .name('auto-git')
   .description('Auto-commit and push with AI-generated commit messages using Gemini - now with interactive controls')
-  .version('2.0.0')
+  .version('3.2.0')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -120,7 +120,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v2.0', 'Initializing file monitoring system with interactive controls');
+      logger.section('Auto-Git Watcher v3.2.0', 'Initializing file monitoring system with cross-platform hotkeys');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -348,7 +348,7 @@ program
         'REPL Hotkey': `${interactiveConfig.hotkeys.enterRepl} or "${interactiveConfig.hotkeys.enterReplAlt}"`
       };
 
-      logger.config('INTERACTIVE FEATURES (NEW IN v2.0)', interactiveItems);
+      logger.config('INTERACTIVE FEATURES (NEW IN v3.2.0)', interactiveItems);
       
       logger.space();
       logger.info('Configuration sources (in order of priority):');
@@ -411,7 +411,7 @@ program
     logger.setup(steps);
     
     logger.space();
-    logger.info('New in v2.0 - Interactive Features:', 'FEATURES');
+    logger.info('New in v3.2.0 - Interactive Features:', 'FEATURES');
     logger.info('  • Cross-platform keyboard shortcuts (Ctrl+Shift combinations)');
     logger.info('  • Alternative number key shortcuts for better compatibility');
     logger.info('  • Error-driven AI suggestions');
@@ -446,7 +446,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v2.0', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.2.0', 'System health check');
     
     try {
       const config = getConfig();
@@ -456,7 +456,7 @@ program
       const remote = isRepo ? await hasRemote() : false;
       
       const diagnostics = {
-        'Auto-Git Version': '2.0.0',
+        'Auto-Git Version': '3.2.0',
         'Node.js Version': process.version,
         'Platform': process.platform,
         'Working Directory': process.cwd(),
