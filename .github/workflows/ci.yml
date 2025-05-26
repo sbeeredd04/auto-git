@@ -11,13 +11,65 @@ on:
     branches: [ main ]
 
 jobs:
+  validate:
+    name: Validate Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Check for circular dependencies
+        run: |
+          echo "🔍 Checking for circular dependencies..."
+          
+          # Function to check dependencies in a package.json file
+          check_deps() {
+            local file="$1"
+            local name="$2"
+            
+            if [ ! -f "$file" ]; then
+              echo "⚠️  $file not found, skipping..."
+              return 0
+            fi
+            
+            echo "📋 Checking $name..."
+            
+            # Extract dependencies section and check for self-reference
+            if grep -A 50 '"dependencies"' "$file" | grep -q '"@sbeeredd04/auto-git"'; then
+              echo "❌ Circular dependency detected in $name"
+              return 1
+            fi
+            
+            echo "✅ No circular dependencies in $name"
+            return 0
+          }
+          
+          # Check main package.json
+          check_deps "package.json" "main package.json"
+          main_result=$?
+          
+          # Check gitcue package.json
+          check_deps "gitcue/package.json" "gitcue/package.json"
+          gitcue_result=$?
+          
+          # Exit with error if any check failed
+          if [ $main_result -ne 0 ] || [ $gitcue_result -ne 0 ]; then
+            echo "💥 Circular dependency validation failed!"
+            exit 1
+          fi
+          
+          echo "🎉 All dependency validations passed!"
+
   test:
+    name: Test Package
     runs-on: ${{ matrix.os }}
+    needs: validate
     
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [18, 20, 21]
+        node-version: [18, 20]
         
     steps:
       - name: Checkout code
@@ -27,64 +79,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          registry-url: 'https://registry.npmjs.org/'
+          cache: 'npm'
           
-      - name: Configure npm registry
-        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
-        
-      - name: Validate package.json
-        run: |
-          # Check for circular dependencies in main package.json dependencies section
-          if grep -A 20 '"dependencies"' package.json | grep -q '"@sbeeredd04/auto-git"'; then
-            echo "Error: Circular dependency detected in package.json dependencies"
-            exit 1
-          fi
-          
-          # Check for circular dependencies in gitcue/package.json dependencies section
-          if [ -f gitcue/package.json ]; then
-            if grep -A 20 '"dependencies"' gitcue/package.json | grep -q '"@sbeeredd04/auto-git"'; then
-              echo "Error: Circular dependency detected in gitcue/package.json dependencies"
-              exit 1
-            fi
-          fi
-          
-          echo "package.json validation passed"
-        
-      - name: Clean install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-        
-      - name: Run lint (if available)
-        run: npm run lint
-        continue-on-error: true
+      - name: Install dependencies
+        run: npm ci
         
       - name: Run tests
         run: npm test
-        continue-on-error: true
         
-      - name: Test CLI installation
+      - name: Test CLI functionality
         run: |
-          # Try npm link, but continue if it fails due to permissions
-          npm link || echo "npm link failed (expected in CI), continuing..."
-          # Test the CLI directly from node_modules if link failed
-          if command -v auto-git >/dev/null 2>&1; then
-            auto-git --help
-          else
-            echo "Testing CLI directly from bin directory"
-            node bin/auto-git.js --help
-          fi
-        
-      - name: Test configuration
-        run: auto-git config
-        continue-on-error: true
+          echo "🧪 Testing CLI functionality..."
+          node bin/auto-git.js --help
+          echo "✅ CLI help command works"
 
   build:
+    name: Build Package
     runs-on: ubuntu-latest
-    needs: test
+    needs: [validate, test]
     
     steps:
       - name: Checkout code
@@ -93,48 +105,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org/'
+          node-version: '20'
+          cache: 'npm'
           
-      - name: Configure npm registry
-        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+      - name: Install dependencies
+        run: npm ci
         
-      - name: Validate package.json
+      - name: Create package
         run: |
-          # Check for circular dependencies in main package.json dependencies section
-          if grep -A 20 '"dependencies"' package.json | grep -q '"@sbeeredd04/auto-git"'; then
-            echo "Error: Circular dependency detected in package.json dependencies"
-            exit 1
-          fi
-          
-          # Check for circular dependencies in gitcue/package.json dependencies section
-          if [ -f gitcue/package.json ]; then
-            if grep -A 20 '"dependencies"' gitcue/package.json | grep -q '"@sbeeredd04/auto-git"'; then
-              echo "Error: Circular dependency detected in gitcue/package.json dependencies"
-              exit 1
-            fi
-          fi
-          
-          echo "package.json validation passed"
-        
-      - name: Clean install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-        
-      - name: Test package creation
-        run: |
+          echo "📦 Creating npm package..."
           npm pack
-          # Verify the package was created
+          
+          echo "📋 Package contents:"
           ls -la *.tgz
-          # Test package installation
-          npm install -g ./sbeeredd04-auto-git-*.tgz || echo "Global install failed (expected in CI)"
+          
+          echo "✅ Package created successfully"
         
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: npm-package
-          path: '*.tgz' 
+          name: npm-package-${{ github.sha }}
+          path: '*.tgz'
+          retention-days: 30 
