@@ -1,187 +1,468 @@
-# GitCue - AI-Powered Git Automation for VS Code
+# 🎯 GitCue - AI-Powered Git Assistant for VS Code
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+**Version 0.3.3** | Your intelligent Git companion that automates commits with AI-crafted messages, provides an AI-powered interactive terminal with chat capabilities, and keeps your workflow smooth and effortless.
 
-> 🤖 **GitCue** — Your intelligent Git companion for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.
+![GitCue Banner](https://img.shields.io/badge/GitCue-v0.3.3-blue?style=for-the-badge&logo=git)
+![VS Code](https://img.shields.io/badge/VS%20Code-Extension-007ACC?style=for-the-badge&logo=visual-studio-code)
+![AI Powered](https://img.shields.io/badge/AI-Powered-FF6B6B?style=for-the-badge&logo=openai)
 
-GitCue brings the power of [Auto-Git CLI](https://www.npmjs.com/package/@sbeeredd04/auto-git) directly into VS Code with a beautiful, intuitive interface.
+---
 
-## ✨ Features
+## ✨ What's New in v0.3.3
 
-### 🤖 AI-Powered Commits
-- **Smart Commit Messages**: Generate meaningful commit messages using Google's Gemini AI
-- **Intelligent Mode**: AI decides when to commit based on code changes
-- **Periodic Mode**: Time-based commits with customizable intervals
+### 🖥️ **Full Terminal Functionality**
+- **Directory Navigation**: Use `cd` to change directories, and `pwd` to print the current directory
+- **Cross-Platform Shell**: Works on both Windows (cmd.exe) and Unix (bash)
+- **Clean Output**: Properly aligned and formatted command output
+- **Consistent Prompt**: Improved prompt and session management
+- **AI Chat Exit**: Type `exit`, `quit`, `q`, or press Ctrl+C to leave AI chat mode
 
-### ⏰ Buffer Period Protection
-- **Commit Buffer**: 30-second cancellation window before commits are executed
-- **Visual Countdown**: Beautiful timer interface with progress indicators
-- **Quick Cancel**: Press 'c' or click to cancel pending commits
-- **Seamless Resume**: Watch mode continues after cancellation
+### 🚀 **Enhanced Features**
+- **Improved Error Analysis**: Better AI suggestions with styled markdown responses
+- **Interactive Chat Interface**: Ask AI questions and get formatted answers
+- **Session History**: Persistent command history across sessions
+- **Arrow Key Navigation**: Browse history with ↑↓ keys
 
-### 🎯 Modern Dashboard (v0.1.0)
-- **Redesigned Interface**: Complete UI overhaul with clean, professional styling matching VS Code design language
-- **Fixed Stability Issues**: Dashboard no longer disappears unexpectedly with improved error handling
-- **Real-time Status**: Live monitoring of system status and configuration with optimized state management
-- **Intuitive Controls**: Simplified checkbox-style toggle for watching mode and streamlined action buttons
-- **Enhanced Visual Feedback**: Clear status indicators with color-coded badges and smooth animations
-- **Responsive Design**: Works perfectly on all screen sizes with mobile-friendly layout
+---
 
-### 🔧 Smart Configuration
-- **File Watching**: Customizable glob patterns for file monitoring
-- **Rate Limiting**: Built-in API call limits to prevent overuse
-- **Auto-Push**: Optional automatic pushing to remote repositories
-- **Notifications**: Configurable status updates and alerts
+## 🚀 Key Features
 
-## 🚀 Getting Started
+### 🤖 **AI-Powered Commit Messages**
+Generate contextual, meaningful commit messages using Google Gemini AI that understand your code changes and follow best practices.
 
-### Prerequisites
-- VS Code 1.96.0 or higher
-- Git repository
-- Gemini API key (get one from [Google AI Studio](https://makersuite.google.com/app/apikey))
+**Features**:
+- Intelligent analysis of your code changes
+- Customizable commit modes (periodic/intelligent)
+- Preview and edit before committing
+- Buffer time to cancel unwanted commits
+- Auto-push capabilities
 
-### Installation
-1. Install the extension from the VS Code marketplace
-2. Open a Git repository in VS Code
-3. Configure your Gemini API key in settings
-4. Start using GitCue!
+### 🖥️ **AI-Enhanced Interactive Terminal** *(Enhanced in v0.3.3)*
+A professional terminal experience with AI-powered error analysis and interactive chat capabilities.
 
-### Quick Setup
-1. **Set API Key**: `Ctrl+Shift+P` → "GitCue: Configure Settings"
-2. **Start Watching**: `Ctrl+Alt+W` or click the GitCue status bar item
-3. **Open Dashboard**: Click the GitCue status bar or use `Ctrl+Shift+P` → "GitCue: Open Dashboard"
+**New in v0.3.3**:
+- **Full Terminal Navigation**: Use `cd`, `pwd`, and other shell commands
+- **Cross-Platform Support**: Works on Windows and Unix
+- **Clean Output Formatting**: Properly formatted command output
+- **Styled Markdown**: AI responses with headers, code blocks, and formatting
+- **Visual Separators**: Clear borders and status indicators
+- **Git Syntax Highlighting**: Enhanced display for Git commands
 
-## 🎮 Usage
+**Terminal Features**:
+- Execute any command with real-time output
+- Persistent command history across sessions
+- Arrow key navigation (↑↓) through history
+- Smart error analysis with AI suggestions
+- Built-in commands: `history`, `clear`, `config`, `ai`, `help`, `exit`, `cd`, `pwd`
 
-### Commands
-- `Ctrl+Alt+C` - Manual AI commit
-- `Ctrl+Alt+W` - Toggle file watching
-- `Ctrl+Alt+X` - Cancel pending commit
-- `Ctrl+Shift+P` → "GitCue" - Access all commands
+### 👁️ **Smart File Watching**
+Automatically detect file changes and create intelligent commits based on your workflow patterns.
 
-### Dashboard Features
-- **System Status**: Monitor watching mode, commit mode, and auto-push settings
-- **API Configuration**: Check API key status, rate limits, and buffer time
-- **Performance Metrics**: View debounce time, notifications, and auto-start settings
-- **Watch Patterns**: See which file patterns are being monitored
-- **Quick Actions**: Start/stop watching, manual commit, settings, and logs
+**Features**:
+- Configurable watch patterns and ignore rules
+- Debounced commits to prevent spam
+- Buffer notifications with cancel options
+- Intelligent vs periodic commit modes
 
-### Buffer Period System
-When GitCue is about to commit:
-1. **Buffer Notification**: A countdown timer appears
-2. **Cancellation Window**: 30 seconds (configurable) to cancel
-3. **Visual Feedback**: Progress bar and timer show remaining time
-4. **Quick Cancel**: Press 'c' key or click cancel button
-5. **Auto-Resume**: Watching continues seamlessly after cancellation
+### 📊 **Intuitive Dashboard**
+Monitor your GitCue status and access all features from a beautiful, responsive interface.
+
+**Features**:
+- Real-time status monitoring
+- Configuration management
+- Quick access to all GitCue features
+- System health indicators
+
+---
+
+## 🎮 Quick Start Guide
+
+### 1. **Installation**
+1. **From VS Code Marketplace**: Search for "GitCue" and install
+2. **From VSIX**: Download `gitcue-0.3.3.vsix` and install locally
+
+### 2. **Setup API Key**
+1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Open VS Code Settings (`Ctrl+,` or `Cmd+,`)
+3. Search for "GitCue" and set your API key in `gitcue.geminiApiKey`
+
+### 3. **Start Using GitCue**
+
+#### **AI Commit** (`Ctrl+Alt+C` / `Cmd+Alt+C`)
+```bash
+# Make changes to your code
+# Press Ctrl+Alt+C (or Cmd+Alt+C on Mac)
+# Review the AI-generated commit message
+# Commit with one click!
+```
+
+#### **AI Terminal** (`Ctrl+Alt+T` / `Cmd+Alt+T`) *(Enhanced!)*
+```bash
+# Open AI-powered terminal
+gitcue> git status
+🔄 Executing: git status
+
+────────────────────────────────────────────────────────────
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+        modified:   package.json
+        modified:   src/extension.ts
+────────────────────────────────────────────────────────────
+✅ Command completed successfully
+
+gitcue> cd test
+🔄 Changed directory to: /path/to/your/workspace/test
+
+gitcue> pwd
+🔄 Current directory: /path/to/your/workspace/test
+
+gitcue> ai
+🤖 Entering AI Chat Mode
+Type your questions and get AI-powered answers. Use Ctrl+C or type 'exit' to leave chat mode.
+```
+
+#### **Dashboard** (`Ctrl+Shift+P` → "GitCue: Open Dashboard")
+Access the centralized control panel to:
+- Monitor file watching status
+- View system configuration
+- Access all GitCue features
+- Manage settings
+
+---
+
+## 📋 Commands & Shortcuts
+
+| Command | Shortcut | Description |
+|---------|----------|-------------|
+| **GitCue: AI Commit** | `Ctrl+Alt+C` / `Cmd+Alt+C` | Generate and preview AI commit |
+| **GitCue: Open AI Terminal** | `Ctrl+Alt+T` / `Cmd+Alt+T` | Launch interactive AI terminal |
+| **GitCue: Toggle Auto-Watch** | `Ctrl+Alt+W` / `Cmd+Alt+W` | Start/stop file watching |
+| **GitCue: Open Dashboard** | - | Open GitCue control panel |
+| **GitCue: Cancel Commit** | `Ctrl+Alt+X` / `Cmd+Alt+X` | Cancel pending commit |
+
+### **Terminal Built-in Commands**
+| Command | Description |
+|---------|-------------|
+| `ai` | Enter interactive AI chat mode |
+| `history` | Show command history with syntax highlighting |
+| `config` | Display GitCue configuration |
+| `help` | Show comprehensive help |
+| `clear` | Clear terminal screen |
+| `exit` | Exit interactive session or AI chat mode |
+| `cd` | Change directory |
+| `pwd` | Print current directory |
+
+---
 
 ## ⚙️ Configuration
 
-### Settings
+### **Core Settings**
 ```json
 {
   "gitcue.geminiApiKey": "your-api-key-here",
   "gitcue.commitMode": "intelligent",
   "gitcue.autoPush": true,
-  "gitcue.bufferTimeSeconds": 30,
-  "gitcue.debounceMs": 30000,
-  "gitcue.maxCallsPerMinute": 15,
-  "gitcue.enableNotifications": true,
-  "gitcue.autoWatch": false,
-  "gitcue.watchPaths": [
-    "src/**",
-    "lib/**",
-    "*.js",
-    "*.ts",
-    "*.jsx",
-    "*.tsx",
-    "*.py"
-  ]
+  "gitcue.enableNotifications": true
 }
 ```
 
-### Commit Modes
-- **Intelligent**: AI analyzes changes and decides when to commit
-- **Periodic**: Time-based commits after file changes
+### **Interactive Terminal** *(Enhanced in v0.3.3)*
+```json
+{
+  "gitcue.enableSuggestions": true,
+  "gitcue.sessionPersistence": true,
+  "gitcue.maxHistorySize": 100,
+  "gitcue.terminalVerbose": false
+}
+```
 
-### Watch Patterns
-Configure which files to monitor using glob patterns:
-- `src/**` - All files in src directory
-- `*.js` - All JavaScript files
-- `**/*.ts` - All TypeScript files recursively
+### **File Watching**
+```json
+{
+  "gitcue.watchPaths": ["src/**", "*.js", "*.ts", "*.py"],
+  "gitcue.watchIgnored": ["node_modules/**", ".git/**", "dist/**"],
+  "gitcue.debounceMs": 30000,
+  "gitcue.bufferTimeSeconds": 30
+}
+```
 
-## 🛡️ Safety Features
-
-### Buffer Period Protection
-- **Cancellation Window**: Always get time to review before commits
-- **Visual Countdown**: Clear indication of remaining time
-- **Multiple Cancel Methods**: Keyboard shortcut or button click
-- **No Accidental Commits**: Built-in protection against unwanted commits
-
-### Rate Limiting
-- **API Protection**: Prevents excessive API calls
-- **Configurable Limits**: Set your own rate limits
-- **Smart Debouncing**: Waits for file changes to settle
-
-### Error Handling
-- **Graceful Fallbacks**: Continues working even if AI fails
-- **Detailed Logging**: Comprehensive error reporting
-- **Safe Defaults**: Sensible fallback commit messages
-
-## 🎨 UI/UX Features
-
-### Modern Dashboard
-- **Clean Design**: Professional, minimalist interface
-- **Smooth Animations**: Polished transitions and effects
-- **Responsive Layout**: Works on all screen sizes
-- **Dark Theme Support**: Follows VS Code theme
-
-### Status Indicators
-- **Real-time Updates**: Live status monitoring
-- **Visual Feedback**: Clear indicators for all states
-- **Color-coded Status**: Easy-to-understand status colors
-- **Hover Effects**: Interactive elements with smooth transitions
-
-## 🔧 Troubleshooting
-
-### Common Issues
-1. **API Key Not Working**: Verify your Gemini API key in settings
-2. **No File Changes Detected**: Check your watch patterns configuration
-3. **Commits Not Happening**: Ensure you're in a Git repository
-4. **Buffer Not Showing**: Check if notifications are enabled
-
-### Debug Mode
-Enable detailed logging by opening the GitCue output channel:
-`View` → `Output` → Select "GitCue" from dropdown
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Setup
-1. Clone the repository
-2. Run `npm install`
-3. Open in VS Code
-4. Press `F5` to launch extension development host
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Google Gemini AI for intelligent commit message generation
-- VS Code team for the excellent extension API
-- The open-source community for inspiration and feedback
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/sbeeredd04/auto-git/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/sbeeredd04/auto-git/discussions)
-- **Email**: [Support Email](mailto:support@gitcue.dev)
+### **AI & Rate Limiting**
+```json
+{
+  "gitcue.maxCallsPerMinute": 15,
+  "gitcue.interactiveOnError": true
+}
+```
 
 ---
 
-**Made with ❤️ by the GitCue team**
+## 🎯 Use Cases
 
-*GitCue - Making Git automation intelligent, efficient, and user-friendly in VS Code.*
+### **For Individual Developers**
+- ✅ Generate meaningful commit messages automatically
+- ✅ Get AI help when Git commands fail
+- ✅ Learn Git through interactive AI conversations
+- ✅ Maintain consistent commit history
+- ✅ Debug Git issues with AI assistance
+
+### **For Teams**
+- ✅ Standardize commit message formats
+- ✅ Reduce time spent on Git troubleshooting
+- ✅ Share AI-powered Git knowledge
+- ✅ Improve code review efficiency
+- ✅ Onboard new developers faster
+
+### **For Learning & Development**
+- ✅ Understand Git commands through AI explanations
+- ✅ Learn from contextual error suggestions
+- ✅ Ask questions in AI chat mode
+- ✅ Build better Git habits
+- ✅ Explore advanced Git features safely
+
+---
+
+## 🔧 Advanced Features
+
+### **AI Chat Interface** *(New in v0.3.3)*
+Interactive AI conversations directly in the terminal:
+
+```bash
+gitcue> ai
+🤖 Entering AI Chat Mode
+
+ai-chat> explain git rebase vs merge
+🤖 AI Response:
+## Git Rebase vs Merge
+
+**Git Merge**:
+- Creates a new commit that combines changes
+- Preserves branch history
+- Non-destructive operation
+
+**Git Rebase**:
+- Rewrites commit history
+- Creates a linear history
+- More dangerous but cleaner
+
+### When to use each:
+- Use **merge** for: feature branches, public commits
+- Use **rebase** for: cleaning up local history, linear workflow
+```
+
+### **Enhanced Error Recovery** *(Improved in v0.3.3)*
+- Contextual analysis of Git errors with styled output
+- Step-by-step resolution guides with formatted code blocks
+- Alternative command suggestions
+- Interactive troubleshooting through AI chat
+- Prevention tips for future issues
+
+### **Professional Terminal Output** *(New in v0.3.3)*
+- Clean command execution with visual separators
+- ANSI color support for better readability
+- Git syntax highlighting
+- Formatted markdown responses
+- Status indicators (✅ success, ❌ error)
+
+### **Session Management**
+- Persistent command history across VS Code restarts
+- Configurable history size (10-1000 commands)
+- Smart deduplication of repeated commands
+- Arrow key navigation through history
+
+---
+
+## 🧪 Testing & Development
+
+### **Testing GitCue v0.3.3**
+
+1. **Basic Terminal Test**:
+   ```bash
+   # Open terminal (Ctrl+Alt+T)
+   gitcue> help
+   gitcue> config
+   gitcue> git status
+   gitcue> cd test
+   gitcue> pwd
+   ```
+
+2. **AI Chat Test**:
+   ```bash
+   gitcue> ai
+   ai-chat> what is git stash?
+   # Use Ctrl+C or type 'exit' to exit chat mode
+   ```
+
+3. **Error Analysis Test**:
+   ```bash
+   gitcue> git push origin nonexistent-branch
+   # Should trigger AI error analysis
+   ```
+
+4. **History & Navigation**:
+   ```bash
+   # Run several commands
+   gitcue> history
+   # Use ↑↓ arrows to navigate
+   ```
+
+### **Common Testing Scenarios**
+- ✅ Terminal opens without errors
+- ✅ Commands execute with clean formatting
+- ✅ AI chat mode works correctly
+- ✅ Error analysis provides helpful suggestions
+- ✅ Markdown rendering is properly styled
+- ✅ History navigation functions
+- ✅ Configuration display is accurate
+
+---
+
+## 🐛 Troubleshooting
+
+### **AI Features Not Working**
+1. ✅ **Check API Key**: Ensure `gitcue.geminiApiKey` is set correctly
+2. ✅ **Verify Internet**: AI features require internet connection
+3. ✅ **Rate Limiting**: Check if you've exceeded `gitcue.maxCallsPerMinute`
+4. ✅ **VS Code Output**: Check Output panel > GitCue for error details
+
+### **Terminal Issues**
+1. ✅ **Workspace Required**: Ensure a folder/workspace is open
+2. ✅ **Extension Enabled**: Verify GitCue is enabled in Extensions panel
+3. ✅ **Permissions**: Check file system permissions
+4. ✅ **Restart**: Try restarting VS Code
+
+### **Formatting Problems**
+1. ✅ **Terminal Support**: Ensure your terminal supports ANSI colors
+2. ✅ **VS Code Version**: Update to latest VS Code version
+3. ✅ **Font Settings**: Use a monospace font in terminal
+
+### **Chat Mode Issues**
+1. ✅ **Exit Chat**: Use Ctrl+C or type 'exit' to exit AI chat mode
+2. ✅ **API Key**: Ensure Gemini API key is configured
+3. ✅ **Network**: Check internet connection
+4. ✅ **Rate Limits**: Wait if you've exceeded API limits
+
+---
+
+## 📚 Version History
+
+### **v0.3.3** (December 19, 2024) - Full Terminal Functionality Release
+- **🎉 Major Features**:
+  - Full terminal navigation (`cd`, `pwd`, etc.)
+  - Cross-platform shell support
+  - Clean output formatting and alignment
+  - Enhanced AI chat exit and prompt
+  - Improved markdown rendering
+  - Professional visual design with ANSI colors
+  - Directory feedback and error handling
+
+- **🛠️ Improvements**:
+  - Better error analysis with formatted suggestions
+  - Git command syntax highlighting
+  - Clean command execution display
+  - Improved user experience
+
+### **v0.3.2** - Enhanced Terminal Navigation
+- Directory navigation and shell improvements
+- Output formatting fixes
+
+### **v0.3.1** - AI Chat Exit and Output Fixes
+- AI chat exit commands and output formatting
+
+### **v0.3.0** - Terminal Enhancement Release
+- Interactive AI chat mode (`ai` command)
+- Fixed terminal output formatting with clean borders
+- Enhanced markdown rendering with styled responses
+- Professional visual design with ANSI colors
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions to make GitCue even better!
+
+### **Ways to Contribute**
+- 🐛 **Report Bugs**: Found an issue? Let us know!
+- 💡 **Suggest Features**: Have ideas for improvements?
+- 📝 **Improve Documentation**: Help make our docs better
+- 🔧 **Submit Code**: Pull requests are welcome
+
+### **Development Setup**
+```bash
+# Clone the repository
+git clone https://github.com/sbeeredd04/Auto-Commit.git
+cd Auto-Commit/gitcue
+
+# Install dependencies
+npm install
+
+# Compile the extension
+npm run compile
+
+# Package for testing
+npm run package
+```
+
+### **Repository Links**
+- **GitHub**: [https://github.com/sbeeredd04/Auto-Commit](https://github.com/sbeeredd04/Auto-Commit)
+- **Issues**: [Report Bugs & Request Features](https://github.com/sbeeredd04/Auto-Commit/issues)
+- **Discussions**: [Community Discussions](https://github.com/sbeeredd04/Auto-Commit/discussions)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**.
+
+### MIT License Summary
+- ✅ Use, copy, modify, merge, publish, distribute
+- ✅ Sublicense and sell copies
+- ✅ Private and commercial use
+- ❗ Include copyright notice and license text
+- ❗ No warranty provided
+
+See the [LICENSE](LICENSE) file for complete details.
+
+---
+
+## 🙏 Acknowledgments
+
+### **Powered By**
+- **Google Gemini AI** - For intelligent commit messages and chat capabilities
+- **VS Code Extension API** - For seamless editor integration
+- **Open Source Community** - For inspiration, feedback, and contributions
+
+### **Special Thanks**
+- Contributors who help improve GitCue
+- Users who provide valuable feedback
+- The VS Code team for excellent tooling
+- The Git community for best practices
+
+---
+
+## 🌟 Support GitCue
+
+If GitCue helps improve your development workflow, consider:
+
+- ⭐ **Star the Repository** on GitHub
+- 📝 **Write a Review** on VS Code Marketplace
+- 🐛 **Report Issues** to help us improve
+- 💬 **Share with Others** who might benefit
+- 🤝 **Contribute** to the project
+
+---
+
+<div align="center">
+
+**Made with ❤️ for Developers**
+
+![GitCue Logo](icon.png)
+
+**GitCue v0.3.3** - Your AI-Powered Git Assistant
+
+[⭐ Star on GitHub](https://github.com/sbeeredd04/Auto-Commit) | [🐛 Report Issues](https://github.com/sbeeredd04/Auto-Commit/issues) | [💬 Discussions](https://github.com/sbeeredd04/Auto-Commit/discussions) | [📦 VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
+
+**Happy Coding! 🚀**
+
+</div>

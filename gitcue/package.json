@@ -2,7 +2,7 @@
   "name": "gitcue",
   "displayName": "GitCue",
   "description": "GitCue — your Git helper extension for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.",
-  "version": "0.1.0",
+  "version": "0.3.3",
   "publisher": "sbeeredd04",
   "icon": "icon.png",
   "galleryBanner": {
@@ -74,6 +74,11 @@
         "command": "gitcue.cancelCommit",
         "title": "GitCue: Cancel Pending Commit",
         "icon": "$(close)"
+      },
+      {
+        "command": "gitcue.openInteractiveTerminal",
+        "title": "GitCue: Open AI-Powered Shell",
+        "icon": "$(terminal)"
       }
     ],
     "menus": {
@@ -92,6 +97,11 @@
         },
         {
           "command": "gitcue.watchToggle",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        },
+        {
+          "command": "gitcue.openInteractiveTerminal",
           "when": "scmProvider == git",
           "group": "navigation"
         }
@@ -116,6 +126,10 @@
         {
           "command": "gitcue.cancelCommit",
           "when": "scmProvider == git"
+        },
+        {
+          "command": "gitcue.openInteractiveTerminal",
+          "when": "scmProvider == git"
         }
       ]
     },
@@ -136,6 +150,12 @@
         "command": "gitcue.cancelCommit",
         "key": "ctrl+alt+x",
         "mac": "cmd+alt+x",
+        "when": "scmProvider == git"
+      },
+      {
+        "command": "gitcue.openInteractiveTerminal",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
         "when": "scmProvider == git"
       }
     ],
@@ -205,6 +225,57 @@
           "type": "boolean",
           "default": false,
           "description": "Automatically start watching files when VS Code opens"
+        },
+        "gitcue.interactiveOnError": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show AI suggestions when commands fail in interactive terminal"
+        },
+        "gitcue.enableSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered error suggestions and analysis"
+        },
+        "gitcue.terminalVerbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable verbose logging in interactive terminal"
+        },
+        "gitcue.sessionPersistence": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save and restore command history across sessions"
+        },
+        "gitcue.maxHistorySize": {
+          "type": "number",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 1000,
+          "description": "Maximum number of commands to keep in history"
+        },
+        "gitcue.watchIgnored": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "/(^|[/\\\\])\\../",
+            "/node_modules/",
+            "/\\.git/",
+            "/\\.DS_Store/",
+            "/\\.log$/",
+            "/\\.tmp$/",
+            "/\\.temp$/",
+            "/\\.swp$/",
+            "/\\.swo$/",
+            "/dist\\/",
+            "/build\\/",
+            "/coverage\\/",
+            "/package-lock\\.json$/",
+            "/yarn\\.lock$/",
+            "/pnpm-lock\\.yaml$/"
+          ],
+          "description": "Glob patterns for files and directories to ignore when watching"
         }
       }
     },
@@ -252,5 +323,7 @@
     "webpack": "^5.99.7",
     "webpack-cli": "^6.0.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@google/genai": "^1.0.1"
+  }
 }

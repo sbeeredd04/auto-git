@@ -4,6 +4,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
+import { GitCuePty } from './terminal/interactivePty';
+import { configManager } from './utils/config';
+import logger from './utils/logger';
 
 const execAsync = promisify(exec);
 
@@ -17,6 +20,12 @@ interface GitCueConfig {
 	maxCallsPerMinute: number;
 	enableNotifications: boolean;
 	autoWatch: boolean;
+	// Interactive terminal settings
+	interactiveOnError: boolean;
+	enableSuggestions: boolean;
+	terminalVerbose: boolean;
+	sessionPersistence: boolean;
+	maxHistorySize: number;
 }
 
 interface BufferNotification {
@@ -39,6 +48,9 @@ class GitCueExtension {
 		this.outputChannel = vscode.window.createOutputChannel('GitCue');
 		this.statusProvider = new GitCueStatusProvider();
 		
+		// Set up logger
+		logger.setVerbose(this.getConfig().terminalVerbose);
+		
 		this.setupStatusBar();
 		this.registerCommands();
 		this.registerViews();
@@ -48,21 +60,12 @@ class GitCueExtension {
 		if (config.autoWatch) {
 			this.startWatching();
 		}
+		
+		logger.info('GitCue extension initialized', 'STARTUP');
 	}
 
 	private getConfig(): GitCueConfig {
-		const config = vscode.workspace.getConfiguration('gitcue');
-		return {
-			geminiApiKey: config.get('geminiApiKey') || process.env.GEMINI_API_KEY || '',
-			commitMode: config.get('commitMode') || 'periodic',
-			autoPush: config.get('autoPush') ?? true,
-			watchPaths: config.get('watchPaths') || ['**/*'],
-			debounceMs: config.get('debounceMs') || 30000,
-			bufferTimeSeconds: config.get('bufferTimeSeconds') || 30,
-			maxCallsPerMinute: config.get('maxCallsPerMinute') || 15,
-			enableNotifications: config.get('enableNotifications') ?? true,
-			autoWatch: config.get('autoWatch') ?? false
-		};
+		return configManager.getConfig();
 	}
 
 	private setupStatusBar() {
@@ -95,7 +98,8 @@ class GitCueExtension {
 			vscode.commands.registerCommand('gitcue.reset', () => this.resetCommits()),
 			vscode.commands.registerCommand('gitcue.configure', () => this.openSettings()),
 			vscode.commands.registerCommand('gitcue.showStatus', () => this.showStatus()),
-			vscode.commands.registerCommand('gitcue.cancelCommit', () => this.cancelBufferedCommit())
+			vscode.commands.registerCommand('gitcue.cancelCommit', () => this.cancelBufferedCommit()),
+			vscode.commands.registerCommand('gitcue.openInteractiveTerminal', () => this.openInteractiveTerminal())
 		];
 
 		commands.forEach(command => this.context.subscriptions.push(command));
@@ -392,10 +396,10 @@ class GitCueExtension {
 				}
 
 				.actions {
-					margin-top: auto;
-					display: flex;
-					gap: 16px;
-					animation: slideUp 0.6s ease-out 0.4s both;
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 12px;
+					margin-bottom: 24px;
 				}
 
 				.btn {
@@ -1402,6 +1406,9 @@ class GitCueExtension {
 					case 'manualCommit':
 						this.commitWithPreview();
 						break;
+					case 'openTerminal':
+						this.openInteractiveTerminal();
+						break;
 					case 'keepAlive':
 						// Dashboard is alive, send status update
 						if (!panelDisposed) {
@@ -1676,7 +1683,7 @@ class GitCueExtension {
 
 				.actions {
 					display: grid;
-					grid-template-columns: repeat(3, 1fr);
+					grid-template-columns: repeat(2, 1fr);
 					gap: 12px;
 					margin-bottom: 24px;
 				}
@@ -1872,6 +1879,10 @@ class GitCueExtension {
 							<span>🔄</span>
 							<span>Manual Commit</span>
 						</button>
+						<button class="btn btn-success" onclick="openTerminal()">
+							<span>🖥️</span>
+							<span>AI Terminal</span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -1896,6 +1907,10 @@ class GitCueExtension {
 
 				function manualCommit() {
 					vscode.postMessage({ action: 'manualCommit' });
+				}
+
+				function openTerminal() {
+					vscode.postMessage({ action: 'openTerminal' });
 				}
 
 				function updateUI() {
@@ -1998,6 +2013,49 @@ class GitCueExtension {
 		vscode.commands.executeCommand('workbench.action.openSettings', 'gitcue');
 	}
 
+	private openInteractiveTerminal() {
+		try {
+			const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+			if (!workspaceFolder) {
+				vscode.window.showErrorMessage('No workspace folder found. Please open a folder or workspace first.');
+				return;
+			}
+
+			const config = this.getConfig();
+			if (!config.geminiApiKey) {
+				vscode.window.showWarningMessage(
+					'Gemini API key not configured. AI suggestions will be disabled. Configure it in GitCue settings.',
+					'Configure'
+				).then(action => {
+					if (action === 'Configure') {
+						this.openSettings();
+					}
+				});
+			}
+
+			// Create and show the interactive terminal
+			const pty = new GitCuePty(workspaceFolder.uri.fsPath);
+			const terminal = vscode.window.createTerminal({ 
+				name: '🎯 GitCue AI Shell', 
+				pty,
+				iconPath: new vscode.ThemeIcon('terminal')
+			});
+			
+			terminal.show(true);
+			
+			// Log the action
+			logger.interactiveInfo('Interactive terminal opened');
+			
+			if (config.enableNotifications) {
+				vscode.window.showInformationMessage('🎯 GitCue AI-powered shell is ready!');
+			}
+
+		} catch (error) {
+			logger.error('Failed to open interactive terminal', error instanceof Error ? error.message : String(error));
+			vscode.window.showErrorMessage(`Failed to open GitCue interactive terminal: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	}
+
 	private showStatus() {
 		this.outputChannel.show();
 		const config = this.getConfig();
@@ -2013,6 +2071,7 @@ class GitCueExtension {
 		this.stopWatching();
 		this.statusBarItem.dispose();
 		this.outputChannel.dispose();
+		logger.dispose();
 	}
 }
 
@@ -2080,7 +2139,13 @@ class GitCueStatusProvider implements vscode.TreeDataProvider<GitCueStatusItem> 
 			bufferTimeSeconds: config.get('bufferTimeSeconds') || 30,
 			maxCallsPerMinute: config.get('maxCallsPerMinute') || 15,
 			enableNotifications: config.get('enableNotifications') ?? true,
-			autoWatch: config.get('autoWatch') ?? false
+			autoWatch: config.get('autoWatch') ?? false,
+			// Interactive terminal settings
+			interactiveOnError: config.get('interactiveOnError') ?? false,
+			enableSuggestions: config.get('enableSuggestions') ?? false,
+			terminalVerbose: config.get('terminalVerbose') ?? false,
+			sessionPersistence: config.get('sessionPersistence') ?? false,
+			maxHistorySize: config.get('maxHistorySize') || 100
 		};
 	}
 }
