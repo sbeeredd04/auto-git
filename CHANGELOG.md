@@ -1,3 +1,7 @@
+## v3.10.0 - 2025-05-26
+
+Bug fixes and improvements
+
 ## v3.9.3 - 2024-12-19
 
 ### 🔧 Bug Fixes
