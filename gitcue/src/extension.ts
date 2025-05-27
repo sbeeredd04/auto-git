@@ -1822,7 +1822,11 @@ Consider:
 					background: var(--danger);
 				}
 
-				.patterns-section {
+				.indicator.pending {
+					background: var(--warning);
+				}
+
+				.watch-status {
 					grid-column: 1 / -1;
 					background: var(--bg-secondary);
 					border: 1px solid var(--border);
@@ -1831,33 +1835,33 @@ Consider:
 					margin-bottom: 24px;
 				}
 
-				.patterns-header {
-					display: flex;
-					align-items: center;
-					gap: 12px;
-					margin-bottom: 16px;
-				}
-
-				.patterns-grid {
+				.watch-stats {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-					gap: 8px;
+					grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+					gap: 16px;
+					margin-top: 16px;
 				}
 
-				.pattern {
+				.stat-card {
 					background: var(--bg-tertiary);
 					border: 1px solid var(--border);
 					border-radius: 8px;
-					padding: 8px 12px;
-					font-family: 'SF Mono', Monaco, monospace;
-					font-size: 12px;
+					padding: 16px;
 					text-align: center;
-					transition: var(--transition);
 				}
 
-				.pattern:hover {
-					border-color: var(--primary);
-					background: var(--bg-primary);
+				.stat-value {
+					font-size: 24px;
+					font-weight: 700;
+					color: var(--primary);
+					margin-bottom: 4px;
+				}
+
+				.stat-label {
+					font-size: 12px;
+					color: var(--text-secondary);
+					text-transform: uppercase;
+					letter-spacing: 0.5px;
 				}
 
 				.actions {
@@ -1874,7 +1878,7 @@ Consider:
 					gap: 8px;
 					padding: 12px 16px;
 					border: none;
-					border-radius: var(--border-radius);
+					border-radius: var(--radius);
 					font-size: 14px;
 					font-weight: 600;
 					cursor: pointer;
@@ -1907,47 +1911,28 @@ Consider:
 				}
 
 				.btn-secondary {
-					background: var(--vscode-button-secondaryBackground);
-					color: var(--vscode-button-secondaryForeground);
-					border: 2px solid var(--vscode-panel-border);
+					background: var(--bg-tertiary);
+					color: var(--text-primary);
+					border: 1px solid var(--border);
 				}
 
 				.btn-secondary:hover {
 					border-color: var(--primary);
-					background: var(--vscode-button-secondaryHoverBackground);
-				}
-
-				.checkbox-container {
-					display: flex;
-					align-items: center;
-					gap: 8px;
-					margin-bottom: 16px;
-				}
-
-				.checkbox {
-					width: 16px;
-					height: 16px;
-					border: 2px solid var(--border);
-					border-radius: 4px;
-					background: var(--vscode-input-background);
-					cursor: pointer;
-					transition: var(--transition);
-				}
-
-				.checkbox.checked {
-					background: var(--primary);
-					border-color: var(--primary);
-				}
-
-				.checkbox-label {
-					font-size: 14px;
-					color: var(--text-primary);
-					cursor: pointer;
+					background: var(--bg-secondary);
 				}
 
 				@keyframes pulse {
 					0%, 100% { opacity: 1; }
 					50% { opacity: 0.6; }
+				}
+
+				@keyframes spin {
+					0% { transform: rotate(0deg); }
+					100% { transform: rotate(360deg); }
+				}
+
+				.spinner {
+					animation: spin 1s linear infinite;
 				}
 
 				@media (max-width: 768px) {
@@ -1958,10 +1943,6 @@ Consider:
 					.actions {
 						grid-template-columns: 1fr;
 					}
-					
-					.patterns-grid {
-						grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-					}
 				}
 			</style>
 		</head>
@@ -1970,8 +1951,33 @@ Consider:
 				<div class="container">
 					<div class="header">
 						<div class="logo">🎯</div>
-						<h1 class="title">GitCue Dashboard</h1>
+						<h1 class="title">GitCue Dashboard v0.3.5</h1>
 						<p class="subtitle">Monitor your AI-powered Git automation in real-time</p>
+					</div>
+
+					<div class="watch-status">
+						<div class="card-header">
+							<div class="card-icon" id="watchIcon">👁️</div>
+							<h3 class="card-title">Watch Status</h3>
+						</div>
+						<div class="watch-stats">
+							<div class="stat-card">
+								<div class="stat-value" id="filesChanged">0</div>
+								<div class="stat-label">Files Changed</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-value" id="lastChange">None</div>
+								<div class="stat-label">Last Change</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-value" id="lastCommit">None</div>
+								<div class="stat-label">Last Commit</div>
+							</div>
+							<div class="stat-card">
+								<div class="stat-value" id="aiStatus">Idle</div>
+								<div class="stat-label">AI Status</div>
+							</div>
+						</div>
 					</div>
 
 					<div class="main-grid">
@@ -1983,26 +1989,20 @@ Consider:
 							<div class="status-item">
 								<span class="status-label">Watching mode</span>
 								<div class="status-value">
-									<span class="indicator ${this.isWatching ? 'active' : 'inactive'}"></span>
-									<span class="badge ${this.isWatching ? 'success' : 'danger'}">
-										${this.isWatching ? 'Intelligent' : 'Disabled'}
-									</span>
+									<span class="indicator" id="watchIndicator"></span>
+									<span class="badge" id="watchBadge">Disabled</span>
 								</div>
 							</div>
 							<div class="status-item">
 								<span class="status-label">Commit mode</span>
 								<div class="status-value">
-									<span class="badge ${config.commitMode === 'intelligent' ? 'success' : 'info'}">
-										${config.commitMode === 'intelligent' ? 'Enabled' : 'Disabled'}
-									</span>
+									<span class="badge" id="commitModeBadge">intelligent</span>
 								</div>
 							</div>
 							<div class="status-item">
 								<span class="status-label">Auto push</span>
 								<div class="status-value">
-									<span class="badge ${config.autoPush ? 'success' : 'danger'}">
-										${config.autoPush ? 'Enabled' : 'Disabled'}
-									</span>
+									<span class="badge" id="autoPushBadge">Enabled</span>
 								</div>
 							</div>
 						</div>
@@ -2010,55 +2010,43 @@ Consider:
 						<div class="card">
 							<div class="card-header">
 								<div class="card-icon">🔍</div>
-								<h3 class="card-title">API Configuration</h3>
+								<h3 class="card-title">AI Configuration</h3>
 							</div>
 							<div class="status-item">
 								<span class="status-label">Gemini API Key</span>
 								<div class="status-value">
-									<span class="badge ${config.geminiApiKey ? 'success' : 'danger'}">
-										${config.geminiApiKey ? 'Configured' : 'Not Set'}
-									</span>
+									<span class="badge" id="apiKeyBadge">Not Set</span>
+								</div>
+							</div>
+							<div class="status-item">
+								<span class="status-label">AI Suggestions</span>
+								<div class="status-value">
+									<span class="badge" id="suggestionsBadge">Enabled</span>
 								</div>
 							</div>
 							<div class="status-item">
 								<span class="status-label">Rate-limit</span>
 								<div class="status-value">
-									<span class="badge info">${config.maxCallsPerMinute} calls/min</span>
+									<span class="badge info" id="rateLimitBadge">15 calls/min</span>
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<div class="patterns-section">
-						<div class="patterns-header">
-							<div class="card-icon">📁</div>
-							<h3 class="card-title">Watch Patterns</h3>
-						</div>
-						<div class="patterns-grid">
-							<div class="pattern">.src/</div>
-							<div class="pattern">*.py</div>
-							<div class="pattern">*.js</div>
-							<div class="pattern">*.ts.x</div>
-							<div class="pattern">*.tsx</div>
-							<div class="pattern">*.jsx</div>
-							<div class="pattern">*.tsx</div>
-						</div>
-					</div>
-
 					<div class="actions">
-						<div class="checkbox-container">
-							<div class="checkbox ${this.isWatching ? 'checked' : ''}" onclick="toggleWatching()"></div>
-							<span class="checkbox-label">Stop Watching</span>
-						</div>
+						<button class="btn btn-primary" onclick="toggleWatching()" id="watchToggleBtn">
+							<span>👁️</span>
+							<span>Start Watching</span>
+						</button>
 						<button class="btn btn-secondary" onclick="openSettings()">
 							<span>⚙️</span>
 							<span>Configure Settings</span>
 						</button>
-						<button class="btn btn-primary" onclick="manualCommit()">
+						<button class="btn btn-success" onclick="manualCommit()">
 							<span>🔄</span>
 							<span>Manual Commit</span>
 						</button>
-						<button class="btn btn-success" onclick="openTerminal()">
+						<button class="btn btn-secondary" onclick="openTerminal()">
 							<span>🖥️</span>
 							<span>AI Terminal</span>
 						</button>
@@ -2069,15 +2057,20 @@ Consider:
 			<script>
 				const vscode = acquireVsCodeApi();
 				let currentState = {
-					isWatching: ${this.isWatching},
-					config: ${JSON.stringify(config)}
+					isWatching: false,
+					config: {},
+					watchStatus: {
+						isWatching: false,
+						filesChanged: 0,
+						lastChange: 'None',
+						lastCommit: 'None',
+						pendingCommit: false,
+						aiAnalysisInProgress: false
+					}
 				};
 
 				function toggleWatching() {
 					vscode.postMessage({ action: 'toggleWatching' });
-					// Optimistically update UI
-					currentState.isWatching = !currentState.isWatching;
-					updateUI();
 				}
 
 				function openSettings() {
@@ -2089,32 +2082,62 @@ Consider:
 				}
 
 				function openTerminal() {
-					if (!this.terminal) {
-						this.terminal = vscode.window.createTerminal({
-							name: 'GitCue',
-							pty: new GitCuePty(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath)
-						});
-					}
-					this.terminal.show();
+					vscode.postMessage({ action: 'openTerminal' });
 				}
 
 				function updateUI() {
-					// Update watching indicator
-					const indicator = document.querySelector('.indicator');
-					const watchingBadge = document.querySelector('.status-item .badge');
-					const checkbox = document.querySelector('.checkbox');
+					const { isWatching, config, watchStatus } = currentState;
 					
-					if (currentState.isWatching) {
-						indicator.className = 'indicator active';
-						watchingBadge.className = 'badge success';
-						watchingBadge.textContent = 'Intelligent';
-						checkbox.classList.add('checked');
+					// Update watch status
+					const watchIndicator = document.getElementById('watchIndicator');
+					const watchBadge = document.getElementById('watchBadge');
+					const watchToggleBtn = document.getElementById('watchToggleBtn');
+					const watchIcon = document.getElementById('watchIcon');
+					
+					if (isWatching) {
+						watchIndicator.className = 'indicator active';
+						watchBadge.className = 'badge success';
+						watchBadge.textContent = 'Active';
+						watchToggleBtn.innerHTML = '<span>👁️</span><span>Stop Watching</span>';
+						watchIcon.textContent = '👁️';
 					} else {
-						indicator.className = 'indicator inactive';
-						watchingBadge.className = 'badge danger';
-						watchingBadge.textContent = 'Disabled';
-						checkbox.classList.remove('checked');
+						watchIndicator.className = 'indicator inactive';
+						watchBadge.className = 'badge danger';
+						watchBadge.textContent = 'Inactive';
+						watchToggleBtn.innerHTML = '<span>👁️</span><span>Start Watching</span>';
+						watchIcon.textContent = '👁️';
 					}
+
+					// Update watch statistics
+					document.getElementById('filesChanged').textContent = watchStatus.filesChanged || 0;
+					document.getElementById('lastChange').textContent = watchStatus.lastChange || 'None';
+					document.getElementById('lastCommit').textContent = watchStatus.lastCommit || 'None';
+					
+					// Update AI status
+					const aiStatusEl = document.getElementById('aiStatus');
+					if (watchStatus.pendingCommit) {
+						aiStatusEl.textContent = 'Committing';
+						aiStatusEl.style.color = 'var(--warning)';
+					} else if (watchStatus.aiAnalysisInProgress) {
+						aiStatusEl.textContent = 'Analyzing';
+						aiStatusEl.style.color = 'var(--info)';
+					} else {
+						aiStatusEl.textContent = 'Idle';
+						aiStatusEl.style.color = 'var(--text-secondary)';
+					}
+
+					// Update configuration badges
+					document.getElementById('commitModeBadge').textContent = config.commitMode || 'intelligent';
+					document.getElementById('autoPushBadge').textContent = config.autoPush ? 'Enabled' : 'Disabled';
+					document.getElementById('autoPushBadge').className = config.autoPush ? 'badge success' : 'badge danger';
+					
+					document.getElementById('apiKeyBadge').textContent = config.geminiApiKey ? 'Configured' : 'Not Set';
+					document.getElementById('apiKeyBadge').className = config.geminiApiKey ? 'badge success' : 'badge danger';
+					
+					document.getElementById('suggestionsBadge').textContent = config.enableSuggestions ? 'Enabled' : 'Disabled';
+					document.getElementById('suggestionsBadge').className = config.enableSuggestions ? 'badge success' : 'badge danger';
+					
+					document.getElementById('rateLimitBadge').textContent = (config.maxCallsPerMinute || 15) + ' calls/min';
 				}
 
 				window.addEventListener('message', event => {
@@ -2125,16 +2148,13 @@ Consider:
 					}
 				});
 
-				// Prevent the dashboard from disappearing by handling errors
-				window.addEventListener('error', function(e) {
-					console.error('Dashboard error:', e);
-					e.preventDefault();
-				});
-
 				// Keep the dashboard alive
 				setInterval(() => {
 					vscode.postMessage({ action: 'keepAlive' });
 				}, 5000);
+
+				// Initial UI update
+				updateUI();
 			</script>
 		</body>
 		</html>`;

@@ -3,7 +3,7 @@ import { configManager } from './config';
 import logger from './logger';
 
 /**
- * AI utilities for GitCue extension
+ * AI utilities for GitCue extension v0.3.5
  * Handles error analysis and suggestions using Google GenAI SDK
  */
 
@@ -12,7 +12,7 @@ const DEBUG_MODE = process.env.NODE_ENV === 'development' || process.env.GITCUE_
 
 function debugLog(message: string, data?: any) {
   if (DEBUG_MODE) {
-    logger.debug(message + (data ? ': ' + JSON.stringify(data) : ''));
+    logger.debug('[GitCue v0.3.5] ' + message + (data ? ': ' + JSON.stringify(data) : ''));
   }
 }
 
