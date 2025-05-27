@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as fs from 'fs/promises';
 import { configManager } from '../utils/config';
 import logger from '../utils/logger';
-import { generateErrorSuggestion, formatAISuggestion, formatGitCommand, formatMarkdown } from '../utils/ai';
+import { generateErrorSuggestion, formatAISuggestion, formatGitCommand, formatMarkdown, testAIConnection } from '../utils/ai';
 
 interface SessionHistory {
   commands: string[];
@@ -211,6 +211,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
     this.write('  • ' + this.colors.cyan + 'help' + this.colors.reset + '                           # Show available commands\r\n');
     this.write('  • ' + this.colors.cyan + 'config' + this.colors.reset + '                         # Show GitCue configuration\r\n');
     this.write('  • ' + this.colors.cyan + 'ai' + this.colors.reset + '                             # Start AI chat mode\r\n');
+    this.write('  • ' + this.colors.cyan + 'test-ai' + this.colors.reset + '                        # Test AI connection\r\n');
     this.write('  • ' + this.colors.cyan + 'exit' + this.colors.reset + '                           # Exit interactive session\r\n');
     this.write('\r\n');
     
@@ -293,6 +294,10 @@ export class GitCuePty implements vscode.Pseudoterminal {
         
       case 'ai':
         this.enterAiChatMode();
+        break;
+        
+      case 'test-ai':
+        await this.testAI();
         break;
         
       case 'version':
@@ -406,13 +411,29 @@ export class GitCuePty implements vscode.Pseudoterminal {
   }
 
   private async analyzeError(command: string, errorMessage: string): Promise<void> {
+    const config = configManager.getConfig();
+    
+    // Check if AI analysis is enabled
+    if (!config.enableSuggestions) {
+      this.write('\r\n' + this.colors.yellow + '⚠️ AI suggestions are disabled in settings' + this.colors.reset + '\r\n');
+      return;
+    }
+    
+    if (!config.geminiApiKey) {
+      this.write('\r\n' + this.colors.yellow + '⚠️ Gemini API key not configured. Please set it in GitCue settings.' + this.colors.reset + '\r\n');
+      return;
+    }
+
     try {
       this.write('\r\n' + this.colors.yellow + '🔄 Analyzing error with AI...' + this.colors.reset + '\r\n');
       this.write(this.colors.dim + 'Press Ctrl+C to stop analysis' + this.colors.reset + '\r\n\r\n');
 
       this.isAiAnalysisRunning = true;
+      logger.debug(`Starting AI analysis for command: ${command}`);
+      logger.debug(`Error message: ${errorMessage}`);
 
-      const suggestion = await generateErrorSuggestion(`Command: ${command}\nError: ${errorMessage}`);
+      const errorContext = `Command: ${command}\nError: ${errorMessage}`;
+      const suggestion = await generateErrorSuggestion(errorContext);
       
       if (!this.isAiAnalysisRunning) {
         this.write(this.colors.yellow + '🛑 Analysis cancelled by user' + this.colors.reset + '\r\n');
@@ -423,11 +444,14 @@ export class GitCuePty implements vscode.Pseudoterminal {
       this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n\r\n');
       this.renderMarkdown(suggestion);
       this.write('\r\n' + this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
+      this.write(this.colors.cyan + '💡 You can run the suggested commands directly in this terminal!' + this.colors.reset + '\r\n');
 
     } catch (error) {
       if (!this.isAiAnalysisRunning) return;
       
       const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error(`AI analysis failed: ${errorMsg}`);
+      
       this.write(this.colors.red + `\r\n❌ AI analysis failed: ${errorMsg}` + this.colors.reset + '\r\n');
       
       // Provide basic help if AI fails
@@ -435,6 +459,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
       if (command.startsWith('git ')) {
         this.write('  • Check: ' + this.colors.cyan + 'git status' + this.colors.reset + '\r\n');
         this.write('  • Try: ' + this.colors.cyan + `git --help ${command.split(' ')[1]}` + this.colors.reset + '\r\n');
+        this.write('  • Verify repository exists and you have access\r\n');
       } else {
         this.write('  • Check command syntax\r\n');
         this.write('  • Verify paths and permissions\r\n');
@@ -546,8 +571,9 @@ Remember to:
 4. Provide practical examples
 5. Focus on actionable solutions`;
 
+      // Always use gemini-2.0-flash
       const response = await ai.models.generateContent({
-        model: 'gemini-pro',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: {
           maxOutputTokens: 1000,
@@ -578,9 +604,8 @@ Remember to:
     
     const recentHistory = this.sessionHistory.slice(-20); // Show last 20 commands
     recentHistory.forEach((cmd, index) => {
-      const number = this.sessionHistory.length - recentHistory.length + index + 1;
       const formattedCmd = cmd.startsWith('git ') ? this.formatGitCommandDisplay(cmd) : this.colors.cyan + cmd + this.colors.reset;
-      this.write(`  ${this.colors.gray}${number}.${this.colors.reset} ${formattedCmd}\r\n`);
+      this.write(`  ${this.colors.gray}•${this.colors.reset} ${formattedCmd}\r\n`);
     });
     
     if (this.sessionHistory.length > 20) {
@@ -613,6 +638,7 @@ Remember to:
     this.write('  ' + this.colors.cyan + 'clear' + this.colors.reset + '                      Clear terminal screen\r\n');
     this.write('  ' + this.colors.cyan + 'config' + this.colors.reset + '                     Show GitCue configuration\r\n');
     this.write('  ' + this.colors.cyan + 'ai' + this.colors.reset + '                         Start AI chat mode\r\n');
+    this.write('  ' + this.colors.cyan + 'test-ai' + this.colors.reset + '                        Test AI connection\r\n');
     this.write('  ' + this.colors.cyan + 'version' + this.colors.reset + '                    Show version information\r\n');
     this.write('  ' + this.colors.cyan + 'help' + this.colors.reset + '                       Show this help message\r\n');
     this.write('  ' + this.colors.cyan + 'exit' + this.colors.reset + '                       Exit interactive session\r\n');
@@ -682,6 +708,41 @@ Remember to:
     } catch (error) {
       // Silently fail if we can't save history
       logger.debug('Failed to save session history: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  }
+
+  private async testAI(): Promise<void> {
+    this.write('\r\n' + this.colors.bright + this.colors.blue + '🧪 Testing AI Connection' + this.colors.reset + '\r\n');
+    this.write(this.colors.dim + '─'.repeat(40) + this.colors.reset + '\r\n');
+    
+    const config = configManager.getConfig();
+    
+    // Check configuration
+    this.write('Checking configuration...\r\n');
+    if (!config.geminiApiKey) {
+      this.write(this.colors.red + '❌ Gemini API key not configured' + this.colors.reset + '\r\n');
+      return;
+    }
+    this.write(this.colors.green + '✅ API key configured' + this.colors.reset + '\r\n');
+    
+    if (!config.enableSuggestions) {
+      this.write(this.colors.yellow + '⚠️ AI suggestions disabled in settings' + this.colors.reset + '\r\n');
+      return;
+    }
+    this.write(this.colors.green + '✅ AI suggestions enabled' + this.colors.reset + '\r\n');
+    
+    // Test AI connection
+    this.write('\r\nTesting AI connection...\r\n');
+    try {
+      const isWorking = await testAIConnection();
+      if (isWorking) {
+        this.write(this.colors.green + '✅ AI connection successful!' + this.colors.reset + '\r\n');
+        this.write('AI analysis should work properly for failed commands.\r\n');
+      } else {
+        this.write(this.colors.red + '❌ AI connection failed' + this.colors.reset + '\r\n');
+      }
+    } catch (error) {
+      this.write(this.colors.red + `❌ AI test failed: ${error instanceof Error ? error.message : String(error)}` + this.colors.reset + '\r\n');
     }
   }
 } 

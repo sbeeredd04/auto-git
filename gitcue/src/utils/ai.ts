@@ -7,22 +7,40 @@ import logger from './logger';
  * Handles error analysis and suggestions using Google GenAI SDK
  */
 
+// Global debug mode
+const DEBUG_MODE = process.env.NODE_ENV === 'development' || process.env.GITCUE_DEBUG === 'true';
+
+function debugLog(message: string, data?: any) {
+  if (DEBUG_MODE) {
+    logger.debug(message + (data ? ': ' + JSON.stringify(data) : ''));
+  }
+}
+
 /**
  * Generate AI-powered error suggestion
  */
 export async function generateErrorSuggestion(errorContext: string): Promise<string> {
   const config = configManager.getConfig();
   
+  debugLog('Starting AI error analysis', errorContext.substring(0, 100) + '...');
+  
   if (!config.geminiApiKey) {
-    throw new Error('Gemini API key not configured');
+    const error = 'Gemini API key not configured';
+    logger.error('AI analysis failed: ' + error);
+    throw new Error(error);
   }
 
   if (!config.enableSuggestions) {
-    return 'AI suggestions are disabled in settings.';
+    const message = 'AI suggestions are disabled in settings.';
+    debugLog('AI suggestions disabled');
+    return message;
   }
 
   try {
+    debugLog('Importing Google GenAI SDK...');
     const { GoogleGenAI } = await import('@google/genai');
+    
+    debugLog('Initializing AI with API key...');
     const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
 
     const prompt = `As a terminal and development expert, analyze this error and provide clear guidance:
@@ -42,6 +60,9 @@ Format your response in markdown with:
 - Bullet points for steps
 - Important notes highlighted`;
 
+    debugLog('Sending request to Gemini 2.0 Flash...');
+    
+    // Always use gemini-2.0-flash
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: prompt,
@@ -51,24 +72,54 @@ Format your response in markdown with:
       }
     });
 
-    return response.text || 'No suggestion generated';
+    debugLog('Received response from AI');
+    
+    if (!response || !response.text) {
+      logger.error('AI response is empty or invalid: ' + JSON.stringify(response));
+      throw new Error('AI response is empty or invalid');
+    }
+
+    debugLog('AI analysis completed successfully');
+    return response.text;
 
   } catch (error) {
-    logger.error('AI suggestion generation failed', error instanceof Error ? error.message : String(error));
+    logger.error('AI suggestion generation failed: ' + (error instanceof Error ? error.message : String(error)));
+    
+    // Add more detailed error logging
+    if (error instanceof Error) {
+      logger.error(`Error details - Name: ${error.name}, Message: ${error.message}, Stack: ${error.stack || 'No stack trace'}`);
+    }
     
     // Add retry logic for transient errors
     if (error instanceof Error && 
-        (error.message.includes('API') || error.message.includes('network'))) {
+        (error.message.includes('API') || 
+         error.message.includes('network') || 
+         error.message.includes('timeout'))) {
       try {
-        // Wait for 1 second before retrying
+        debugLog('Retrying AI request after 1 second...');
         await new Promise(resolve => setTimeout(resolve, 1000));
         return generateErrorSuggestion(errorContext);
       } catch (retryError) {
-        logger.error('Retry failed', retryError instanceof Error ? retryError.message : String(retryError));
+        logger.error('Retry failed: ' + (retryError instanceof Error ? retryError.message : String(retryError)));
       }
     }
     
     throw error; // Propagate the error to be handled by the caller
+  }
+}
+
+/**
+ * Test function to verify AI functionality
+ */
+export async function testAIConnection(): Promise<boolean> {
+  try {
+    debugLog('Testing AI connection...');
+    const testResponse = await generateErrorSuggestion('Test error: command not found');
+    debugLog('AI test successful', testResponse.substring(0, 100) + '...');
+    return true;
+  } catch (error) {
+    logger.error('AI test failed: ' + (error instanceof Error ? error.message : String(error)));
+    return false;
   }
 }
 
