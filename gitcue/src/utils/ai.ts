@@ -22,27 +22,28 @@ export async function generateErrorSuggestion(errorContext: string): Promise<str
   }
 
   try {
-    // Use the new Google GenAI SDK
     const { GoogleGenAI } = await import('@google/genai');
     const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
 
-    const prompt = `You are an expert Git and terminal assistant. A user encountered an error while running a command. 
-Please analyze the error and provide helpful suggestions.
+    const prompt = `As a terminal and development expert, analyze this error and provide clear guidance:
 
 Error Context:
 ${errorContext}
 
-Please analyze this error and provide:
-1. A brief explanation of what went wrong
-2. Specific steps to fix the issue
-3. Alternative approaches if applicable
-4. Preventive measures for the future
+Please provide:
+1. A clear explanation of what went wrong
+2. Step-by-step solution to fix the issue
+3. Additional context or preventive measures
+4. Common pitfalls to avoid
 
-Format your response in clear, actionable markdown with code blocks for commands.
-Keep it concise but comprehensive.`;
+Format your response in markdown with:
+- Headers for sections
+- Code blocks for commands
+- Bullet points for steps
+- Important notes highlighted`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-pro',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         maxOutputTokens: 1000,
@@ -67,7 +68,7 @@ Keep it concise but comprehensive.`;
       }
     }
     
-    return `Failed to generate AI suggestion: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    throw error; // Propagate the error to be handled by the caller
   }
 }
 

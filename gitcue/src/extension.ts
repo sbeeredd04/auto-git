@@ -42,6 +42,7 @@ class GitCueExtension {
 	private statusProvider: GitCueStatusProvider;
 	private debounceTimer: NodeJS.Timeout | undefined;
 	private bufferNotification: BufferNotification | undefined;
+	private terminal: vscode.Terminal | undefined;
 
 	constructor(private context: vscode.ExtensionContext) {
 		this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -99,7 +100,7 @@ class GitCueExtension {
 			vscode.commands.registerCommand('gitcue.configure', () => this.openSettings()),
 			vscode.commands.registerCommand('gitcue.showStatus', () => this.showStatus()),
 			vscode.commands.registerCommand('gitcue.cancelCommit', () => this.cancelBufferedCommit()),
-			vscode.commands.registerCommand('gitcue.openInteractiveTerminal', () => this.openInteractiveTerminal())
+			vscode.commands.registerCommand('gitcue.openInteractiveTerminal', () => this.openTerminal())
 		];
 
 		commands.forEach(command => this.context.subscriptions.push(command));
@@ -1407,7 +1408,7 @@ class GitCueExtension {
 						this.commitWithPreview();
 						break;
 					case 'openTerminal':
-						this.openInteractiveTerminal();
+						this.openTerminal();
 						break;
 					case 'keepAlive':
 						// Dashboard is alive, send status update
@@ -1910,7 +1911,13 @@ class GitCueExtension {
 				}
 
 				function openTerminal() {
-					vscode.postMessage({ action: 'openTerminal' });
+					if (!this.terminal) {
+						this.terminal = vscode.window.createTerminal({
+							name: 'GitCue',
+							pty: new GitCuePty(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath)
+						});
+					}
+					this.terminal.show();
 				}
 
 				function updateUI() {
@@ -2013,47 +2020,14 @@ class GitCueExtension {
 		vscode.commands.executeCommand('workbench.action.openSettings', 'gitcue');
 	}
 
-	private openInteractiveTerminal() {
-		try {
-			const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-			if (!workspaceFolder) {
-				vscode.window.showErrorMessage('No workspace folder found. Please open a folder or workspace first.');
-				return;
-			}
-
-			const config = this.getConfig();
-			if (!config.geminiApiKey) {
-				vscode.window.showWarningMessage(
-					'Gemini API key not configured. AI suggestions will be disabled. Configure it in GitCue settings.',
-					'Configure'
-				).then(action => {
-					if (action === 'Configure') {
-						this.openSettings();
-					}
-				});
-			}
-
-			// Create and show the interactive terminal
-			const pty = new GitCuePty(workspaceFolder.uri.fsPath);
-			const terminal = vscode.window.createTerminal({ 
-				name: '🎯 GitCue AI Shell', 
-				pty,
-				iconPath: new vscode.ThemeIcon('terminal')
+	private openTerminal() {
+		if (!this.terminal) {
+			this.terminal = vscode.window.createTerminal({
+				name: 'GitCue',
+				pty: new GitCuePty(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath)
 			});
-			
-			terminal.show(true);
-			
-			// Log the action
-			logger.interactiveInfo('Interactive terminal opened');
-			
-			if (config.enableNotifications) {
-				vscode.window.showInformationMessage('🎯 GitCue AI-powered shell is ready!');
-			}
-
-		} catch (error) {
-			logger.error('Failed to open interactive terminal', error instanceof Error ? error.message : String(error));
-			vscode.window.showErrorMessage(`Failed to open GitCue interactive terminal: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
+		this.terminal.show();
 	}
 
 	private showStatus() {
@@ -2072,6 +2046,9 @@ class GitCueExtension {
 		this.statusBarItem.dispose();
 		this.outputChannel.dispose();
 		logger.dispose();
+		if (this.terminal) {
+			this.terminal.dispose();
+		}
 	}
 }
 
@@ -2168,12 +2145,20 @@ class GitCueStatusItem extends vscode.TreeItem {
 let gitCueExtension: GitCueExtension;
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('GitCue extension is now active!');
+	logger.info('GitCue extension activated');
+	
 	gitCueExtension = new GitCueExtension(context);
+
+	// Show terminal on activation if configured
+	const config = configManager.getConfig();
+	if (config.autoWatch) {
+		vscode.commands.executeCommand('gitcue.openInteractiveTerminal');
+	}
 }
 
 export function deactivate() {
 	if (gitCueExtension) {
 		gitCueExtension.dispose();
 	}
+	logger.info('GitCue extension deactivated');
 }

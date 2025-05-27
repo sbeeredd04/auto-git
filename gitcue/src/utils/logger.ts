@@ -38,8 +38,8 @@ export class ExtensionLogger {
    */
   success(message: string, details?: string): void {
     const content = details 
-      ? `✅ SUCCESS: ${message}\n   ${details}`
-      : `✅ SUCCESS: ${message}`;
+      ? `[SUCCESS] ${message}\n   ${details}`
+      : `[SUCCESS] ${message}`;
     
     this.outputChannel.appendLine(content);
     this.outputChannel.appendLine('');
@@ -50,8 +50,8 @@ export class ExtensionLogger {
    */
   error(message: string, details?: string): void {
     const content = details 
-      ? `❌ ERROR: ${message}\n   ${details}`
-      : `❌ ERROR: ${message}`;
+      ? `[ERROR] ${message}\n   ${details}`
+      : `[ERROR] ${message}`;
     
     this.outputChannel.appendLine(content);
     this.outputChannel.appendLine('');
@@ -62,8 +62,8 @@ export class ExtensionLogger {
    */
   warning(message: string, details?: string): void {
     const content = details 
-      ? `⚠️  WARNING: ${message}\n   ${details}`
-      : `⚠️  WARNING: ${message}`;
+      ? `[WARNING] ${message}\n   ${details}`
+      : `[WARNING] ${message}`;
     
     this.outputChannel.appendLine(content);
     this.outputChannel.appendLine('');
@@ -73,7 +73,7 @@ export class ExtensionLogger {
    * Info message
    */
   info(message: string, title: string = 'INFO'): void {
-    this.outputChannel.appendLine(`ℹ️  [${title}] ${message}`);
+    this.outputChannel.appendLine(`[${title}] ${message}`);
   }
 
   /**
@@ -81,7 +81,7 @@ export class ExtensionLogger {
    */
   debug(message: string): void {
     if (this.verbose) {
-      this.outputChannel.appendLine(`🐛 [DEBUG] ${message}`);
+      this.outputChannel.appendLine(`[DEBUG] ${message}`);
     }
   }
 
@@ -89,16 +89,16 @@ export class ExtensionLogger {
    * Status update
    */
   status(message: string, type: 'info' | 'success' | 'warning' | 'error' | 'processing' = 'info'): void {
-    const icons = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      processing: '🔄'
+    const prefixes = {
+      info: '[INFO]',
+      success: '[SUCCESS]',
+      warning: '[WARNING]',
+      error: '[ERROR]',
+      processing: '[PROCESSING]'
     };
     
-    const icon = icons[type] || 'ℹ️';
-    this.outputChannel.appendLine(`${icon} ${message}`);
+    const prefix = prefixes[type] || '[INFO]';
+    this.outputChannel.appendLine(`${prefix} ${message}`);
   }
 
   /**
@@ -107,7 +107,7 @@ export class ExtensionLogger {
   section(title: string, subtitle?: string): void {
     this.outputChannel.appendLine('');
     this.outputChannel.appendLine('═'.repeat(60));
-    this.outputChannel.appendLine(`📋 ${title.toUpperCase()}`);
+    this.outputChannel.appendLine(`[SECTION] ${title.toUpperCase()}`);
     if (subtitle) {
       this.outputChannel.appendLine(`   ${subtitle}`);
     }
@@ -119,12 +119,12 @@ export class ExtensionLogger {
    * Configuration display
    */
   config(title: string, items: Record<string, any>): void {
-    this.outputChannel.appendLine(`🔧 ${title}`);
+    this.outputChannel.appendLine(`[CONFIG] ${title}`);
     this.outputChannel.appendLine('─'.repeat(40));
     
     Object.entries(items).forEach(([key, value]) => {
       const displayValue = typeof value === 'boolean' 
-        ? (value ? '✓ Yes' : '✗ No')
+        ? (value ? 'Yes' : 'No')
         : String(value);
       
       this.outputChannel.appendLine(`  ${key.padEnd(20)} ${displayValue}`);
@@ -137,22 +137,22 @@ export class ExtensionLogger {
    * File change notification
    */
   fileChange(event: string, path: string): void {
-    this.outputChannel.appendLine(`📁 File Change: ${event} → ${path}`);
+    this.outputChannel.appendLine(`[FILE] ${event} → ${path}`);
   }
 
   /**
    * Processing stage indicator
    */
   stage(message: string, type: 'info' | 'success' | 'error' | 'processing' = 'info'): void {
-    const symbols = {
-      info: '▶️',
-      success: '✅',
-      error: '❌',
-      processing: '🔄'
+    const prefixes = {
+      info: '[INFO]',
+      success: '[SUCCESS]',
+      error: '[ERROR]',
+      processing: '[PROCESSING]'
     };
     
-    const symbol = symbols[type] || '▶️';
-    this.outputChannel.appendLine(`${symbol} ${message}`);
+    const prefix = prefixes[type] || '[INFO]';
+    this.outputChannel.appendLine(`${prefix} ${message}`);
   }
 
   /**
@@ -175,8 +175,8 @@ export class ExtensionLogger {
   commitSummary(message: string, hasRemote: boolean): void {
     const operation = hasRemote ? 'Committed and Pushed' : 'Committed (Local Only)';
     this.outputChannel.appendLine('');
-    this.outputChannel.appendLine('🎉 ' + operation);
-    this.outputChannel.appendLine('💬 ' + message);
+    this.outputChannel.appendLine(`[COMMIT] ${operation}`);
+    this.outputChannel.appendLine(`[MESSAGE] ${message}`);
     this.outputChannel.appendLine('');
   }
 
@@ -184,14 +184,14 @@ export class ExtensionLogger {
    * Interactive session info
    */
   interactiveInfo(message: string): void {
-    this.outputChannel.appendLine(`🖥️  [TERMINAL] ${message}`);
+    this.outputChannel.appendLine(`[TERMINAL] ${message}`);
   }
 
   /**
    * AI suggestion info
    */
   aiSuggestion(message: string): void {
-    this.outputChannel.appendLine(`🤖 [AI] ${message}`);
+    this.outputChannel.appendLine(`[AI] ${message}`);
   }
 
   /**

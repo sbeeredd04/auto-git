@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as fs from 'fs/promises';
 import { configManager } from '../utils/config';
 import logger from '../utils/logger';
-import { generateErrorSuggestionWithRateLimit, formatAISuggestion, formatGitCommand, formatMarkdown } from '../utils/ai';
+import { generateErrorSuggestion, formatAISuggestion, formatGitCommand, formatMarkdown } from '../utils/ai';
 
 interface SessionHistory {
   commands: string[];
@@ -33,6 +33,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
   private workspaceRoot: string;
   private historyFile: string;
   private isInAiChatMode = false;
+  private isAiAnalysisRunning = false;
 
   // Terminal control sequences
   private readonly CLEAR_LINE = '\r\x1b[K';
@@ -102,6 +103,11 @@ export class GitCuePty implements vscode.Pseudoterminal {
 
       // Handle Ctrl+C
       if (charCode === 3) {
+        if (this.isAiAnalysisRunning) {
+          this.isAiAnalysisRunning = false;
+          this.write('\r\n' + this.colors.yellow + '🤖 Stopping AI analysis...\r\n' + this.colors.reset);
+          return;
+        }
         if (this.isInAiChatMode) {
           this.isInAiChatMode = false;
           this.write('\r\n' + this.colors.yellow + '🤖 Exiting AI chat mode...\r\n' + this.colors.reset);
@@ -184,12 +190,12 @@ export class GitCuePty implements vscode.Pseudoterminal {
     
     this.write('\r\n');
     this.write('╔══════════════════════════════════════════════════════════════════════════════╗\r\n');
-    this.write('║                    🎯 GitCue AI-Powered Interactive Shell                    ║\r\n');
-    this.write('║                              Enhanced Terminal v1.0                         ║\r\n');
+    this.write('║                    GitCue AI-Powered Interactive Shell                       ║\r\n');
+    this.write('║                              Enhanced Terminal v0.3.4                       ║\r\n');
     this.write('╚══════════════════════════════════════════════════════════════════════════════╝\r\n');
     this.write('\r\n');
     
-    this.write(this.colors.bright + this.colors.blue + '💡 Enhanced Features:\r\n' + this.colors.reset);
+    this.write(this.colors.bright + this.colors.blue + 'Enhanced Features:\r\n' + this.colors.reset);
     this.write('  • Type any command - executed with clean terminal output\r\n');
     this.write('  • AI-powered error analysis with styled markdown\r\n');
     this.write('  • Session history with ↑↓ arrow key navigation\r\n');
@@ -199,7 +205,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
     this.write('  • Use Ctrl+C to exit\r\n');
     this.write('\r\n');
     
-    this.write(this.colors.bright + this.colors.green + '📋 Built-in Commands:\r\n' + this.colors.reset);
+    this.write(this.colors.bright + this.colors.green + 'Built-in Commands:\r\n' + this.colors.reset);
     this.write('  • ' + this.colors.cyan + 'history' + this.colors.reset + '                        # Show command history\r\n');
     this.write('  • ' + this.colors.cyan + 'clear' + this.colors.reset + '                          # Clear terminal screen\r\n');
     this.write('  • ' + this.colors.cyan + 'help' + this.colors.reset + '                           # Show available commands\r\n');
@@ -208,14 +214,14 @@ export class GitCuePty implements vscode.Pseudoterminal {
     this.write('  • ' + this.colors.cyan + 'exit' + this.colors.reset + '                           # Exit interactive session\r\n');
     this.write('\r\n');
     
-    this.write(this.colors.bright + this.colors.yellow + '🔧 Configuration:\r\n' + this.colors.reset);
-    this.write(`  • API Key: ${config.geminiApiKey ? this.colors.green + '✓ Configured' + this.colors.reset : this.colors.red + '✗ Not Set' + this.colors.reset}\r\n`);
-    this.write(`  • AI Suggestions: ${config.enableSuggestions ? this.colors.green + '✓ Enabled' + this.colors.reset : this.colors.red + '✗ Disabled' + this.colors.reset}\r\n`);
-    this.write(`  • Session Persistence: ${config.sessionPersistence ? this.colors.green + '✓ Enabled' + this.colors.reset : this.colors.red + '✗ Disabled' + this.colors.reset}\r\n`);
+    this.write(this.colors.bright + this.colors.yellow + 'Configuration:\r\n' + this.colors.reset);
+    this.write(`  • API Key: ${config.geminiApiKey ? this.colors.green + 'Configured' + this.colors.reset : this.colors.red + 'Not Set' + this.colors.reset}\r\n`);
+    this.write(`  • AI Suggestions: ${config.enableSuggestions ? this.colors.green + 'Enabled' + this.colors.reset : this.colors.red + 'Disabled' + this.colors.reset}\r\n`);
+    this.write(`  • Session Persistence: ${config.sessionPersistence ? this.colors.green + 'Enabled' + this.colors.reset : this.colors.red + 'Disabled' + this.colors.reset}\r\n`);
     
     if (this.sessionHistory.length > 0) {
       this.write('\r\n');
-      this.write(this.colors.bright + this.colors.magenta + '📚 Session history loaded: ' + this.colors.reset + this.sessionHistory.length + ' commands\r\n');
+      this.write(this.colors.bright + this.colors.magenta + 'Session history loaded: ' + this.colors.reset + this.sessionHistory.length + ' commands\r\n');
       this.write('Use ↑↓ arrow keys to navigate through previous commands\r\n');
     }
     
@@ -225,9 +231,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
   private showPrompt(): void {
     const promptText = this.isInAiChatMode 
       ? this.colors.magenta + 'ai-chat>' + this.colors.reset + ' '
-      : this.sessionHistory.length > 0 
-        ? this.colors.green + `gitcue [${this.sessionHistory.length}]> ` + this.colors.reset
-        : this.colors.green + 'gitcue> ' + this.colors.reset;
+      : this.colors.green + 'gitcue> ' + this.colors.reset;
     this.write(promptText);
     this.currentInput = '';
   }
@@ -322,7 +326,9 @@ export class GitCuePty implements vscode.Pseudoterminal {
         this.showPrompt();
         return;
       } catch (error) {
-        this.write(this.colors.red + `❌ Directory not found: ${newPath}` + this.colors.reset + '\r\n');
+        const errorMsg = `Directory not found: ${newPath}`;
+        this.write(this.colors.red + `❌ Error: ${errorMsg}` + this.colors.reset + '\r\n');
+        await this.analyzeError(command, errorMsg);
         this.showPrompt();
         return;
       }
@@ -344,7 +350,6 @@ export class GitCuePty implements vscode.Pseudoterminal {
     }
     
     this.write('\r\n');
-    this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
 
     try {
       // Execute command using spawn with proper shell
@@ -363,49 +368,33 @@ export class GitCuePty implements vscode.Pseudoterminal {
       child.stdout.on('data', (data) => {
         const output = data.toString();
         stdout += output;
-        // Write output with proper line breaks and alignment
-        const formattedOutput = output
-          .split('\n')
-          .map((line: string) => line.trimEnd())
-          .join('\r\n');
-        this.write(formattedOutput + '\r\n');
+        this.write(output);
       });
 
       child.stderr.on('data', (data) => {
         const output = data.toString();
         stderr += output;
-        // Write error output with proper line breaks and alignment
-        const formattedError = output
-          .split('\n')
-          .map((line: string) => line.trimEnd())
-          .join('\r\n');
-        this.write(this.colors.red + formattedError + this.colors.reset + '\r\n');
+        this.write(this.colors.red + output + this.colors.reset);
       });
 
       const exitCode = await new Promise<number>((resolve) => {
         child.on('close', (code) => resolve(code || 0));
       });
 
-      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
-
-      if (exitCode === 0) {
-        this.write(this.colors.green + '✅ Command completed successfully' + this.colors.reset + '\r\n');
-      } else {
-        this.write(this.colors.red + `❌ Command failed with exit code ${exitCode}` + this.colors.reset + '\r\n');
-        
-        // Get AI suggestion for failed commands
-        if (stderr.trim()) {
-          await this.getAISuggestion(command, stderr.trim());
-        }
+      if (exitCode !== 0) {
+        const errorMsg = stderr.trim() || `Command failed with exit code ${exitCode}`;
+        this.write(this.colors.red + `\r\n❌ Command failed (exit code ${exitCode})` + this.colors.reset + '\r\n');
+        await this.analyzeError(command, errorMsg);
       }
 
     } catch (error) {
-      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
-      this.write(this.colors.red + `❌ Command execution failed: ${error instanceof Error ? error.message : String(error)}` + this.colors.reset + '\r\n');
-      
-      // Get AI suggestion for execution errors
-      await this.getAISuggestion(command, error instanceof Error ? error.message : String(error));
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.write(this.colors.red + `\r\n❌ Command execution failed: ${errorMsg}` + this.colors.reset + '\r\n');
+      await this.analyzeError(command, errorMsg);
     }
+
+    this.write('\r\n');
+    this.showPrompt();
   }
 
   private formatGitCommandDisplay(command: string): string {
@@ -416,38 +405,43 @@ export class GitCuePty implements vscode.Pseudoterminal {
       .replace(/\s-([a-zA-Z])/g, ` ${this.colors.yellow}-$1${this.colors.reset}`);
   }
 
-  private async getAISuggestion(command: string, errorMessage: string): Promise<void> {
-    const config = configManager.getConfig();
-    
-    if (!config.enableSuggestions || !config.geminiApiKey) {
-      return;
-    }
-
-    this.write('\r\n' + this.colors.yellow + '🤖 Analyzing error with AI...' + this.colors.reset + '\r\n');
-
+  private async analyzeError(command: string, errorMessage: string): Promise<void> {
     try {
-      const suggestion = await generateErrorSuggestionWithRateLimit(
-        `Command failed: ${command}\nError: ${errorMessage}`
-      );
+      this.write('\r\n' + this.colors.yellow + '🔄 Analyzing error with AI...' + this.colors.reset + '\r\n');
+      this.write(this.colors.dim + 'Press Ctrl+C to stop analysis' + this.colors.reset + '\r\n\r\n');
 
-      this.write('\r\n' + this.colors.green + '🤖 AI Analysis Complete' + this.colors.reset + '\r\n');
-      this.renderMarkdown(suggestion);
+      this.isAiAnalysisRunning = true;
 
-    } catch (aiError) {
-      this.write('\r\n' + this.colors.red + '🤖 AI suggestion failed' + this.colors.reset + '\r\n');
-      this.write(this.colors.yellow + `⚠️  ${aiError instanceof Error ? aiError.message : String(aiError)}` + this.colors.reset + '\r\n');
+      const suggestion = await generateErrorSuggestion(`Command: ${command}\nError: ${errorMessage}`);
       
-      // Provide basic troubleshooting
-      this.write('\r\n' + this.colors.bright + '💡 Basic troubleshooting:' + this.colors.reset + '\r\n');
+      if (!this.isAiAnalysisRunning) {
+        this.write(this.colors.yellow + '🛑 Analysis cancelled by user' + this.colors.reset + '\r\n');
+        return;
+      }
+
+      this.write(this.colors.green + '🔍 Analysis Complete:\r\n' + this.colors.reset);
+      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n\r\n');
+      this.renderMarkdown(suggestion);
+      this.write('\r\n' + this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
+
+    } catch (error) {
+      if (!this.isAiAnalysisRunning) return;
+      
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.write(this.colors.red + `\r\n❌ AI analysis failed: ${errorMsg}` + this.colors.reset + '\r\n');
+      
+      // Provide basic help if AI fails
+      this.write('\r\n' + this.colors.bright + '📌 Basic troubleshooting:' + this.colors.reset + '\r\n');
       if (command.startsWith('git ')) {
         this.write('  • Check: ' + this.colors.cyan + 'git status' + this.colors.reset + '\r\n');
-        this.write('  • Check: ' + this.colors.cyan + 'git log --oneline -5' + this.colors.reset + '\r\n');
-        this.write(`  • Try: ${this.colors.cyan}git --help ${command.split(' ')[1]}${this.colors.reset}\r\n`);
+        this.write('  • Try: ' + this.colors.cyan + `git --help ${command.split(' ')[1]}` + this.colors.reset + '\r\n');
       } else {
         this.write('  • Check command syntax\r\n');
-        this.write('  • Verify file/directory exists\r\n');
-        this.write('  • Check permissions\r\n');
+        this.write('  • Verify paths and permissions\r\n');
+        this.write('  • Try running with --help flag\r\n');
       }
+    } finally {
+      this.isAiAnalysisRunning = false;
     }
   }
 
