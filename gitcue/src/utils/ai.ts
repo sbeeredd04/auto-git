@@ -16,6 +16,94 @@ function debugLog(message: string, data?: any) {
   }
 }
 
+// Function declarations for AI function calling
+const getCommitDecisionFunctionDeclaration = async () => {
+  const { Type } = await import('@google/genai');
+  return {
+    name: 'make_commit_decision',
+    description: 'Analyzes Git changes and decides whether to commit them based on code quality, completeness, and significance.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        shouldCommit: {
+          type: Type.BOOLEAN,
+          description: 'Whether the changes should be committed now',
+        },
+        reason: {
+          type: Type.STRING,
+          description: 'Clear explanation for the commit decision',
+        },
+        significance: {
+          type: Type.STRING,
+          enum: ['LOW', 'MEDIUM', 'HIGH'],
+          description: 'The significance level of the changes',
+        },
+        suggestedMessage: {
+          type: Type.STRING,
+          description: 'Suggested commit message if shouldCommit is true',
+        },
+        nextSteps: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: 'Recommended next steps for the developer',
+        }
+      },
+      required: ['shouldCommit', 'reason', 'significance'],
+    },
+  };
+};
+
+const getCommitMessageFunctionDeclaration = async () => {
+  const { Type } = await import('@google/genai');
+  return {
+    name: 'generate_commit_message',
+    description: 'Generates a high-quality commit message following conventional commit standards.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        type: {
+          type: Type.STRING,
+          enum: ['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf', 'ci', 'build'],
+          description: 'The type of change according to conventional commits',
+        },
+        scope: {
+          type: Type.STRING,
+          description: 'Optional scope of the change (e.g., component, module)',
+        },
+        description: {
+          type: Type.STRING,
+          description: 'Brief description of the change (imperative mood)',
+        },
+        body: {
+          type: Type.STRING,
+          description: 'Optional longer description explaining the change',
+        },
+        breakingChange: {
+          type: Type.BOOLEAN,
+          description: 'Whether this is a breaking change',
+        }
+      },
+      required: ['type', 'description'],
+    },
+  };
+};
+
+interface CommitDecision {
+  shouldCommit: boolean;
+  reason: string;
+  significance: 'LOW' | 'MEDIUM' | 'HIGH';
+  suggestedMessage?: string;
+  nextSteps?: string[];
+}
+
+interface CommitMessage {
+  type: string;
+  scope?: string;
+  description: string;
+  body?: string;
+  breakingChange?: boolean;
+}
+
 /**
  * Generate AI-powered error suggestion
  */
@@ -43,22 +131,17 @@ export async function generateErrorSuggestion(errorContext: string): Promise<str
     debugLog('Initializing AI with API key...');
     const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
 
-    const prompt = `As a terminal and development expert, analyze this error and provide clear guidance:
+    const prompt = `Analyze this command error and provide a concise solution:
 
 Error Context:
 ${errorContext}
 
-Please provide:
-1. A clear explanation of what went wrong
-2. Step-by-step solution to fix the issue
-3. Additional context or preventive measures
-4. Common pitfalls to avoid
+Provide a brief response with:
+1. **What went wrong** (1-2 sentences)
+2. **Most likely fix** (the exact command to run)
+3. **Alternative solutions** (if applicable)
 
-Format your response in markdown with:
-- Headers for sections
-- Code blocks for commands
-- Bullet points for steps
-- Important notes highlighted`;
+Keep it under 200 words. Use markdown formatting. Focus on actionable solutions.`;
 
     debugLog('Sending request to Gemini 2.0 Flash...');
     
@@ -298,5 +381,141 @@ export async function showAISuggestionInVSCode(errorContext: string): Promise<vo
   } catch (error) {
     logger.error('Failed to show AI suggestion', error instanceof Error ? error.message : String(error));
     vscode.window.showErrorMessage('Failed to generate AI suggestion: ' + (error instanceof Error ? error.message : 'Unknown error'));
+  }
+}
+
+/**
+ * Uses AI function calling to make intelligent commit decisions
+ */
+export async function makeCommitDecisionWithAI(gitDiff: string, gitStatus: string): Promise<CommitDecision> {
+  const config = configManager.getConfig();
+  
+  if (!config.geminiApiKey) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  try {
+    const { GoogleGenAI, Type } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+
+    const prompt = `Analyze these Git changes and decide if they should be committed:
+
+Git Status:
+${gitStatus}
+
+Git Diff (first 3000 chars):
+${gitDiff.substring(0, 3000)}
+
+Consider:
+- Are these meaningful, complete changes?
+- Is this a good stopping point for a commit?
+- Are there any incomplete features or broken functionality?
+- Code quality and consistency
+- Whether changes form a logical unit
+
+Use the make_commit_decision function to provide your analysis.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: prompt,
+      config: {
+        tools: [{
+          functionDeclarations: [await getCommitDecisionFunctionDeclaration()]
+        }],
+        maxOutputTokens: 1000,
+        temperature: 0.3,
+      }
+    });
+
+    if (response.functionCalls && response.functionCalls.length > 0) {
+      const functionCall = response.functionCalls[0];
+      if (functionCall.name === 'make_commit_decision') {
+        return functionCall.args as unknown as CommitDecision;
+      }
+    }
+
+    // Fallback if no function call
+    return {
+      shouldCommit: true,
+      reason: 'AI analysis completed without function call, defaulting to commit',
+      significance: 'MEDIUM'
+    };
+
+  } catch (error) {
+    logger.error('AI commit decision failed: ' + (error instanceof Error ? error.message : String(error)));
+    throw error;
+  }
+}
+
+/**
+ * Uses AI function calling to generate commit messages
+ */
+export async function generateCommitMessageWithAI(gitDiff: string, gitStatus: string): Promise<string> {
+  const config = configManager.getConfig();
+  
+  if (!config.geminiApiKey) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  try {
+    const { GoogleGenAI, Type } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+
+    const prompt = `Generate a high-quality commit message for these changes following conventional commit standards:
+
+Git Status:
+${gitStatus}
+
+Git Diff (first 3000 chars):
+${gitDiff.substring(0, 3000)}
+
+Requirements:
+- Use conventional commit format: type(scope): description
+- Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
+- Keep description under 50 characters, imperative mood
+- Add body if changes are complex
+- Be specific about what changed, not just "update files"
+
+Use the generate_commit_message function to create a proper commit message.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: prompt,
+      config: {
+        tools: [{
+          functionDeclarations: [await getCommitMessageFunctionDeclaration()]
+        }],
+        maxOutputTokens: 500,
+        temperature: 0.3,
+      }
+    });
+
+    if (response.functionCalls && response.functionCalls.length > 0) {
+      const functionCall = response.functionCalls[0];
+      if (functionCall.name === 'generate_commit_message') {
+        const msg = functionCall.args as unknown as CommitMessage;
+        let commitMessage = `${msg.type}`;
+        if (msg.scope) {
+          commitMessage += `(${msg.scope})`;
+        }
+        if (msg.breakingChange) {
+          commitMessage += '!';
+        }
+        commitMessage += `: ${msg.description}`;
+        
+        if (msg.body) {
+          commitMessage += `\n\n${msg.body}`;
+        }
+        
+        return commitMessage;
+      }
+    }
+
+    // Fallback to regular generation
+    return await generateErrorSuggestion(`Generate a commit message for: ${gitStatus}`);
+
+  } catch (error) {
+    logger.error('AI commit message generation failed: ' + (error instanceof Error ? error.message : String(error)));
+    throw error;
   }
 } 

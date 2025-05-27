@@ -7,7 +7,7 @@ import { promisify } from 'util';
 import { GitCuePty } from './terminal/interactivePty';
 import { configManager } from './utils/config';
 import logger from './utils/logger';
-import { generateErrorSuggestion } from './utils/ai';
+import { generateErrorSuggestion, makeCommitDecisionWithAI, generateCommitMessageWithAI } from './utils/ai';
 
 const execAsync = promisify(exec);
 
@@ -42,6 +42,15 @@ interface WatchStatus {
 	lastCommit: string;
 	pendingCommit: boolean;
 	aiAnalysisInProgress: boolean;
+	activityHistory: ActivityLogEntry[];
+	changedFiles: Set<string>;
+}
+
+interface ActivityLogEntry {
+	timestamp: string;
+	type: 'file_change' | 'ai_analysis' | 'commit' | 'error' | 'watch_start' | 'watch_stop';
+	message: string;
+	details?: string;
 }
 
 class GitCueExtension {
@@ -59,7 +68,9 @@ class GitCueExtension {
 		lastChange: 'None',
 		lastCommit: 'None',
 		pendingCommit: false,
-		aiAnalysisInProgress: false
+		aiAnalysisInProgress: false,
+		activityHistory: [],
+		changedFiles: new Set()
 	};
 	private dashboardPanels: vscode.WebviewPanel[] = [];
 
@@ -81,7 +92,7 @@ class GitCueExtension {
 			this.startWatching();
 		}
 		
-		logger.info('GitCue extension initialized v0.3.5', 'STARTUP');
+		logger.info('GitCue extension initialized v0.3.8', 'STARTUP');
 	}
 
 	private getConfig(): GitCueConfig {
@@ -135,7 +146,9 @@ class GitCueExtension {
 			vscode.commands.registerCommand('gitcue.configure', () => this.openSettings()),
 			vscode.commands.registerCommand('gitcue.showStatus', () => this.showStatus()),
 			vscode.commands.registerCommand('gitcue.cancelCommit', () => this.cancelBufferedCommit()),
-			vscode.commands.registerCommand('gitcue.openInteractiveTerminal', () => this.openTerminal())
+			vscode.commands.registerCommand('gitcue.openInteractiveTerminal', () => this.openTerminal()),
+			vscode.commands.registerCommand('gitcue.openAITerminal', () => this.openTerminal()),
+			vscode.commands.registerCommand('gitcue.dashboard', () => this.openDashboard())
 		];
 
 		commands.forEach(command => this.context.subscriptions.push(command));
@@ -209,57 +222,26 @@ class GitCueExtension {
 			this.watchStatus.aiAnalysisInProgress = true;
 			this.updateDashboards();
 
-			// Get git diff
-			const { stdout: diff } = await execAsync('git diff --cached', { cwd: workspacePath });
+			// Get git diff and status
+			const { stdout: diff } = await execAsync('git diff', { cwd: workspacePath });
 			const { stdout: status } = await execAsync('git status --porcelain', { cwd: workspacePath });
 
 			if (!diff.trim() && !status.trim()) {
 				return { shouldCommit: false, reason: 'No changes detected', significance: 'NONE' };
 			}
 
-			// Use AI to analyze changes
-			const analysisPrompt = `Analyze these Git changes and decide if they should be committed:
+			// Stage changes for analysis
+			await execAsync('git add .', { cwd: workspacePath });
+			const { stdout: stagedDiff } = await execAsync('git diff --cached', { cwd: workspacePath });
 
-Git Status:
-${status}
-
-Git Diff:
-${diff.substring(0, 2000)}...
-
-Please respond with a JSON object containing:
-{
-  "shouldCommit": boolean,
-  "reason": "Brief explanation of the decision",
-  "significance": "LOW|MEDIUM|HIGH"
-}
-
-Consider:
-- Are these meaningful changes?
-- Is this a good stopping point?
-- Are there any incomplete features?
-- Code quality and completeness`;
-
-			const aiResponse = await generateErrorSuggestion(analysisPrompt);
+			// Use AI function calling to make commit decision
+			const decision = await makeCommitDecisionWithAI(stagedDiff, status);
 			
-			// Try to parse JSON response
-			try {
-				const analysis = JSON.parse(aiResponse);
-				return {
-					shouldCommit: analysis.shouldCommit || false,
-					reason: analysis.reason || 'AI analysis completed',
-					significance: analysis.significance || 'MEDIUM'
-				};
-			} catch {
-				// Fallback if JSON parsing fails
-				const shouldCommit = aiResponse.toLowerCase().includes('commit') && 
-								   !aiResponse.toLowerCase().includes('not') &&
-								   !aiResponse.toLowerCase().includes('don\'t');
-				return {
-					shouldCommit,
-					reason: 'AI suggests ' + (shouldCommit ? 'committing' : 'waiting'),
-					significance: 'MEDIUM'
-				};
-			}
+			return {
+				shouldCommit: decision.shouldCommit,
+				reason: decision.reason,
+				significance: decision.significance
+			};
 
 		} catch (error) {
 			logger.error('AI analysis failed: ' + (error instanceof Error ? error.message : String(error)));
@@ -724,57 +706,31 @@ Consider:
 	}
 
 	private async generateCommitMessage(workspacePath: string, config: GitCueConfig): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const env = {
-				...process.env,
-				GEMINI_API_KEY: config.geminiApiKey,
-				AUTO_GIT_COMMIT_MODE: config.commitMode,
-				AUTO_GIT_NO_PUSH: 'true', // Always preview first
-				AUTO_GIT_BUFFER_TIME: config.bufferTimeSeconds.toString()
-			};
+		try {
+			// Get git status first
+			const { stdout: status } = await execAsync('git status --porcelain', { cwd: workspacePath });
 
-			// Use npx to run auto-git commit with buffer support
-			const autoGitProcess = spawn('npx', ['@sbeeredd04/auto-git', 'commit', '--no-push', '--buffer'], {
-				cwd: workspacePath,
-				env,
-				stdio: ['pipe', 'pipe', 'pipe']
-			});
+			if (!status.trim()) {
+				return 'feat: automated commit via GitCue';
+			}
 
-			let output = '';
-			let errorOutput = '';
+			// Stage all changes to get proper diff for AI analysis
+			await execAsync('git add .', { cwd: workspacePath });
+			
+			// Get staged diff for AI analysis
+			const { stdout: stagedDiff } = await execAsync('git diff --cached', { cwd: workspacePath });
+			
+			// Also get unstaged diff for context
+			const { stdout: unstagedDiff } = await execAsync('git diff', { cwd: workspacePath });
 
-			autoGitProcess.stdout.on('data', (data) => {
-				output += data.toString();
-			});
+			// Use AI function calling to generate commit message with better context
+			const commitMessage = await generateCommitMessageWithAI(stagedDiff || unstagedDiff, status);
+			return commitMessage || 'feat: automated commit via GitCue';
 
-			autoGitProcess.stderr.on('data', (data) => {
-				errorOutput += data.toString();
-			});
-
-			autoGitProcess.on('close', (code) => {
-				if (code === 0) {
-					// Extract commit message from output
-					const lines = output.split('\n');
-					const commitLine = lines.find(line => line.includes('Commit:') || line.includes('💬'));
-					if (commitLine) {
-						const message = commitLine.replace(/.*💬\s*/, '').replace(/.*Commit:\s*/, '').trim();
-						resolve(message || 'feat: automated commit via GitCue');
-					} else {
-						resolve('feat: automated commit via GitCue');
-					}
-				} else {
-					// Fallback to basic commit message generation
-					this.outputChannel.appendLine(`Auto-git warning: ${errorOutput || output}`);
-					resolve('feat: automated commit via GitCue');
-				}
-			});
-
-			// Handle process errors
-			autoGitProcess.on('error', (error) => {
-				this.outputChannel.appendLine(`Auto-git process error: ${error.message}`);
-				resolve('feat: automated commit via GitCue');
-			});
-		});
+		} catch (error) {
+			logger.error('Commit message generation failed: ' + (error instanceof Error ? error.message : String(error)));
+			return 'feat: automated commit via GitCue';
+		}
 	}
 
 	private showCommitPreview(message: string, status: string, workspacePath: string, config: GitCueConfig) {
@@ -1109,9 +1065,8 @@ Consider:
 				}
 
 				.btn-secondary:hover {
-					background: var(--vscode-button-secondaryHoverBackground);
 					border-color: var(--primary-color);
-					transform: translateY(-1px);
+					background: var(--vscode-button-secondaryHoverBackground);
 				}
 
 				.btn-danger {
@@ -1386,35 +1341,86 @@ Consider:
 	}
 
 	private async executeCommit(message: string, workspacePath: string, config: GitCueConfig, shouldPush: boolean) {
-		try {
-			await vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'GitCue: Committing changes...',
-				cancellable: false
-			}, async (progress) => {
-				progress.report({ increment: 30, message: 'Adding files...' });
-				await execAsync('git add .', { cwd: workspacePath });
-				
-				progress.report({ increment: 40, message: 'Creating commit...' });
-				await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: workspacePath });
-				
-				if (shouldPush) {
-					progress.report({ increment: 30, message: 'Pushing to remote...' });
-					await execAsync('git push', { cwd: workspacePath });
-				}
-			});
+		const maxRetries = 3;
+		let retryCount = 0;
+		
+		while (retryCount < maxRetries) {
+			try {
+				await vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification,
+					title: `GitCue: Committing changes${retryCount > 0 ? ` (retry ${retryCount}/${maxRetries})` : ''}...`,
+					cancellable: false
+				}, async (progress) => {
+					progress.report({ increment: 30, message: 'Adding files...' });
+					await execAsync('git add .', { cwd: workspacePath });
+					
+					progress.report({ increment: 40, message: 'Creating commit...' });
+					await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: workspacePath });
+					
+					if (shouldPush) {
+						progress.report({ increment: 30, message: 'Pushing to remote...' });
+						await execAsync('git push', { cwd: workspacePath });
+					}
+				});
 
-			const pushText = shouldPush ? ' and pushed' : '';
-			if (config.enableNotifications) {
-				vscode.window.showInformationMessage(`✅ GitCue: Changes committed${pushText} successfully!`);
+				const pushText = shouldPush ? ' and pushed' : '';
+				if (config.enableNotifications) {
+					vscode.window.showInformationMessage(`GitCue: Changes committed${pushText} successfully!`);
+				}
+				
+				this.outputChannel.appendLine(`Commit successful: ${message}`);
+				this.statusProvider.refresh();
+				this.watchStatus.lastCommit = new Date().toLocaleTimeString();
+				this.watchStatus.filesChanged = 0;
+				this.watchStatus.changedFiles.clear();
+				
+				// Log commit activity
+				this.logActivity('commit', `Committed: ${message}`, shouldPush ? 'Pushed to remote' : 'Local commit only');
+				
+				this.updateDashboards();
+				return; // Success, exit retry loop
+				
+			} catch (error) {
+				retryCount++;
+				const errorMsg = error instanceof Error ? error.message : String(error);
+				this.outputChannel.appendLine(`Commit attempt ${retryCount} failed: ${errorMsg}`);
+				
+				if (retryCount >= maxRetries) {
+					// Final failure - prompt user for manual intervention
+					const action = await vscode.window.showErrorMessage(
+						`GitCue: Commit failed after ${maxRetries} attempts. Please fix the issue manually.`,
+						'Open Terminal',
+						'View Output',
+						'Retry Later'
+					);
+					
+					switch (action) {
+						case 'Open Terminal':
+							this.openTerminal();
+							break;
+						case 'View Output':
+							this.outputChannel.show();
+							break;
+						case 'Retry Later':
+							// Schedule retry in 5 minutes
+							setTimeout(() => {
+								this.executeCommit(message, workspacePath, config, shouldPush);
+							}, 5 * 60 * 1000);
+							break;
+					}
+					
+					logger.error(`Commit failed after ${maxRetries} attempts: ${errorMsg}`);
+					throw error;
+				} else {
+					// Wait before retry (exponential backoff)
+					const waitTime = Math.pow(2, retryCount) * 1000;
+					await new Promise(resolve => setTimeout(resolve, waitTime));
+					
+					if (config.enableNotifications) {
+						vscode.window.showWarningMessage(`GitCue: Commit failed, retrying in ${waitTime/1000}s... (${retryCount}/${maxRetries})`);
+					}
+				}
 			}
-			
-			this.outputChannel.appendLine(`Commit successful: ${message}`);
-			this.statusProvider.refresh();
-			
-		} catch (error) {
-			this.outputChannel.appendLine(`Commit failed: ${error}`);
-			vscode.window.showErrorMessage(`GitCue: Commit failed - ${error}`);
 		}
 	}
 
@@ -1445,47 +1451,197 @@ Consider:
 		
 		this.fileWatcher = vscode.workspace.createFileSystemWatcher(watchPattern);
 		
-		const onFileChange = (uri: vscode.Uri) => {
-			// Update watch status
-			this.watchStatus.filesChanged++;
-			this.watchStatus.lastChange = path.basename(uri.fsPath) + ' at ' + new Date().toLocaleTimeString();
+		// Track changes to avoid duplicate processing - similar to auto-git library
+		const changeTracker = new Set<string>();
+		let lastDiffHash: string | null = null;
+		
+		const onFileChange = async (uri: vscode.Uri) => {
+			const filePath = uri.fsPath;
+			const fileName = path.basename(filePath);
+			
+			// Filter out Git internal files and other system files
+			const gitInternalFiles = [
+				'index.lock',
+				'COMMIT_EDITMSG',
+				'MERGE_HEAD',
+				'MERGE_MSG',
+				'FETCH_HEAD',
+				'HEAD.lock',
+				'config.lock',
+				'packed-refs.lock'
+			];
+			
+			const systemFiles = [
+				'.DS_Store',
+				'Thumbs.db',
+				'desktop.ini'
+			];
+			
+			// Skip Git internal files and system files
+			if (gitInternalFiles.includes(fileName) || systemFiles.includes(fileName)) {
+				return;
+			}
+			
+			// Skip files in .git directory
+			if (filePath.includes('/.git/') || filePath.includes('\\.git\\')) {
+				return;
+			}
+			
+			// Skip if we've already processed this file recently
+			if (changeTracker.has(filePath)) {
+				return;
+			}
+			
+			changeTracker.add(filePath);
+			
+			// Remove from tracker after a short delay
+			setTimeout(() => {
+				changeTracker.delete(filePath);
+			}, 1000);
+			
+			// Check actual git changes to get accurate count (like auto-git library)
+			try {
+				const { stdout: gitStatus } = await execAsync('git status --porcelain', { 
+					cwd: workspaceFolder.uri.fsPath 
+				});
+				
+				if (gitStatus.trim()) {
+					// Parse git status to get unique changed files
+					const changedFiles = gitStatus.trim().split('\n')
+						.map(line => line.substring(3).trim()) // Remove status prefix
+						.filter(file => file.length > 0);
+					
+					// Update changed files set
+					this.watchStatus.changedFiles.clear();
+					changedFiles.forEach(file => this.watchStatus.changedFiles.add(file));
+					this.watchStatus.filesChanged = this.watchStatus.changedFiles.size;
+					
+					// Only log and update if there are actual changes
+					if (this.watchStatus.filesChanged > 0) {
+						// Log the file change activity only for actual user files
+						this.logActivity('file_change', `File changed: ${fileName}`, filePath);
+						
+						// Update last change info
+						this.watchStatus.lastChange = fileName + ' at ' + new Date().toLocaleTimeString();
+						
+						// Log the change
+						this.outputChannel.appendLine(`File changed: ${uri.fsPath}`);
+						logger.debug(`File change detected: ${uri.fsPath}`);
+					}
+					
+					// Create diff hash to avoid duplicate processing (like auto-git library)
+					const { stdout: diff } = await execAsync('git diff', { cwd: workspaceFolder.uri.fsPath });
+					const currentDiffHash = this.createDiffHash(diff);
+					
+					// Skip if this is the same diff we already processed
+					if (currentDiffHash === lastDiffHash) {
+						this.updateStatusBar();
+						this.updateDashboards();
+						return;
+					}
+					
+					lastDiffHash = currentDiffHash;
+				} else {
+					// No git changes, reset counters
+					this.watchStatus.changedFiles.clear();
+					this.watchStatus.filesChanged = 0;
+				}
+			} catch (error) {
+				// If git commands fail, fall back to simple file counting but still filter out Git files
+				if (!gitInternalFiles.includes(fileName) && !systemFiles.includes(fileName)) {
+					this.watchStatus.changedFiles.add(filePath);
+					this.watchStatus.filesChanged = this.watchStatus.changedFiles.size;
+					
+					// Log the file change activity only for actual user files
+					this.logActivity('file_change', `File changed: ${fileName}`, filePath);
+					
+					// Update last change info
+					this.watchStatus.lastChange = fileName + ' at ' + new Date().toLocaleTimeString();
+					
+					// Log the change
+					this.outputChannel.appendLine(`File changed: ${uri.fsPath}`);
+					logger.debug(`File change detected: ${uri.fsPath}`);
+				}
+				this.logActivity('error', 'Git status check failed', error instanceof Error ? error.message : String(error));
+			}
+			
 			this.updateStatusBar();
 			this.updateDashboards();
 			
-			// Log the change
-			this.outputChannel.appendLine(`File changed: ${uri.fsPath}`);
-			
+			// Clear existing debounce timer
 			if (this.debounceTimer) {
 				clearTimeout(this.debounceTimer);
 			}
 			
-			this.debounceTimer = setTimeout(() => {
-				if (config.commitMode === 'intelligent') {
-					this.handleIntelligentCommit();
-				} else {
-					// For periodic mode, also use buffer notification
-					const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-					if (workspaceFolder) {
-						this.commitWithBuffer(workspaceFolder.uri.fsPath, config);
+			// Set new debounce timer
+			this.debounceTimer = setTimeout(async () => {
+				try {
+					this.logActivity('ai_analysis', 'Starting AI analysis for changes');
+					
+					if (config.commitMode === 'intelligent') {
+						await this.handleIntelligentCommit();
+					} else {
+						// For periodic mode, also use buffer notification
+						const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+						if (workspaceFolder) {
+							await this.commitWithBuffer(workspaceFolder.uri.fsPath, config);
+						}
+					}
+				} catch (error) {
+					const errorMsg = error instanceof Error ? error.message : String(error);
+					logger.error('Error processing file changes: ' + errorMsg);
+					this.logActivity('error', 'Failed to process file changes', errorMsg);
+					
+					if (config.enableNotifications) {
+						vscode.window.showErrorMessage(`GitCue: Error processing changes - ${errorMsg}`);
 					}
 				}
 			}, config.debounceMs);
 		};
 
+		// Listen to all file system events
 		this.fileWatcher.onDidChange(onFileChange);
 		this.fileWatcher.onDidCreate(onFileChange);
 		this.fileWatcher.onDidDelete(onFileChange);
 
+		// Also listen to workspace file changes for better coverage
+		const workspaceWatcher = vscode.workspace.onDidChangeTextDocument((event) => {
+			if (event.document.uri.scheme === 'file') {
+				onFileChange(event.document.uri);
+			}
+		});
+		
+		this.context.subscriptions.push(workspaceWatcher);
+
 		this.isWatching = true;
 		this.watchStatus.isWatching = true;
 		this.watchStatus.filesChanged = 0;
+		this.watchStatus.changedFiles.clear();
 		this.updateStatusBar();
 		this.updateDashboards();
 		
+		// Log watch start activity
+		this.logActivity('watch_start', 'File watching started', `Patterns: ${watchPatterns.join(', ')}`);
+		
 		if (config.enableNotifications) {
-			vscode.window.showInformationMessage('👁️ GitCue: Started watching for changes');
+			vscode.window.showInformationMessage('GitCue: Started watching for changes');
 		}
 		this.outputChannel.appendLine('Started watching for file changes with patterns: ' + watchPatterns.join(', '));
+		logger.info('File watching started with enhanced detection');
+	}
+
+	// Helper method to create diff hash (similar to auto-git library)
+	private createDiffHash(diffText: string): string | null {
+		if (!diffText) return null;
+		
+		// Simple hash function for diff content
+		let hash = 0;
+		for (let i = 0; i < diffText.length; i++) {
+			const char = diffText.charCodeAt(i);
+			hash = ((hash << 5) - hash) + char;
+			hash = hash & hash; // Convert to 32-bit integer
+		}
+		return hash.toString();
 	}
 
 	private stopWatching() {
@@ -1507,13 +1663,17 @@ Consider:
 		this.isWatching = false;
 		this.watchStatus.isWatching = false;
 		this.watchStatus.filesChanged = 0;
+		this.watchStatus.changedFiles.clear();
 		this.watchStatus.lastChange = 'None';
 		this.updateStatusBar();
 		this.updateDashboards();
 		
+		// Log watch stop activity
+		this.logActivity('watch_stop', 'File watching stopped');
+		
 		const config = this.getConfig();
 		if (config.enableNotifications) {
-			vscode.window.showInformationMessage('👁️ GitCue: Stopped watching');
+			vscode.window.showInformationMessage('GitCue: Stopped watching');
 		}
 		this.outputChannel.appendLine('Stopped watching for file changes');
 	}
@@ -1629,6 +1789,7 @@ Consider:
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<title>GitCue Dashboard</title>
+			<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 			<style>
 				:root {
 					--primary: #007acc;
@@ -1636,14 +1797,14 @@ Consider:
 					--warning: #ff9800;
 					--danger: #f44336;
 					--info: #2196f3;
-					--bg-primary: #1e1e1e;
-					--bg-secondary: #2d2d30;
-					--bg-tertiary: #3c3c3c;
-					--text-primary: #cccccc;
-					--text-secondary: #969696;
-					--border: #404040;
+					--bg-primary: var(--vscode-editor-background);
+					--bg-secondary: var(--vscode-sideBar-background);
+					--bg-tertiary: var(--vscode-panel-background);
+					--text-primary: var(--vscode-foreground);
+					--text-secondary: var(--vscode-descriptionForeground);
+					--border: var(--vscode-panel-border);
 					--radius: 12px;
-					--shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+					--shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 					--transition: all 0.2s ease;
 				}
 
@@ -1654,7 +1815,7 @@ Consider:
 				}
 
 				body {
-					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+					font-family: var(--vscode-font-family);
 					background: var(--bg-primary);
 					color: var(--text-primary);
 					line-height: 1.6;
@@ -1687,9 +1848,12 @@ Consider:
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					font-size: 28px;
 					color: white;
 					box-shadow: var(--shadow);
+				}
+
+				.logo .material-icons {
+					font-size: 32px;
 				}
 
 				.title {
@@ -1743,9 +1907,12 @@ Consider:
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					font-size: 18px;
 					color: white;
 					background: linear-gradient(135deg, var(--primary), var(--info));
+				}
+
+				.card-icon .material-icons {
+					font-size: 20px;
 				}
 
 				.card-title {
@@ -1921,6 +2088,10 @@ Consider:
 					background: var(--bg-secondary);
 				}
 
+				.material-icons {
+					font-size: 18px;
+				}
+
 				@keyframes pulse {
 					0%, 100% { opacity: 1; }
 					50% { opacity: 0.6; }
@@ -1944,20 +2115,150 @@ Consider:
 						grid-template-columns: 1fr;
 					}
 				}
+
+				.activity-history {
+					grid-column: 1 / -1;
+					background: var(--bg-secondary);
+					border: 1px solid var(--border);
+					border-radius: var(--radius);
+					padding: 24px;
+					margin-bottom: 24px;
+				}
+
+				.btn-toggle {
+					background: none;
+					border: none;
+					color: var(--text-primary);
+					cursor: pointer;
+					padding: 4px;
+					border-radius: 4px;
+					transition: var(--transition);
+					margin-left: auto;
+				}
+
+				.btn-toggle:hover {
+					background: var(--bg-tertiary);
+				}
+
+				.btn-toggle .material-icons {
+					transition: transform 0.3s ease;
+				}
+
+				.btn-toggle.expanded .material-icons {
+					transform: rotate(180deg);
+				}
+
+				.activity-content {
+					margin-top: 16px;
+					border-top: 1px solid var(--border);
+					padding-top: 16px;
+				}
+
+				.activity-list {
+					max-height: 300px;
+					overflow-y: auto;
+					padding-right: 8px;
+				}
+
+				.activity-list::-webkit-scrollbar {
+					width: 6px;
+				}
+
+				.activity-list::-webkit-scrollbar-track {
+					background: var(--bg-tertiary);
+					border-radius: 3px;
+				}
+
+				.activity-list::-webkit-scrollbar-thumb {
+					background: var(--border);
+					border-radius: 3px;
+				}
+
+				.activity-list::-webkit-scrollbar-thumb:hover {
+					background: var(--text-secondary);
+				}
+
+				.activity-item {
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					padding: 8px 12px;
+					border-radius: 6px;
+					margin-bottom: 4px;
+					transition: var(--transition);
+				}
+
+				.activity-item:hover {
+					background: var(--bg-tertiary);
+				}
+
+				.activity-time {
+					font-size: 12px;
+					color: var(--text-secondary);
+					font-family: monospace;
+					min-width: 60px;
+				}
+
+				.activity-type {
+					font-size: 10px;
+					padding: 2px 6px;
+					border-radius: 10px;
+					text-transform: uppercase;
+					font-weight: 600;
+					letter-spacing: 0.5px;
+					min-width: 80px;
+					text-align: center;
+				}
+
+				.activity-type.file_change {
+					background: rgba(33, 150, 243, 0.2);
+					color: var(--info);
+				}
+
+				.activity-type.ai_analysis {
+					background: rgba(156, 39, 176, 0.2);
+					color: #9c27b0;
+				}
+
+				.activity-type.commit {
+					background: rgba(76, 175, 80, 0.2);
+					color: var(--success);
+				}
+
+				.activity-type.error {
+					background: rgba(244, 67, 54, 0.2);
+					color: var(--danger);
+				}
+
+				.activity-type.watch_start,
+				.activity-type.watch_stop {
+					background: rgba(255, 152, 0, 0.2);
+					color: var(--warning);
+				}
+
+				.activity-message {
+					flex: 1;
+					font-size: 14px;
+					color: var(--text-primary);
+				}
 			</style>
 		</head>
 		<body>
 			<div class="dashboard">
 				<div class="container">
 					<div class="header">
-						<div class="logo">🎯</div>
-						<h1 class="title">GitCue Dashboard v0.3.5</h1>
+						<div class="logo">
+							<span class="material-icons">code</span>
+						</div>
+						<h1 class="title">GitCue Dashboard v0.3.8</h1>
 						<p class="subtitle">Monitor your AI-powered Git automation in real-time</p>
 					</div>
 
 					<div class="watch-status">
 						<div class="card-header">
-							<div class="card-icon" id="watchIcon">👁️</div>
+							<div class="card-icon" id="watchIcon">
+								<span class="material-icons">visibility</span>
+							</div>
 							<h3 class="card-title">Watch Status</h3>
 						</div>
 						<div class="watch-stats">
@@ -1980,10 +2281,33 @@ Consider:
 						</div>
 					</div>
 
+					<div class="activity-history">
+						<div class="card-header">
+							<div class="card-icon">
+								<span class="material-icons">history</span>
+							</div>
+							<h3 class="card-title">Activity History</h3>
+							<button class="btn-toggle" onclick="toggleActivityHistory()" id="historyToggle">
+								<span class="material-icons">expand_more</span>
+							</button>
+						</div>
+						<div class="activity-content" id="activityContent" style="display: none;">
+							<div class="activity-list" id="activityList">
+								<div class="activity-item">
+									<span class="activity-time">--:--:--</span>
+									<span class="activity-type info">system</span>
+									<span class="activity-message">No activity yet</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<div class="main-grid">
 						<div class="card">
 							<div class="card-header">
-								<div class="card-icon">✅</div>
+								<div class="card-icon">
+									<span class="material-icons">check_circle</span>
+								</div>
 								<h3 class="card-title">System Status</h3>
 							</div>
 							<div class="status-item">
@@ -2009,7 +2333,9 @@ Consider:
 
 						<div class="card">
 							<div class="card-header">
-								<div class="card-icon">🔍</div>
+								<div class="card-icon">
+									<span class="material-icons">psychology</span>
+								</div>
 								<h3 class="card-title">AI Configuration</h3>
 							</div>
 							<div class="status-item">
@@ -2035,7 +2361,7 @@ Consider:
 
 					<div class="actions">
 						<button class="btn btn-primary" onclick="toggleWatching()" id="watchToggleBtn">
-							<span>👁️</span>
+							<span class="material-icons">visibility</span>
 							<span>Start Watching</span>
 						</button>
 						<button class="btn btn-secondary" onclick="openSettings()">
@@ -2065,7 +2391,9 @@ Consider:
 						lastChange: 'None',
 						lastCommit: 'None',
 						pendingCommit: false,
-						aiAnalysisInProgress: false
+						aiAnalysisInProgress: false,
+						activityHistory: [],
+						changedFiles: new Set()
 					}
 				};
 
@@ -2085,6 +2413,45 @@ Consider:
 					vscode.postMessage({ action: 'openTerminal' });
 				}
 
+				function toggleActivityHistory() {
+					const content = document.getElementById('activityContent');
+					const toggle = document.getElementById('historyToggle');
+					
+					if (content.style.display === 'none') {
+						content.style.display = 'block';
+						toggle.classList.add('expanded');
+					} else {
+						content.style.display = 'none';
+						toggle.classList.remove('expanded');
+					}
+				}
+
+				function updateActivityHistory(activities) {
+					// Simple implementation without template literals to avoid TypeScript issues
+					const activityList = document.getElementById('activityList');
+					activityList.innerHTML = '';
+					
+					if (!activities || activities.length === 0) {
+						const item = document.createElement('div');
+						item.className = 'activity-item';
+						item.innerHTML = '<span class="activity-time">--:--:--</span>' +
+							'<span class="activity-type info">system</span>' +
+							'<span class="activity-message">No activity yet</span>';
+						activityList.appendChild(item);
+						return;
+					}
+					
+					activities.forEach(function(activity) {
+						const item = document.createElement('div');
+						item.className = 'activity-item';
+						item.title = activity.details || '';
+						item.innerHTML = '<span class="activity-time">' + activity.timestamp + '</span>' +
+							'<span class="activity-type ' + activity.type + '">' + activity.type.replace('_', ' ') + '</span>' +
+							'<span class="activity-message">' + activity.message + '</span>';
+						activityList.appendChild(item);
+					});
+				}
+
 				function updateUI() {
 					const { isWatching, config, watchStatus } = currentState;
 					
@@ -2098,14 +2465,14 @@ Consider:
 						watchIndicator.className = 'indicator active';
 						watchBadge.className = 'badge success';
 						watchBadge.textContent = 'Active';
-						watchToggleBtn.innerHTML = '<span>👁️</span><span>Stop Watching</span>';
-						watchIcon.textContent = '👁️';
+						watchToggleBtn.innerHTML = '<span class="material-icons">visibility_off</span><span>Stop Watching</span>';
+						watchIcon.innerHTML = '<span class="material-icons">visibility</span>';
 					} else {
 						watchIndicator.className = 'indicator inactive';
 						watchBadge.className = 'badge danger';
 						watchBadge.textContent = 'Inactive';
-						watchToggleBtn.innerHTML = '<span>👁️</span><span>Start Watching</span>';
-						watchIcon.textContent = '👁️';
+						watchToggleBtn.innerHTML = '<span class="material-icons">visibility</span><span>Start Watching</span>';
+						watchIcon.innerHTML = '<span class="material-icons">visibility_off</span>';
 					}
 
 					// Update watch statistics
@@ -2138,6 +2505,9 @@ Consider:
 					document.getElementById('suggestionsBadge').className = config.enableSuggestions ? 'badge success' : 'badge danger';
 					
 					document.getElementById('rateLimitBadge').textContent = (config.maxCallsPerMinute || 15) + ' calls/min';
+					
+					// Update activity history
+					updateActivityHistory(watchStatus.activityHistory);
 				}
 
 				window.addEventListener('message', event => {
@@ -2247,6 +2617,24 @@ Consider:
 		if (this.terminal) {
 			this.terminal.dispose();
 		}
+	}
+
+	private logActivity(type: ActivityLogEntry['type'], message: string, details?: string) {
+		const entry: ActivityLogEntry = {
+			timestamp: new Date().toLocaleTimeString(),
+			type,
+			message,
+			details
+		};
+		
+		this.watchStatus.activityHistory.unshift(entry);
+		
+		// Keep only last 50 entries
+		if (this.watchStatus.activityHistory.length > 50) {
+			this.watchStatus.activityHistory = this.watchStatus.activityHistory.slice(0, 50);
+		}
+		
+		this.updateDashboards();
 	}
 }
 

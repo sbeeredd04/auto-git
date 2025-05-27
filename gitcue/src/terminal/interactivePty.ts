@@ -6,6 +6,7 @@ import * as fs from 'fs/promises';
 import { configManager } from '../utils/config';
 import logger from '../utils/logger';
 import { generateErrorSuggestion, formatAISuggestion, formatGitCommand, formatMarkdown, testAIConnection } from '../utils/ai';
+import { renderMarkdown, createErrorSuggestionBox } from '../utils/markdown';
 
 interface SessionHistory {
   commands: string[];
@@ -191,7 +192,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
     this.write('\r\n');
     this.write('╔══════════════════════════════════════════════════════════════════════════════╗\r\n');
     this.write('║                    GitCue AI-Powered Interactive Shell                       ║\r\n');
-    this.write('║                              Enhanced Terminal v0.3.5                       ║\r\n');
+    this.write('║                              Enhanced Terminal v0.3.8                       ║\r\n');
     this.write('╚══════════════════════════════════════════════════════════════════════════════╝\r\n');
     this.write('\r\n');
     
@@ -328,13 +329,11 @@ export class GitCuePty implements vscode.Pseudoterminal {
         await fs.access(targetPath); // Check if directory exists
         this.workspaceRoot = targetPath;
         this.write(this.colors.blue + '🔄 Changed directory to: ' + this.colors.reset + this.colors.cyan + targetPath + this.colors.reset + '\r\n');
-        this.showPrompt();
         return;
       } catch (error) {
         const errorMsg = `Directory not found: ${newPath}`;
         this.write(this.colors.red + `❌ Error: ${errorMsg}` + this.colors.reset + '\r\n');
         await this.analyzeError(command, errorMsg);
-        this.showPrompt();
         return;
       }
     }
@@ -342,7 +341,6 @@ export class GitCuePty implements vscode.Pseudoterminal {
     // Handle pwd command
     if (command === 'pwd') {
       this.write(this.colors.blue + '🔄 Current directory: ' + this.colors.reset + this.colors.cyan + this.workspaceRoot + this.colors.reset + '\r\n');
-      this.showPrompt();
       return;
     }
 
@@ -373,13 +371,31 @@ export class GitCuePty implements vscode.Pseudoterminal {
       child.stdout.on('data', (data) => {
         const output = data.toString();
         stdout += output;
-        this.write(output);
+        
+        // Clean up the output formatting - remove excessive whitespace and normalize line endings
+        const cleanOutput = output
+          .replace(/\r\n/g, '\n')  // Normalize line endings
+          .replace(/\r/g, '\n')    // Convert remaining \r to \n
+          .split('\n')
+          .map((line: string) => line.trimEnd()) // Remove trailing whitespace from each line
+          .join('\r\n');
+        
+        this.write(cleanOutput);
       });
 
       child.stderr.on('data', (data) => {
         const output = data.toString();
         stderr += output;
-        this.write(this.colors.red + output + this.colors.reset);
+        
+        // Clean up stderr output as well
+        const cleanOutput = output
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .split('\n')
+          .map((line: string) => line.trimEnd())
+          .join('\r\n');
+        
+        this.write(this.colors.red + cleanOutput + this.colors.reset);
       });
 
       const exitCode = await new Promise<number>((resolve) => {
@@ -397,9 +413,6 @@ export class GitCuePty implements vscode.Pseudoterminal {
       this.write(this.colors.red + `\r\n❌ Command execution failed: ${errorMsg}` + this.colors.reset + '\r\n');
       await this.analyzeError(command, errorMsg);
     }
-
-    this.write('\r\n');
-    this.showPrompt();
   }
 
   private formatGitCommandDisplay(command: string): string {
@@ -426,7 +439,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
 
     try {
       this.write('\r\n' + this.colors.yellow + '🔄 Analyzing error with AI...' + this.colors.reset + '\r\n');
-      this.write(this.colors.dim + 'Press Ctrl+C to stop analysis' + this.colors.reset + '\r\n\r\n');
+      this.write(this.colors.dim + 'Press Ctrl+C to stop analysis' + this.colors.reset + '\r\n');
 
       this.isAiAnalysisRunning = true;
       logger.debug(`Starting AI analysis for command: ${command}`);
@@ -440,10 +453,10 @@ export class GitCuePty implements vscode.Pseudoterminal {
         return;
       }
 
-      this.write(this.colors.green + '🔍 Analysis Complete:\r\n' + this.colors.reset);
-      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n\r\n');
+      this.write('\r\n' + this.colors.green + '🔍 Analysis Complete:' + this.colors.reset + '\r\n');
+      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
       this.renderMarkdown(suggestion);
-      this.write('\r\n' + this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
+      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
       this.write(this.colors.cyan + '💡 You can run the suggested commands directly in this terminal!' + this.colors.reset + '\r\n');
 
     } catch (error) {
@@ -471,58 +484,22 @@ export class GitCuePty implements vscode.Pseudoterminal {
   }
 
   private renderMarkdown(content: string): void {
-    this.write(this.colors.dim + '─'.repeat(60) + this.colors.reset + '\r\n');
+    // Use the new markdown renderer for cleaner output
+    const rendered = renderMarkdown(content, {
+      maxWidth: 80,
+      colors: {
+        header: this.colors.bright + this.colors.blue,
+        code: this.colors.cyan,
+        bold: this.colors.bright,
+        italic: this.colors.dim,
+        list: this.colors.green,
+        quote: this.colors.gray,
+        reset: this.colors.reset,
+        dim: this.colors.dim
+      }
+    });
     
-    const lines = content.split('\n');
-    let inCodeBlock = false;
-    let codeBlockLanguage = '';
-    
-    for (let line of lines) {
-      // Handle code blocks
-      if (line.startsWith('```')) {
-        if (inCodeBlock) {
-          inCodeBlock = false;
-          this.write(this.colors.dim + '└─' + this.colors.reset + '\r\n');
-        } else {
-          inCodeBlock = true;
-          codeBlockLanguage = line.substring(3).trim();
-          this.write(this.colors.dim + '┌─ ' + (codeBlockLanguage || 'code') + this.colors.reset + '\r\n');
-        }
-        continue;
-      }
-      
-      if (inCodeBlock) {
-        this.write(this.colors.cyan + '│ ' + line + this.colors.reset + '\r\n');
-        continue;
-      }
-      
-      // Handle headers
-      if (line.startsWith('###')) {
-        this.write(this.colors.bright + this.colors.yellow + line.substring(3).trim() + this.colors.reset + '\r\n');
-        continue;
-      }
-      if (line.startsWith('##')) {
-        this.write(this.colors.bright + this.colors.magenta + line.substring(2).trim() + this.colors.reset + '\r\n');
-        continue;
-      }
-      if (line.startsWith('#')) {
-        this.write(this.colors.bright + this.colors.blue + line.substring(1).trim() + this.colors.reset + '\r\n');
-        continue;
-      }
-      
-      // Handle inline formatting
-      line = line
-        .replace(/\*\*(.*?)\*\*/g, this.colors.bright + '$1' + this.colors.reset)
-        .replace(/\*(.*?)\*/g, this.colors.dim + '$1' + this.colors.reset)
-        .replace(/`(.*?)`/g, this.colors.cyan + '$1' + this.colors.reset)
-        .replace(/^- (.*)/, '  • $1')
-        .replace(/^\d+\. (.*)/, '  $1. $1');
-      
-      this.write(line + '\r\n');
-    }
-    
-    this.write(this.colors.dim + '─'.repeat(60) + this.colors.reset + '\r\n');
-    this.write(this.colors.cyan + '💡 You can run the suggested commands directly in this terminal!' + this.colors.reset + '\r\n');
+    this.write(rendered + '\r\n');
   }
 
   private enterAiChatMode(): void {
@@ -555,21 +532,17 @@ export class GitCuePty implements vscode.Pseudoterminal {
       const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
 
-      const prompt = `You are an expert Git and development assistant. Provide clear, concise, and actionable responses.
-Focus on practical solutions and specific steps. Format your response in markdown with:
-- Clear headers for main points
-- Code blocks for commands
-- Bullet points for steps
-- Bold text for important concepts
+      const prompt = `You are a Git and development expert. Provide a concise, helpful response.
 
 User Question: ${message}
 
-Remember to:
-1. Be precise and to the point
-2. Include specific commands when relevant
-3. Explain complex concepts simply
-4. Provide practical examples
-5. Focus on actionable solutions`;
+Keep your response:
+- Under 150 words
+- Focused on practical solutions
+- Include specific commands when relevant
+- Use markdown formatting
+
+Be direct and actionable.`;
 
       // Always use gemini-2.0-flash
       const response = await ai.models.generateContent({
