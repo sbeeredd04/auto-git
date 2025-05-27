@@ -7,6 +7,7 @@ import { promisify } from 'util';
 import { GitCuePty } from './terminal/interactivePty';
 import { configManager } from './utils/config';
 import logger from './utils/logger';
+import { generateErrorSuggestion } from './utils/ai';
 
 const execAsync = promisify(exec);
 
@@ -34,6 +35,15 @@ interface BufferNotification {
 	cancelled: boolean;
 }
 
+interface WatchStatus {
+	isWatching: boolean;
+	filesChanged: number;
+	lastChange: string;
+	lastCommit: string;
+	pendingCommit: boolean;
+	aiAnalysisInProgress: boolean;
+}
+
 class GitCueExtension {
 	private statusBarItem: vscode.StatusBarItem;
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
@@ -43,6 +53,15 @@ class GitCueExtension {
 	private debounceTimer: NodeJS.Timeout | undefined;
 	private bufferNotification: BufferNotification | undefined;
 	private terminal: vscode.Terminal | undefined;
+	private watchStatus: WatchStatus = {
+		isWatching: false,
+		filesChanged: 0,
+		lastChange: 'None',
+		lastCommit: 'None',
+		pendingCommit: false,
+		aiAnalysisInProgress: false
+	};
+	private dashboardPanels: vscode.WebviewPanel[] = [];
 
 	constructor(private context: vscode.ExtensionContext) {
 		this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -62,7 +81,7 @@ class GitCueExtension {
 			this.startWatching();
 		}
 		
-		logger.info('GitCue extension initialized', 'STARTUP');
+		logger.info('GitCue extension initialized v0.3.5', 'STARTUP');
 	}
 
 	private getConfig(): GitCueConfig {
@@ -77,7 +96,7 @@ class GitCueExtension {
 
 	private updateStatusBar() {
 		if (this.isWatching) {
-			this.statusBarItem.text = `$(eye) GitCue: Watching`;
+			this.statusBarItem.text = `$(eye) GitCue: Watching (${this.watchStatus.filesChanged} changes)`;
 			this.statusBarItem.tooltip = 'GitCue is actively watching for file changes. Click to open dashboard.';
 			this.statusBarItem.color = undefined;
 		} else {
@@ -89,6 +108,22 @@ class GitCueExtension {
 		// Add command to open dashboard when clicked
 		this.statusBarItem.command = 'gitcue.openDashboard';
 		this.statusBarItem.show();
+	}
+
+	private updateDashboards() {
+		// Update all open dashboard panels
+		this.dashboardPanels.forEach(panel => {
+			if (panel.visible) {
+				panel.webview.postMessage({
+					action: 'statusUpdate',
+					data: { 
+						isWatching: this.isWatching,
+						config: this.getConfig(),
+						watchStatus: this.watchStatus
+					}
+				});
+			}
+		});
 	}
 
 	private registerCommands() {
@@ -169,6 +204,72 @@ class GitCueExtension {
 		}
 	}
 
+	private async analyzeChangesWithAI(workspacePath: string): Promise<{ shouldCommit: boolean; reason: string; significance: string }> {
+		try {
+			this.watchStatus.aiAnalysisInProgress = true;
+			this.updateDashboards();
+
+			// Get git diff
+			const { stdout: diff } = await execAsync('git diff --cached', { cwd: workspacePath });
+			const { stdout: status } = await execAsync('git status --porcelain', { cwd: workspacePath });
+
+			if (!diff.trim() && !status.trim()) {
+				return { shouldCommit: false, reason: 'No changes detected', significance: 'NONE' };
+			}
+
+			// Use AI to analyze changes
+			const analysisPrompt = `Analyze these Git changes and decide if they should be committed:
+
+Git Status:
+${status}
+
+Git Diff:
+${diff.substring(0, 2000)}...
+
+Please respond with a JSON object containing:
+{
+  "shouldCommit": boolean,
+  "reason": "Brief explanation of the decision",
+  "significance": "LOW|MEDIUM|HIGH"
+}
+
+Consider:
+- Are these meaningful changes?
+- Is this a good stopping point?
+- Are there any incomplete features?
+- Code quality and completeness`;
+
+			const aiResponse = await generateErrorSuggestion(analysisPrompt);
+			
+			// Try to parse JSON response
+			try {
+				const analysis = JSON.parse(aiResponse);
+				return {
+					shouldCommit: analysis.shouldCommit || false,
+					reason: analysis.reason || 'AI analysis completed',
+					significance: analysis.significance || 'MEDIUM'
+				};
+			} catch {
+				// Fallback if JSON parsing fails
+				const shouldCommit = aiResponse.toLowerCase().includes('commit') && 
+								   !aiResponse.toLowerCase().includes('not') &&
+								   !aiResponse.toLowerCase().includes('don\'t');
+				return {
+					shouldCommit,
+					reason: 'AI suggests ' + (shouldCommit ? 'committing' : 'waiting'),
+					significance: 'MEDIUM'
+				};
+			}
+
+		} catch (error) {
+			logger.error('AI analysis failed: ' + (error instanceof Error ? error.message : String(error)));
+			return { shouldCommit: true, reason: 'AI analysis failed, defaulting to commit', significance: 'MEDIUM' };
+		} finally {
+			this.watchStatus.aiAnalysisInProgress = false;
+			this.updateDashboards();
+		}
+	}
+
 	private async commitWithBuffer(workspacePath: string, config: GitCueConfig) {
 		try {
 			// Get git status and diff
@@ -179,6 +280,24 @@ class GitCueExtension {
 			if (!status.trim()) {
 				this.outputChannel.appendLine('No changes to commit');
 				return;
+			}
+
+			// Stage all changes
+			await execAsync('git add .', { cwd: workspacePath });
+
+			// AI analysis for intelligent mode
+			if (config.commitMode === 'intelligent') {
+				const analysis = await this.analyzeChangesWithAI(workspacePath);
+				
+				if (!analysis.shouldCommit) {
+					this.outputChannel.appendLine(`AI decided not to commit: ${analysis.reason}`);
+					if (config.enableNotifications) {
+						vscode.window.showInformationMessage(`🤖 GitCue: ${analysis.reason}`);
+					}
+					return;
+				}
+				
+				this.outputChannel.appendLine(`AI analysis: ${analysis.reason} (${analysis.significance})`);
 			}
 
 			// Generate commit message
@@ -202,6 +321,9 @@ class GitCueExtension {
 				this.cancelBufferedCommit();
 			}
 
+			this.watchStatus.pendingCommit = true;
+			this.updateDashboards();
+
 			const panel = vscode.window.createWebviewPanel(
 				'gitcueBuffer',
 				'⏰ GitCue Commit Buffer',
@@ -221,6 +343,24 @@ class GitCueExtension {
 
 			updatePanel();
 
+			// Show notification
+			if (config.enableNotifications) {
+				vscode.window.showWarningMessage(
+					`⏰ GitCue: Committing in ${timeLeft} seconds. Click to cancel.`,
+					'Cancel Commit'
+				).then(action => {
+					if (action === 'Cancel Commit') {
+						cancelled = true;
+						clearInterval(timer);
+						panel.dispose();
+						this.bufferNotification = undefined;
+						this.watchStatus.pendingCommit = false;
+						this.updateDashboards();
+						resolve();
+					}
+				});
+			}
+
 			const timer = setInterval(() => {
 				timeLeft--;
 				if (timeLeft <= 0 || cancelled) {
@@ -230,12 +370,19 @@ class GitCueExtension {
 					if (!cancelled) {
 						// Proceed with commit
 						this.executeCommit(message, workspacePath, config, config.autoPush)
-							.finally(() => resolve());
+							.finally(() => {
+								this.watchStatus.pendingCommit = false;
+								this.watchStatus.lastCommit = new Date().toLocaleTimeString();
+								this.updateDashboards();
+								resolve();
+							});
 					} else {
+						this.watchStatus.pendingCommit = false;
+						this.updateDashboards();
 						resolve();
 					}
 					
-			this.bufferNotification = undefined;
+					this.bufferNotification = undefined;
 				} else {
 					updatePanel();
 				}
@@ -248,6 +395,8 @@ class GitCueExtension {
 					clearInterval(timer);
 					panel.dispose();
 					this.bufferNotification = undefined;
+					this.watchStatus.pendingCommit = false;
+					this.updateDashboards();
 					
 					if (config.enableNotifications) {
 						vscode.window.showInformationMessage('🚫 GitCue: Commit cancelled');
@@ -263,6 +412,8 @@ class GitCueExtension {
 					cancelled = true;
 					clearInterval(timer);
 					this.bufferNotification = undefined;
+					this.watchStatus.pendingCommit = false;
+					this.updateDashboards();
 					resolve();
 				}
 			});
@@ -519,7 +670,7 @@ class GitCueExtension {
 
 				<div class="actions">
 					<button class="btn btn-primary" onclick="cancelCommit()">
-						<span>��</span>
+						<span></span>
 						<span>Cancel Commit</span>
 					</button>
 				</div>
@@ -697,7 +848,6 @@ class GitCueExtension {
 				.container {
 					max-width: 800px;
 					margin: 0 auto;
-					padding: 24px;
 				}
 
 				.header { 
@@ -921,8 +1071,6 @@ class GitCueExtension {
 					cursor: pointer;
 					transition: var(--transition);
 					text-decoration: none;
-					min-width: 140px;
-					justify-content: center;
 					position: relative;
 					overflow: hidden;
 				}
@@ -943,7 +1091,7 @@ class GitCueExtension {
 				}
 
 				.btn-primary {
-					background: linear-gradient(135deg, var(--primary-color), #005a9e);
+					background: linear-gradient(135deg, var(--primary-color), var(--info));
 					color: white;
 					box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
 				}
@@ -1291,10 +1439,22 @@ class GitCueExtension {
 			return;
 		}
 
-		const watchPattern = `{${config.watchPaths.join(',')}}`;
+		// Use comprehensive watch patterns
+		const watchPatterns = configManager.getWatchPatterns();
+		const watchPattern = `{${watchPatterns.join(',')}}`;
+		
 		this.fileWatcher = vscode.workspace.createFileSystemWatcher(watchPattern);
 		
-		const onFileChange = () => {
+		const onFileChange = (uri: vscode.Uri) => {
+			// Update watch status
+			this.watchStatus.filesChanged++;
+			this.watchStatus.lastChange = path.basename(uri.fsPath) + ' at ' + new Date().toLocaleTimeString();
+			this.updateStatusBar();
+			this.updateDashboards();
+			
+			// Log the change
+			this.outputChannel.appendLine(`File changed: ${uri.fsPath}`);
+			
 			if (this.debounceTimer) {
 				clearTimeout(this.debounceTimer);
 			}
@@ -1317,12 +1477,15 @@ class GitCueExtension {
 		this.fileWatcher.onDidDelete(onFileChange);
 
 		this.isWatching = true;
+		this.watchStatus.isWatching = true;
+		this.watchStatus.filesChanged = 0;
 		this.updateStatusBar();
+		this.updateDashboards();
 		
 		if (config.enableNotifications) {
 			vscode.window.showInformationMessage('👁️ GitCue: Started watching for changes');
 		}
-		this.outputChannel.appendLine('Started watching for file changes');
+		this.outputChannel.appendLine('Started watching for file changes with patterns: ' + watchPatterns.join(', '));
 	}
 
 	private stopWatching() {
@@ -1342,7 +1505,11 @@ class GitCueExtension {
 		}
 
 		this.isWatching = false;
+		this.watchStatus.isWatching = false;
+		this.watchStatus.filesChanged = 0;
+		this.watchStatus.lastChange = 'None';
 		this.updateStatusBar();
+		this.updateDashboards();
 		
 		const config = this.getConfig();
 		if (config.enableNotifications) {
@@ -1373,6 +1540,9 @@ class GitCueExtension {
 			}
 		);
 
+		// Add to dashboard panels list
+		this.dashboardPanels.push(panel);
+
 		panel.webview.html = this.getDashboardHtml();
 
 		let panelDisposed = false;
@@ -1380,6 +1550,11 @@ class GitCueExtension {
 		// Handle panel disposal
 		panel.onDidDispose(() => {
 			panelDisposed = true;
+			// Remove from dashboard panels list
+			const index = this.dashboardPanels.indexOf(panel);
+			if (index > -1) {
+				this.dashboardPanels.splice(index, 1);
+			}
 		});
 
 		// Handle messages from the dashboard
@@ -1395,7 +1570,8 @@ class GitCueExtension {
 									action: 'statusUpdate',
 									data: { 
 										isWatching: this.isWatching,
-										config: this.getConfig()
+										config: this.getConfig(),
+										watchStatus: this.watchStatus
 									}
 								});
 							}
@@ -1417,7 +1593,8 @@ class GitCueExtension {
 								action: 'statusUpdate',
 								data: { 
 									isWatching: this.isWatching,
-									config: this.getConfig()
+									config: this.getConfig(),
+									watchStatus: this.watchStatus
 								}
 							});
 						}
@@ -1435,7 +1612,8 @@ class GitCueExtension {
 					action: 'statusUpdate',
 					data: { 
 						isWatching: this.isWatching,
-						config: this.getConfig()
+						config: this.getConfig(),
+						watchStatus: this.watchStatus
 					}
 				});
 			}
@@ -1696,7 +1874,7 @@ class GitCueExtension {
 					gap: 8px;
 					padding: 12px 16px;
 					border: none;
-					border-radius: var(--radius);
+					border-radius: var(--border-radius);
 					font-size: 14px;
 					font-weight: 600;
 					cursor: pointer;
@@ -1729,14 +1907,14 @@ class GitCueExtension {
 				}
 
 				.btn-secondary {
-					background: var(--bg-tertiary);
-					color: var(--text-primary);
-					border: 1px solid var(--border);
+					background: var(--vscode-button-secondaryBackground);
+					color: var(--vscode-button-secondaryForeground);
+					border: 2px solid var(--vscode-panel-border);
 				}
 
 				.btn-secondary:hover {
 					border-color: var(--primary);
-					background: var(--bg-secondary);
+					background: var(--vscode-button-secondaryHoverBackground);
 				}
 
 				.checkbox-container {
@@ -1751,7 +1929,7 @@ class GitCueExtension {
 					height: 16px;
 					border: 2px solid var(--border);
 					border-radius: 4px;
-					background: var(--bg-tertiary);
+					background: var(--vscode-input-background);
 					cursor: pointer;
 					transition: var(--transition);
 				}
