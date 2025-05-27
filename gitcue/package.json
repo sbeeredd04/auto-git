@@ -187,17 +187,7 @@
             "type": "string"
           },
           "default": [
-            "src/**",
-            "lib/**",
-            "*.js",
-            "*.ts",
-            "*.jsx",
-            "*.tsx",
-            "*.py",
-            "*.java",
-            "*.cpp",
-            "*.c",
-            "*.h"
+            "**/*"
           ],
           "description": "Glob patterns for files to watch for changes"
         },
@@ -223,7 +213,7 @@
         },
         "gitcue.autoWatch": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Automatically start watching files when VS Code opens"
         },
         "gitcue.interactiveOnError": {

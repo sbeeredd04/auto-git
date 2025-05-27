@@ -56,25 +56,13 @@ export class ConfigManager {
       commitMode: config.get('commitMode') || 'intelligent',
       autoPush: config.get('autoPush') ?? true,
       watchPaths: config.get('watchPaths') || [
-        '**/*',           // Watch all files recursively
-        '!node_modules/**',
-        '!.git/**',
-        '!dist/**',
-        '!build/**',
-        '!coverage/**',
-        '!*.log',
-        '!*.tmp',
-        '!*.temp',
-        '!.DS_Store',
-        '!package-lock.json',
-        '!yarn.lock',
-        '!pnpm-lock.yaml'
+        '**/*'  // Watch all files by default
       ],
-      debounceMs: config.get('debounceMs') || 5000, // Reduced for faster response
+      debounceMs: config.get('debounceMs') || 30000,
       bufferTimeSeconds: config.get('bufferTimeSeconds') || 30,
       maxCallsPerMinute: config.get('maxCallsPerMinute') || 15,
       enableNotifications: config.get('enableNotifications') ?? true,
-      autoWatch: config.get('autoWatch') ?? false,
+      autoWatch: config.get('autoWatch') ?? true, // Enable auto-watch by default
       
       // Interactive terminal settings (new)
       interactiveOnError: config.get('interactiveOnError') ?? true,
@@ -88,18 +76,21 @@ export class ConfigManager {
         ignored: config.get('watchIgnored') || [
           '**/node_modules/**',
           '**/.git/**',
-          '**/dist/**',
-          '**/build/**',
-          '**/coverage/**',
+          '**/.DS_Store',
           '**/*.log',
           '**/*.tmp',
           '**/*.temp',
-          '**/.DS_Store',
+          '**/*.swp',
+          '**/*.swo',
+          '**/dist/**',
+          '**/build/**',
+          '**/coverage/**',
           '**/package-lock.json',
           '**/yarn.lock',
           '**/pnpm-lock.yaml',
           '**/.vscode/**',
-          '**/.idea/**'
+          '**/.idea/**',
+          '**/.*' // Ignore all dotfiles except specific ones
         ],
         persistent: true,
         ignoreInitial: true,
@@ -107,6 +98,25 @@ export class ConfigManager {
         depth: undefined
       }
     };
+  }
+
+  /**
+   * Get watch patterns optimized for comprehensive monitoring
+   */
+  getOptimizedWatchPatterns(): string[] {
+    return [
+      '**/*.{js,ts,jsx,tsx,py,java,cpp,c,h,cs,php,rb,go,rs,swift,kt}', // Code files
+      '**/*.{json,yaml,yml,xml,toml,ini,cfg}', // Config files
+      '**/*.{md,txt,rst}', // Documentation
+      '**/*.{css,scss,sass,less}', // Styles
+      '**/*.{html,htm,vue,svelte}', // Templates
+      '**/package.json',
+      '**/requirements.txt',
+      '**/Cargo.toml',
+      '**/go.mod',
+      '**/pom.xml',
+      '**/build.gradle'
+    ];
   }
 
   /**
@@ -147,7 +157,7 @@ export class ConfigManager {
    */
   getWatchPatterns(): string[] {
     const config = this.getConfig();
-    return config.watchPaths;
+    return config.watchPaths.length > 0 ? config.watchPaths : this.getOptimizedWatchPatterns();
   }
 
   /**
