@@ -364,7 +364,7 @@ class GitCueExtension {
 						resolve();
 					}
 					
-					this.bufferNotification = undefined;
+			this.bufferNotification = undefined;
 				} else {
 					updatePanel();
 				}
@@ -1345,31 +1345,31 @@ class GitCueExtension {
 		let retryCount = 0;
 		
 		while (retryCount < maxRetries) {
-			try {
-				await vscode.window.withProgress({
-					location: vscode.ProgressLocation.Notification,
+		try {
+			await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
 					title: `GitCue: Committing changes${retryCount > 0 ? ` (retry ${retryCount}/${maxRetries})` : ''}...`,
-					cancellable: false
-				}, async (progress) => {
-					progress.report({ increment: 30, message: 'Adding files...' });
-					await execAsync('git add .', { cwd: workspacePath });
-					
-					progress.report({ increment: 40, message: 'Creating commit...' });
-					await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: workspacePath });
-					
-					if (shouldPush) {
-						progress.report({ increment: 30, message: 'Pushing to remote...' });
-						await execAsync('git push', { cwd: workspacePath });
-					}
-				});
-
-				const pushText = shouldPush ? ' and pushed' : '';
-				if (config.enableNotifications) {
-					vscode.window.showInformationMessage(`GitCue: Changes committed${pushText} successfully!`);
-				}
+				cancellable: false
+			}, async (progress) => {
+				progress.report({ increment: 30, message: 'Adding files...' });
+				await execAsync('git add .', { cwd: workspacePath });
 				
-				this.outputChannel.appendLine(`Commit successful: ${message}`);
-				this.statusProvider.refresh();
+				progress.report({ increment: 40, message: 'Creating commit...' });
+				await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: workspacePath });
+				
+				if (shouldPush) {
+					progress.report({ increment: 30, message: 'Pushing to remote...' });
+					await execAsync('git push', { cwd: workspacePath });
+				}
+			});
+
+			const pushText = shouldPush ? ' and pushed' : '';
+			if (config.enableNotifications) {
+					vscode.window.showInformationMessage(`GitCue: Changes committed${pushText} successfully!`);
+			}
+			
+			this.outputChannel.appendLine(`Commit successful: ${message}`);
+			this.statusProvider.refresh();
 				this.watchStatus.lastCommit = new Date().toLocaleTimeString();
 				this.watchStatus.filesChanged = 0;
 				this.watchStatus.changedFiles.clear();
@@ -1379,8 +1379,8 @@ class GitCueExtension {
 				
 				this.updateDashboards();
 				return; // Success, exit retry loop
-				
-			} catch (error) {
+			
+		} catch (error) {
 				retryCount++;
 				const errorMsg = error instanceof Error ? error.message : String(error);
 				this.outputChannel.appendLine(`Commit attempt ${retryCount} failed: ${errorMsg}`);
@@ -1578,12 +1578,12 @@ class GitCueExtension {
 				try {
 					this.logActivity('ai_analysis', 'Starting AI analysis for changes');
 					
-					if (config.commitMode === 'intelligent') {
+				if (config.commitMode === 'intelligent') {
 						await this.handleIntelligentCommit();
-					} else {
-						// For periodic mode, also use buffer notification
-						const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-						if (workspaceFolder) {
+				} else {
+					// For periodic mode, also use buffer notification
+					const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+					if (workspaceFolder) {
 							await this.commitWithBuffer(workspaceFolder.uri.fsPath, config);
 						}
 					}
@@ -2223,7 +2223,7 @@ class GitCueExtension {
 				.activity-type.commit {
 					background: rgba(76, 175, 80, 0.2);
 					color: var(--success);
-				}
+					}
 
 				.activity-type.error {
 					background: rgba(244, 67, 54, 0.2);
@@ -2354,8 +2354,8 @@ class GitCueExtension {
 								<span class="status-label">Rate-limit</span>
 								<div class="status-value">
 									<span class="badge info" id="rateLimitBadge">15 calls/min</span>
-								</div>
-							</div>
+						</div>
+					</div>
 						</div>
 					</div>
 
