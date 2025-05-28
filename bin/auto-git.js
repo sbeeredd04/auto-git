@@ -21,7 +21,7 @@ process.on('SIGINT', () => {
 
 // Custom help formatter with styled output
 function displayStyledHelp() {
-  logger.section('Auto-Git v3.10.2', 'AI-powered Git automation with intelligent commit decisions and enhanced interactive terminal session');
+  logger.section('Auto-Git v3.10.3', 'AI-powered Git automation with intelligent commit decisions and enhanced interactive terminal session');
   
   logger.space();
   logger.info('USAGE:', 'COMMAND');
@@ -113,7 +113,7 @@ function handleMissingApiKey(commandName) {
 program
   .name('auto-git')
   .description('AI-powered Git automation with intelligent commit decisions using Gemini function calling, smart diff optimization, push control, and enhanced interactive terminal session')
-  .version('3.10.2')
+  .version('3.10.3')
   .configureHelp({
     formatHelp: () => {
       displayStyledHelp();
@@ -162,7 +162,7 @@ program
         throw error;
       }
       
-      logger.section('Auto-Git Watcher v3.10.2', 'Simple file monitoring with auto-commit (Ctrl+C to exit)');
+      logger.section('Auto-Git Watcher v3.10.3', 'Simple file monitoring with auto-commit (Ctrl+C to exit)');
       
       const isRepo = await isGitRepository();
       if (!isRepo) {
@@ -487,7 +487,7 @@ program
   .command('debug')
   .description('Run system diagnostics')
   .action(async () => {
-    logger.section('Auto-Git Diagnostics v3.10.2', 'System health check');
+    logger.section('Auto-Git Diagnostics v3.10.3', 'System health check');
     
     try {
       const config = getConfig();
@@ -500,7 +500,7 @@ program
         'Node.js Version': process.version,
         'Platform': process.platform,
         'Architecture': process.arch,
-        'Auto-Git Version': '3.10.2',
+        'Auto-Git Version': '3.10.3',
         'Working Directory': process.cwd(),
         'Git Repository': isRepo,
         'Current Branch': branch || 'N/A',

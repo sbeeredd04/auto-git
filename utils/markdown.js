@@ -71,21 +71,60 @@ export function formatMarkdown(markdown) {
 }
 
 /**
- * Format AI suggestion with proper styling
+ * Format AI suggestion with proper styling and line wrapping
  * @param {string} suggestion - AI suggestion text
  * @returns {string} - Formatted suggestion
  */
 export function formatAISuggestion(suggestion) {
   const formatted = formatMarkdown(suggestion);
   
-  // Add some spacing and borders for better readability
-  const lines = formatted.split('\n');
-  const maxLength = Math.max(...lines.map(line => stripAnsi(line).length));
-  const border = '─'.repeat(Math.min(maxLength + 4, 80));
+  // Wrap long lines to fit terminal width
+  const maxWidth = Math.min(process.stdout.columns || 80, 80) - 4; // Leave space for borders
+  const wrappedLines = [];
   
-  return `\n┌${border}┐\n` +
-         lines.map(line => `│ ${line.padEnd(Math.min(maxLength + 2, 78))} │`).join('\n') +
-         `\n└${border}┘\n`;
+  formatted.split('\n').forEach(line => {
+    const cleanLine = stripAnsi(line);
+    if (cleanLine.length <= maxWidth) {
+      wrappedLines.push(line);
+    } else {
+      // Split long lines into multiple lines
+      const words = line.split(' ');
+      let currentLine = '';
+      let currentCleanLine = '';
+      
+      for (const word of words) {
+        const cleanWord = stripAnsi(word);
+        const testLine = currentCleanLine + (currentCleanLine ? ' ' : '') + cleanWord;
+        
+        if (testLine.length <= maxWidth) {
+          currentLine += (currentLine ? ' ' : '') + word;
+          currentCleanLine = testLine;
+        } else {
+          if (currentLine) {
+            wrappedLines.push(currentLine);
+          }
+          currentLine = word;
+          currentCleanLine = cleanWord;
+        }
+      }
+      
+      if (currentLine) {
+        wrappedLines.push(currentLine);
+      }
+    }
+  });
+  
+  // Create box with consistent width
+  const boxWidth = Math.min(maxWidth + 2, 78);
+  const border = '─'.repeat(boxWidth);
+  
+  const content = wrappedLines.map(line => {
+    const cleanLine = stripAnsi(line);
+    const padding = boxWidth - cleanLine.length - 2;
+    return `│ ${line}${' '.repeat(Math.max(0, padding))} │`;
+  }).join('\n');
+  
+  return `\n┌${border}┐\n${content}\n└${border}┘\n`;
 }
 
 /**
