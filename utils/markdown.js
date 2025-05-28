@@ -18,7 +18,8 @@ const colors = {
   error: chalk.red,
   success: chalk.green,
   warning: chalk.yellow,
-  info: chalk.blue
+  info: chalk.blue,
+  gray: chalk.gray
 };
 
 /**
