@@ -45,7 +45,11 @@ class GitCueExtension {
 		this.setupStatusBar();
 		this.updateStatusBar();
 		this.registerCommands();
-		this.registerViews();
+		
+		// Register views after a short delay to ensure proper initialization
+		setTimeout(() => {
+			this.registerViews();
+		}, 100);
 		
 		// Set up activity logger callback for real-time updates
 		this.activityLogger.setUpdateCallback(() => {
@@ -117,43 +121,74 @@ class GitCueExtension {
 			vscode.commands.registerCommand('gitcue.cancelCommit', () => this.cancelBufferedCommit()),
 			vscode.commands.registerCommand('gitcue.openInteractiveTerminal', () => this.openTerminal()),
 			vscode.commands.registerCommand('gitcue.openAITerminal', () => this.openTerminal()),
-			vscode.commands.registerCommand('gitcue.dashboard', () => this.openDashboard())
+			vscode.commands.registerCommand('gitcue.dashboard', () => this.openDashboard()),
+			
+			// Additional commands for sidebar interactivity
+			vscode.commands.registerCommand('gitcue.resetConfig', () => this.resetConfig()),
+			vscode.commands.registerCommand('gitcue.exportConfig', () => this.exportConfig()),
+			vscode.commands.registerCommand('gitcue.importConfig', () => this.importConfig()),
+			vscode.commands.registerCommand('gitcue.openDocumentation', () => this.openDocumentation()),
+			vscode.commands.registerCommand('gitcue.refreshViews', () => this.refreshSidebarViews())
 		];
 
 		commands.forEach(command => this.context.subscriptions.push(command));
 	}
 
 	private registerViews() {
-		const statusView = vscode.window.createTreeView('gitcueStatus', {
-			treeDataProvider: this.statusProvider,
-			showCollapseAll: false
-		});
-		this.context.subscriptions.push(statusView);
+		try {
+			// Register status view (in SCM container)
+			const statusView = vscode.window.createTreeView('gitcueStatus', {
+				treeDataProvider: this.statusProvider,
+				showCollapseAll: false
+			});
+			this.context.subscriptions.push(statusView);
 
-		// Register sidebar views
-		const dashboardView = vscode.window.createTreeView('gitcueDashboard', {
-			treeDataProvider: this.sidebarDashboardProvider,
-			showCollapseAll: false
-		});
-		this.context.subscriptions.push(dashboardView);
+			// Register custom container views with error handling
+			try {
+				const dashboardView = vscode.window.createTreeView('gitcueDashboard', {
+					treeDataProvider: this.sidebarDashboardProvider,
+					showCollapseAll: false
+				});
+				this.context.subscriptions.push(dashboardView);
+			} catch (error) {
+				logger.error('Failed to register gitcueDashboard view: ' + error);
+			}
 
-		const activityView = vscode.window.createTreeView('gitcueActivity', {
-			treeDataProvider: this.sidebarActivityProvider,
-			showCollapseAll: false
-		});
-		this.context.subscriptions.push(activityView);
+			try {
+				const activityView = vscode.window.createTreeView('gitcueActivity', {
+					treeDataProvider: this.sidebarActivityProvider,
+					showCollapseAll: false
+				});
+				this.context.subscriptions.push(activityView);
+			} catch (error) {
+				logger.error('Failed to register gitcueActivity view: ' + error);
+			}
 
-		const settingsView = vscode.window.createTreeView('gitcueSettings', {
-			treeDataProvider: this.sidebarSettingsProvider,
-			showCollapseAll: false
-		});
-		this.context.subscriptions.push(settingsView);
+			try {
+				const settingsView = vscode.window.createTreeView('gitcueSettings', {
+					treeDataProvider: this.sidebarSettingsProvider,
+					showCollapseAll: false
+				});
+				this.context.subscriptions.push(settingsView);
+			} catch (error) {
+				logger.error('Failed to register gitcueSettings view: ' + error);
+			}
+
+			logger.info('Views registered successfully');
+
+		} catch (error) {
+			logger.error('Failed to register views: ' + error);
+		}
 	}
 
 	private refreshSidebarViews() {
-		this.sidebarDashboardProvider.refresh();
-		this.sidebarActivityProvider.refresh();
-		this.sidebarSettingsProvider.refresh();
+		try {
+			this.sidebarDashboardProvider.refresh();
+			this.sidebarActivityProvider.refresh();
+			this.sidebarSettingsProvider.refresh();
+		} catch (error) {
+			logger.error('Failed to refresh sidebar views: ' + error);
+		}
 	}
 
 	private async commitWithPreview() {
@@ -329,6 +364,89 @@ class GitCueExtension {
 
 	private cancelBufferedCommit() {
 		this.commitService.cancelBufferedCommit();
+	}
+
+	private async resetConfig() {
+		const selection = await vscode.window.showWarningMessage(
+			'Are you sure you want to reset GitCue configuration to defaults?',
+			'Reset', 'Cancel'
+		);
+		
+		if (selection === 'Reset') {
+			// Reset configuration to defaults
+			const config = vscode.workspace.getConfiguration('gitcue');
+			await config.update('commitMode', 'intelligent', vscode.ConfigurationTarget.Global);
+			await config.update('autoPush', true, vscode.ConfigurationTarget.Global);
+			await config.update('bufferTimeSeconds', 30, vscode.ConfigurationTarget.Global);
+			await config.update('maxCallsPerMinute', 15, vscode.ConfigurationTarget.Global);
+			await config.update('autoWatch', false, vscode.ConfigurationTarget.Global);
+			await config.update('enableNotifications', true, vscode.ConfigurationTarget.Global);
+			
+			vscode.window.showInformationMessage('GitCue configuration reset to defaults');
+			this.refreshSidebarViews();
+		}
+	}
+
+	private async exportConfig() {
+		const config = this.getConfig();
+		const configJson = JSON.stringify(config, null, 2);
+		
+		const uri = await vscode.window.showSaveDialog({
+			defaultUri: vscode.Uri.file('gitcue-config.json'),
+			filters: {
+				'JSON files': ['json'],
+				'All files': ['*']
+			}
+		});
+		
+		if (uri) {
+			const workspaceEdit = new vscode.WorkspaceEdit();
+			workspaceEdit.createFile(uri, { ignoreIfExists: false });
+			workspaceEdit.insert(uri, new vscode.Position(0, 0), configJson);
+			
+			const success = await vscode.workspace.applyEdit(workspaceEdit);
+			if (success) {
+				vscode.window.showInformationMessage(`Configuration exported to ${uri.fsPath}`);
+			} else {
+				vscode.window.showErrorMessage('Failed to export configuration');
+			}
+		}
+	}
+
+	private async importConfig() {
+		const uri = await vscode.window.showOpenDialog({
+			canSelectFiles: true,
+			canSelectFolders: false,
+			canSelectMany: false,
+			filters: {
+				'JSON files': ['json'],
+				'All files': ['*']
+			}
+		});
+		
+		if (uri && uri[0]) {
+			try {
+				const document = await vscode.workspace.openTextDocument(uri[0]);
+				const configData = JSON.parse(document.getText());
+				
+				const config = vscode.workspace.getConfiguration('gitcue');
+				await config.update('commitMode', configData.commitMode, vscode.ConfigurationTarget.Global);
+				await config.update('autoPush', configData.autoPush, vscode.ConfigurationTarget.Global);
+				await config.update('bufferTimeSeconds', configData.bufferTimeSeconds, vscode.ConfigurationTarget.Global);
+				await config.update('maxCallsPerMinute', configData.maxCallsPerMinute, vscode.ConfigurationTarget.Global);
+				await config.update('autoWatch', configData.autoWatch, vscode.ConfigurationTarget.Global);
+				await config.update('enableNotifications', configData.enableNotifications, vscode.ConfigurationTarget.Global);
+				
+				vscode.window.showInformationMessage('Configuration imported successfully');
+				this.refreshSidebarViews();
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to import configuration: ${error}`);
+			}
+		}
+	}
+
+	private openDocumentation() {
+		vscode.env.openExternal(vscode.Uri.parse('https://github.com/sbeeredd04/auto-git/tree/main/gitcue'));
 	}
 
 	dispose() {

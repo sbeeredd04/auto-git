@@ -1,4 +1,4 @@
-# Auto-Git v3.10.0
+# Auto-Git v4.0.0
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -7,11 +7,18 @@
 [![GitHub Stars](https://img.shields.io/github/stars/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 
-> AI-powered Git automation with intelligent commit decisions using Gemini function calling, smart diff optimization, push control, and enhanced interactive terminal session
+> AI-powered Git automation with intelligent commit decisions, enhanced interactive sidebar, smart diff optimization, push control, and persistent terminal session
 
-Auto-Git is a cross-platform CLI tool that intelligently analyzes your code changes and automatically generates meaningful commit messages using Google's Gemini AI. **Version 3.10.0** introduces revolutionary intelligent commit mode with function calling, smart API optimization, and flexible push control.
+Auto-Git is a cross-platform CLI tool that intelligently analyzes your code changes and automatically generates meaningful commit messages using Google's Gemini AI. **Version 4.0.0** introduces a revolutionary VS Code extension with enhanced interactive sidebar, improved UI/UX, and seamless integration alongside the powerful CLI tools.
 
-## 🚀 What's New in v3.10.0
+## 🚀 What's New in v4.0.0
+
+### 🎨 Enhanced VS Code Extension
+- **Interactive Sidebar**: Redesigned with actionable buttons and better space utilization
+- **Smart Status Cards**: Real-time GitCue status, file changes, and repository information
+- **One-Click Actions**: Direct commit, terminal access, and configuration from sidebar
+- **Enhanced Activity Feed**: Improved activity tracking with visual indicators and commands
+- **Professional UI**: Modern interface with proper icons, tooltips, and organized sections
 
 ### 🧠 Intelligent Commit Mode
 - **AI-Driven Decisions**: Gemini analyzes changes and decides when to commit based on significance

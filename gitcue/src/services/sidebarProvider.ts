@@ -42,198 +42,79 @@ export class GitCueDashboardProvider implements vscode.TreeDataProvider<Dashboar
 		
 		const items: DashboardItem[] = [];
 
-		// Current Status Section
+		// Status Overview Card
 		items.push(new DashboardItem(
-			'Current Status',
+			`GitCue ${isWatching ? 'Active' : 'Idle'}`,
 			vscode.TreeItemCollapsibleState.Expanded,
-			'gitcue-status',
+			'gitcue-status-overview',
 			[
+				// Status with inline action
 				new DashboardItem(
-					`Watching: ${isWatching ? 'Active' : 'Inactive'}`,
+					`File Watching: ${isWatching ? 'ON' : 'OFF'}`,
 					vscode.TreeItemCollapsibleState.None,
-					'gitcue-status-item',
+					'gitcue-status-toggle',
 					[],
 					isWatching ? 'eye' : 'eye-closed',
-					undefined,
-					isWatching ? 'GitCue is actively watching for file changes' : 'GitCue is not watching - click to start'
-				),
-				new DashboardItem(
-					`Files Changed: ${watchStatus.filesChanged || 0}`,
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-status-item',
-					[],
-					'diff',
-					undefined,
-					`${watchStatus.filesChanged || 0} files have been modified since last commit`
-				),
-				new DashboardItem(
-					`Last Change: ${watchStatus.lastChange || 'Never'}`,
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-status-item',
-					[],
-					'clock',
-					undefined,
-					`Most recent file change: ${watchStatus.lastChange || 'No changes detected'}`
-				),
-				new DashboardItem(
-					`Pending Commit: ${watchStatus.pendingCommit ? 'Yes' : 'No'}`,
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-status-item',
-					[],
-					watchStatus.pendingCommit ? 'git-commit' : 'check',
-					undefined,
-					watchStatus.pendingCommit ? 'A commit is currently pending' : 'No pending commits'
-				)
-			],
-			'pulse'
-		));
-
-		// Git Repository Section
-		if (gitInfo) {
-			items.push(new DashboardItem(
-				'Git Repository',
-				vscode.TreeItemCollapsibleState.Expanded,
-				'gitcue-git',
-				[
-					new DashboardItem(
-						`Branch: ${gitInfo.branch}`,
-						vscode.TreeItemCollapsibleState.None,
-						'gitcue-git-item',
-						[],
-						'git-branch',
-						undefined,
-						`Current git branch: ${gitInfo.branch}`
-					),
-					new DashboardItem(
-						`Commits: ${gitInfo.commits}`,
-						vscode.TreeItemCollapsibleState.None,
-						'gitcue-git-item',
-						[],
-						'git-commit',
-						undefined,
-						`Total commits in current branch: ${gitInfo.commits}`
-					),
-					new DashboardItem(
-						`Uncommitted: ${gitInfo.uncommittedChanges}`,
-						vscode.TreeItemCollapsibleState.None,
-						'gitcue-git-item',
-						[],
-						'diff-modified',
-						undefined,
-						`Files with uncommitted changes: ${gitInfo.uncommittedChanges}`
-					),
-					new DashboardItem(
-						`Staged: ${gitInfo.stagedChanges}`,
-						vscode.TreeItemCollapsibleState.None,
-						'gitcue-git-item',
-						[],
-						'diff-added',
-						undefined,
-						`Files staged for commit: ${gitInfo.stagedChanges}`
-					)
-				],
-				'source-control'
-			));
-		}
-
-		// Configuration Section
-		items.push(new DashboardItem(
-			'Configuration',
-			vscode.TreeItemCollapsibleState.Expanded,
-			'gitcue-config',
-			[
-				new DashboardItem(
-					`Commit Mode: ${config.commitMode}`,
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-config-item',
-					[],
-					'settings-gear',
 					{
-						command: 'workbench.action.openSettings',
-						title: 'Open Commit Mode Settings',
-						arguments: ['@ext:sbeeredd04.gitcue commitMode']
-					},
-					`Current commit mode: ${config.commitMode}`
-				),
-				new DashboardItem(
-					`Auto Push: ${config.autoPush ? 'Enabled' : 'Disabled'}`,
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-config-item',
-					[],
-					config.autoPush ? 'repo-push' : 'repo',
-					{
-						command: 'workbench.action.openSettings',
-						title: 'Open Auto Push Settings',
-						arguments: ['@ext:sbeeredd04.gitcue autoPush']
-					},
-					`Auto push to remote: ${config.autoPush ? 'enabled' : 'disabled'}`
-				),
-				new DashboardItem(
-					`Buffer Time: ${config.bufferTimeSeconds}s`,
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-config-item',
-					[],
-					'clock',
-					{
-						command: 'workbench.action.openSettings',
-						title: 'Open Buffer Time Settings',
-						arguments: ['@ext:sbeeredd04.gitcue bufferTimeSeconds']
-					},
-					`Commit buffer time: ${config.bufferTimeSeconds} seconds`
-				),
-				new DashboardItem(
-					`API Key: ${config.geminiApiKey ? 'Configured' : 'Not Set'}`,
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-config-item',
-					[],
-					config.geminiApiKey ? 'key' : 'warning',
-					{
-						command: 'gitcue.configure',
-						title: 'Configure API Key',
+						command: 'gitcue.watchToggle',
+						title: isWatching ? 'Stop Watching' : 'Start Watching',
 						arguments: []
 					},
-					config.geminiApiKey ? 'Gemini API key is configured' : 'Gemini API key needs to be configured'
+					isWatching ? 'Currently watching - click to stop' : 'Not watching - click to start'
+				),
+				// Files changed with commit action
+				new DashboardItem(
+					`${watchStatus.filesChanged || 0} Files Changed`,
+					vscode.TreeItemCollapsibleState.None,
+					'gitcue-files-changed',
+					[],
+					watchStatus.filesChanged && watchStatus.filesChanged > 0 ? 'file-code' : 'file',
+					watchStatus.filesChanged && watchStatus.filesChanged > 0 ? {
+						command: 'gitcue.commit',
+						title: 'Commit Changes',
+						arguments: []
+					} : undefined,
+					watchStatus.filesChanged && watchStatus.filesChanged > 0 ? 'Click to commit changes' : 'No changes to commit'
+				),
+				// Last activity
+				new DashboardItem(
+					`Last Change: ${this.formatTimeAgo(watchStatus.lastChange)}`,
+					vscode.TreeItemCollapsibleState.None,
+					'gitcue-last-change',
+					[],
+					'clock',
+					undefined,
+					watchStatus.lastChange || 'No recent changes'
 				)
 			],
-			'gear'
+			isWatching ? 'pulse' : 'circle-outline',
+			undefined,
+			`GitCue is ${isWatching ? 'actively monitoring' : 'idle'}`
 		));
 
-		// Quick Actions Section
+		// Quick Actions Panel
 		items.push(new DashboardItem(
 			'Quick Actions',
 			vscode.TreeItemCollapsibleState.Expanded,
-			'gitcue-actions',
+			'gitcue-actions-panel',
 			[
 				new DashboardItem(
-					isWatching ? 'Stop Watching' : 'Start Watching',
+					'Create AI Commit',
 					vscode.TreeItemCollapsibleState.None,
-					'gitcue-action',
-					[],
-					isWatching ? 'eye-closed' : 'eye',
-					{
-						command: 'gitcue.watchToggle',
-						title: 'Toggle File Watching',
-						arguments: []
-					},
-					isWatching ? 'Stop watching for file changes' : 'Start watching for file changes'
-				),
-				new DashboardItem(
-					'Commit Now',
-					vscode.TreeItemCollapsibleState.None,
-					'gitcue-action',
+					'gitcue-action-commit',
 					[],
 					'git-commit',
 					{
 						command: 'gitcue.commit',
-						title: 'Create Commit Now',
+						title: 'Create AI Commit',
 						arguments: []
 					},
-					'Create a commit with current changes'
+					'Generate and create an AI-powered commit'
 				),
 				new DashboardItem(
-					'AI Terminal',
+					'Open AI Terminal',
 					vscode.TreeItemCollapsibleState.None,
-					'gitcue-action',
+					'gitcue-action-terminal',
 					[],
 					'terminal',
 					{
@@ -241,39 +122,190 @@ export class GitCueDashboardProvider implements vscode.TreeDataProvider<Dashboar
 						title: 'Open AI Terminal',
 						arguments: []
 					},
-					'Open GitCue AI-powered terminal'
+					'Open AI-powered terminal assistant'
 				),
 				new DashboardItem(
-					'Open Dashboard',
+					'Web Dashboard',
 					vscode.TreeItemCollapsibleState.None,
-					'gitcue-action',
+					'gitcue-action-dashboard',
 					[],
 					'dashboard',
 					{
 						command: 'gitcue.openDashboard',
-						title: 'Open GitCue Dashboard',
+						title: 'Open Web Dashboard',
 						arguments: []
 					},
-					'Open the GitCue web dashboard'
+					'Open the full GitCue web dashboard'
 				),
 				new DashboardItem(
-					'Settings',
+					'Extension Settings',
 					vscode.TreeItemCollapsibleState.None,
-					'gitcue-action',
+					'gitcue-action-settings',
 					[],
 					'gear',
 					{
 						command: 'gitcue.configure',
-						title: 'Configure GitCue Settings',
+						title: 'Configure GitCue',
 						arguments: []
 					},
 					'Configure GitCue settings and preferences'
 				)
 			],
-			'zap'
+			'zap',
+			undefined,
+			'Quick access to GitCue actions'
+		));
+
+		// Repository Information Card
+		if (gitInfo) {
+			items.push(new DashboardItem(
+				'Repository Info',
+				vscode.TreeItemCollapsibleState.Expanded,
+				'gitcue-repo-info',
+				[
+					new DashboardItem(
+						`${gitInfo.branch} • ${gitInfo.commits} commits`,
+						vscode.TreeItemCollapsibleState.None,
+						'gitcue-repo-branch',
+						[],
+						'git-branch',
+						{
+							command: 'git.checkout',
+							title: 'Switch Branch',
+							arguments: []
+						},
+						`Current branch: ${gitInfo.branch} with ${gitInfo.commits} commits`
+					),
+					new DashboardItem(
+						`${gitInfo.uncommittedChanges} Uncommitted`,
+						vscode.TreeItemCollapsibleState.None,
+						'gitcue-repo-uncommitted',
+						[],
+						gitInfo.uncommittedChanges > 0 ? 'diff-modified' : 'check',
+						gitInfo.uncommittedChanges > 0 ? {
+							command: 'git.stage',
+							title: 'Stage Changes',
+							arguments: []
+						} : undefined,
+						`${gitInfo.uncommittedChanges} files with uncommitted changes`
+					),
+					new DashboardItem(
+						`${gitInfo.stagedChanges} Staged`,
+						vscode.TreeItemCollapsibleState.None,
+						'gitcue-repo-staged',
+						[],
+						gitInfo.stagedChanges > 0 ? 'diff-added' : 'circle-outline',
+						gitInfo.stagedChanges > 0 ? {
+							command: 'gitcue.commit',
+							title: 'Commit Staged',
+							arguments: []
+						} : undefined,
+						`${gitInfo.stagedChanges} files staged for commit`
+					)
+				],
+				'source-control',
+				undefined,
+				'Current Git repository status'
+			));
+		}
+
+		// Configuration Panel
+		items.push(new DashboardItem(
+			'Configuration',
+			vscode.TreeItemCollapsibleState.Collapsed,
+			'gitcue-config-panel',
+			[
+				new DashboardItem(
+					`Mode: ${config.commitMode}`,
+					vscode.TreeItemCollapsibleState.None,
+					'gitcue-config-mode',
+					[],
+					config.commitMode === 'intelligent' ? 'beaker' : 'clock',
+					{
+						command: 'workbench.action.openSettings',
+						title: 'Change Commit Mode',
+						arguments: ['@ext:sbeeredd04.gitcue commitMode']
+					},
+					`Current mode: ${config.commitMode} - click to change`
+				),
+				new DashboardItem(
+					`Auto Push: ${config.autoPush ? 'ON' : 'OFF'}`,
+					vscode.TreeItemCollapsibleState.None,
+					'gitcue-config-push',
+					[],
+					config.autoPush ? 'repo-push' : 'repo',
+					{
+						command: 'workbench.action.openSettings',
+						title: 'Toggle Auto Push',
+						arguments: ['@ext:sbeeredd04.gitcue autoPush']
+					},
+					`Auto push is ${config.autoPush ? 'enabled' : 'disabled'} - click to toggle`
+				),
+				new DashboardItem(
+					`Buffer: ${config.bufferTimeSeconds}s`,
+					vscode.TreeItemCollapsibleState.None,
+					'gitcue-config-buffer',
+					[],
+					'timer',
+					{
+						command: 'workbench.action.openSettings',
+						title: 'Adjust Buffer Time',
+						arguments: ['@ext:sbeeredd04.gitcue bufferTimeSeconds']
+					},
+					`${config.bufferTimeSeconds} second buffer time - click to adjust`
+				),
+				new DashboardItem(
+					`API: ${config.geminiApiKey ? 'Ready' : 'Setup Required'}`,
+					vscode.TreeItemCollapsibleState.None,
+					'gitcue-config-api',
+					[],
+					config.geminiApiKey ? 'key' : 'warning',
+					{
+						command: 'gitcue.configure',
+						title: config.geminiApiKey ? 'Manage API Key' : 'Setup API Key',
+						arguments: []
+					},
+					config.geminiApiKey ? 'API key configured - click to manage' : 'Setup required - click to configure'
+				)
+			],
+			'gear',
+			undefined,
+			'GitCue configuration settings'
 		));
 
 		return items;
+	}
+
+	private formatTimeAgo(timestamp: string | undefined): string {
+		if (!timestamp || timestamp === 'None' || timestamp === 'Never') {
+			return 'Never';
+		}
+		
+		// If it's already formatted as relative time, return as is
+		if (timestamp.includes('ago') || timestamp === 'Just now') {
+			return timestamp;
+		}
+		
+		try {
+			const date = new Date(timestamp);
+			const now = new Date();
+			const diffMs = now.getTime() - date.getTime();
+			const diffMins = Math.floor(diffMs / 60000);
+			const diffHours = Math.floor(diffMins / 60);
+			const diffDays = Math.floor(diffHours / 24);
+
+			if (diffMins < 1) {
+				return 'Just now';
+			} else if (diffMins < 60) {
+				return `${diffMins}m ago`;
+			} else if (diffHours < 24) {
+				return `${diffHours}h ago`;
+			} else {
+				return `${diffDays}d ago`;
+			}
+		} catch {
+			return timestamp;
+		}
 	}
 }
 
@@ -297,12 +329,12 @@ export class GitCueActivityProvider implements vscode.TreeDataProvider<ActivityI
 		if (!element) {
 			return this.getRecentActivity();
 		}
-		return element.children || [];
+		return [];
 	}
 
 	private async getRecentActivity(): Promise<ActivityItem[]> {
 		const activityLogger = ActivityLogger.getInstance();
-		const activities = activityLogger.getActivityHistory().slice(-15); // Show last 15 activities
+		const activities = activityLogger.getActivityHistory().slice(-20); // Show last 20 activities
 		
 		if (activities.length === 0) {
 			return [
@@ -310,21 +342,97 @@ export class GitCueActivityProvider implements vscode.TreeDataProvider<ActivityI
 					'No Recent Activity',
 					'Start watching to see activity',
 					'info',
-					undefined,
-					'Start GitCue watching to begin tracking file changes and commits'
+					{
+						command: 'gitcue.watchToggle',
+						title: 'Start Watching',
+						arguments: []
+					},
+					'Click to start watching and see activity'
 				)
 			];
 		}
 
-		return activities.reverse().map((activity: any) => 
-			new ActivityItem(
-				activity.message,
-				this.formatTime(activity.timestamp),
-				this.getIconForActivityType(activity.type),
+		// Group activities by type for better organization
+		const recentActivities = activities.reverse();
+		const groupedActivities: ActivityItem[] = [];
+		
+		// Add summary header
+		const fileChanges = recentActivities.filter(a => a.type === 'file_change').length;
+		const commits = recentActivities.filter(a => a.type === 'commit').length;
+		const errors = recentActivities.filter(a => a.type === 'error').length;
+		
+		if (fileChanges > 0 || commits > 0 || errors > 0) {
+			groupedActivities.push(new ActivityItem(
+				'Recent Summary',
+				`${fileChanges} changes, ${commits} commits, ${errors} errors`,
+				'graph',
 				undefined,
-				`${activity.message} - ${this.formatTime(activity.timestamp)}`
-			)
-		);
+				'Activity summary for this session'
+			));
+		}
+
+		// Add recent activities with enhanced formatting
+		const displayActivities = recentActivities.slice(0, 15).map((activity: any) => {
+			const timeAgo = this.formatTime(activity.timestamp);
+			const enhancedMessage = this.enhanceActivityMessage(activity);
+			
+			return new ActivityItem(
+				enhancedMessage,
+				timeAgo,
+				this.getIconForActivityType(activity.type),
+				this.getCommandForActivity(activity),
+				`${enhancedMessage} - ${timeAgo}`
+			);
+		});
+
+		return [...groupedActivities, ...displayActivities];
+	}
+
+	private enhanceActivityMessage(activity: any): string {
+		const type = activity.type;
+		const message = activity.message;
+		
+		switch (type) {
+			case 'commit':
+				return `✓ ${message}`;
+			case 'error':
+				return `✗ ${message}`;
+			case 'file_change':
+				return `📝 ${message}`;
+			case 'ai_analysis':
+				return `🤖 ${message}`;
+			case 'watch_start':
+				return `👁️ ${message}`;
+			case 'watch_stop':
+				return `⏹️ ${message}`;
+			default:
+				return message;
+		}
+	}
+
+	private getCommandForActivity(activity: any): vscode.Command | undefined {
+		switch (activity.type) {
+			case 'error':
+				return {
+					command: 'gitcue.showStatus',
+					title: 'Show Details',
+					arguments: []
+				};
+			case 'file_change':
+				return {
+					command: 'gitcue.commit',
+					title: 'Commit Changes',
+					arguments: []
+				};
+			case 'commit':
+				return {
+					command: 'git.log',
+					title: 'View Commit',
+					arguments: []
+				};
+			default:
+				return undefined;
+		}
 	}
 
 	private formatTime(timestamp: number): string {
@@ -355,7 +463,7 @@ export class GitCueActivityProvider implements vscode.TreeDataProvider<ActivityI
 			case 'watch_start': return 'eye';
 			case 'watch_stop': return 'eye-closed';
 			case 'push': return 'repo-push';
-			case 'config_change': return 'settings-gear';
+			case 'config_change': return 'gear';
 			default: return 'circle-filled';
 		}
 	}
@@ -388,34 +496,72 @@ export class GitCueSettingsProvider implements vscode.TreeDataProvider<SettingsI
 		const config = configManager.getConfig();
 		
 		return [
-			// Core Settings
+			// Quick Setup Panel
 			new SettingsItem(
-				'Core Settings',
-				'',
-				'settings-gear',
+				'Quick Setup',
+				'Essential configuration',
+				'rocket',
 				undefined,
 				vscode.TreeItemCollapsibleState.Expanded,
 				[
 					new SettingsItem(
+						'API Key Setup',
+						config.geminiApiKey ? 'Configured ✓' : 'Required ⚠️',
+						config.geminiApiKey ? 'key' : 'warning',
+						{
+							command: 'gitcue.configure',
+							title: 'Setup API Key',
+							arguments: []
+						},
+						vscode.TreeItemCollapsibleState.None,
+						undefined,
+						config.geminiApiKey ? 'API key is configured' : 'Setup your Gemini API key to enable AI features'
+					),
+					new SettingsItem(
 						'Commit Mode',
-						config.commitMode,
-						'git-commit',
+						config.commitMode === 'intelligent' ? 'AI-Powered' : 'Time-Based',
+						config.commitMode === 'intelligent' ? 'beaker' : 'clock',
 						{
 							command: 'workbench.action.openSettings',
-							title: 'Open Commit Mode Settings',
+							title: 'Change Commit Mode',
 							arguments: ['@ext:sbeeredd04.gitcue commitMode']
 						},
 						vscode.TreeItemCollapsibleState.None,
 						undefined,
-						`Current commit mode: ${config.commitMode}`
+						`Currently using ${config.commitMode} commit mode`
 					),
+					new SettingsItem(
+						'Auto-Watch',
+						config.autoWatch ? 'Enabled' : 'Disabled',
+						config.autoWatch ? 'eye' : 'eye-closed',
+						{
+							command: 'workbench.action.openSettings',
+							title: 'Toggle Auto-Watch',
+							arguments: ['@ext:sbeeredd04.gitcue autoWatch']
+						},
+						vscode.TreeItemCollapsibleState.None,
+						undefined,
+						`Auto-watch is ${config.autoWatch ? 'enabled' : 'disabled'}`
+					)
+				],
+				'Quick access to essential settings'
+			),
+
+			// Advanced Configuration
+			new SettingsItem(
+				'Advanced Settings',
+				'Fine-tune GitCue behavior',
+				'gear',
+				undefined,
+				vscode.TreeItemCollapsibleState.Collapsed,
+				[
 					new SettingsItem(
 						'Auto Push',
 						config.autoPush ? 'Enabled' : 'Disabled',
 						config.autoPush ? 'repo-push' : 'repo',
 						{
 							command: 'workbench.action.openSettings',
-							title: 'Open Auto Push Settings',
+							title: 'Toggle Auto Push',
 							arguments: ['@ext:sbeeredd04.gitcue autoPush']
 						},
 						vscode.TreeItemCollapsibleState.None,
@@ -424,71 +570,59 @@ export class GitCueSettingsProvider implements vscode.TreeDataProvider<SettingsI
 					),
 					new SettingsItem(
 						'Buffer Time',
-						`${config.bufferTimeSeconds}s`,
-						'clock',
+						`${config.bufferTimeSeconds} seconds`,
+						'timer',
 						{
 							command: 'workbench.action.openSettings',
-							title: 'Open Buffer Time Settings',
+							title: 'Adjust Buffer Time',
 							arguments: ['@ext:sbeeredd04.gitcue bufferTimeSeconds']
 						},
 						vscode.TreeItemCollapsibleState.None,
 						undefined,
 						`Commit buffer time: ${config.bufferTimeSeconds} seconds`
-					)
-				],
-				'Core GitCue settings and preferences'
-			),
-
-			// API Configuration
-			new SettingsItem(
-				'API Configuration',
-				'',
-				'key',
-				undefined,
-				vscode.TreeItemCollapsibleState.Expanded,
-				[
-					new SettingsItem(
-						'Gemini API Key',
-						config.geminiApiKey ? 'Configured' : 'Not Set',
-						config.geminiApiKey ? 'key' : 'warning',
-						{
-							command: 'gitcue.configure',
-							title: 'Configure API Key',
-							arguments: []
-						},
-						vscode.TreeItemCollapsibleState.None,
-						undefined,
-						config.geminiApiKey ? 'Gemini API key is configured' : 'Configure your Gemini API key'
 					),
 					new SettingsItem(
 						'Rate Limiting',
-						`${config.maxCallsPerMinute}/min`,
+						`${config.maxCallsPerMinute} calls/min`,
 						'graph',
 						{
 							command: 'workbench.action.openSettings',
-							title: 'Open Rate Limiting Settings',
+							title: 'Adjust Rate Limit',
 							arguments: ['@ext:sbeeredd04.gitcue maxCallsPerMinute']
 						},
 						vscode.TreeItemCollapsibleState.None,
 						undefined,
-						`Maximum API calls per minute: ${config.maxCallsPerMinute}`
+						`API rate limit: ${config.maxCallsPerMinute} calls per minute`
+					),
+					new SettingsItem(
+						'Notifications',
+						config.enableNotifications ? 'Enabled' : 'Disabled',
+						config.enableNotifications ? 'bell' : 'bell-slash',
+						{
+							command: 'workbench.action.openSettings',
+							title: 'Toggle Notifications',
+							arguments: ['@ext:sbeeredd04.gitcue enableNotifications']
+						},
+						vscode.TreeItemCollapsibleState.None,
+						undefined,
+						`Notifications are ${config.enableNotifications ? 'enabled' : 'disabled'}`
 					)
 				],
-				'API keys and rate limiting configuration'
+				'Advanced configuration options'
 			),
 
-			// Quick Actions
+			// Management Tools
 			new SettingsItem(
-				'Quick Actions',
-				'',
-				'zap',
+				'Management Tools',
+				'Manage your GitCue setup',
+				'tools',
 				undefined,
-				vscode.TreeItemCollapsibleState.Expanded,
+				vscode.TreeItemCollapsibleState.Collapsed,
 				[
 					new SettingsItem(
 						'Open All Settings',
-						'GitCue Extension Settings',
-						'gear',
+						'VS Code Settings Panel',
+						'settings',
 						{
 							command: 'workbench.action.openSettings',
 							title: 'Open GitCue Settings',
@@ -496,57 +630,70 @@ export class GitCueSettingsProvider implements vscode.TreeDataProvider<SettingsI
 						},
 						vscode.TreeItemCollapsibleState.None,
 						undefined,
-						'Open all GitCue extension settings'
+						'Open the full GitCue settings panel'
 					),
 					new SettingsItem(
-						'Reset Configuration',
 						'Reset to Defaults',
+						'Restore default settings',
 						'refresh',
 						{
 							command: 'gitcue.resetConfig',
-							title: 'Reset GitCue Configuration',
+							title: 'Reset Configuration',
 							arguments: []
 						},
 						vscode.TreeItemCollapsibleState.None,
 						undefined,
-						'Reset GitCue configuration to default values'
+						'Reset all GitCue settings to default values'
 					),
 					new SettingsItem(
-						'Export Configuration',
-						'Save Current Settings',
+						'Export Config',
+						'Save current settings',
 						'export',
 						{
 							command: 'gitcue.exportConfig',
-							title: 'Export GitCue Configuration',
+							title: 'Export Configuration',
 							arguments: []
 						},
 						vscode.TreeItemCollapsibleState.None,
 						undefined,
-						'Export current GitCue configuration to file'
+						'Export your current GitCue configuration'
+					),
+					new SettingsItem(
+						'View Documentation',
+						'Help & guides',
+						'book',
+						{
+							command: 'gitcue.openDocumentation',
+							title: 'View Documentation',
+							arguments: []
+						},
+						vscode.TreeItemCollapsibleState.None,
+						undefined,
+						'Open GitCue documentation and guides'
 					)
 				],
-				'Quick actions for managing GitCue settings'
+				'Tools for managing your GitCue configuration'
 			)
 		];
 	}
 }
 
-// Base classes for tree items
+// Enhanced base classes for tree items
 class DashboardItem extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public readonly contextValue: string,
 		public readonly children?: DashboardItem[],
-		public readonly iconPath?: string | vscode.ThemeIcon,
+		iconName?: string,
 		public readonly command?: vscode.Command,
 		public readonly tooltip?: string
 	) {
 		super(label, collapsibleState);
 		this.contextValue = contextValue;
 		
-		if (iconPath) {
-			this.iconPath = new vscode.ThemeIcon(iconPath as string);
+		if (iconName) {
+			this.iconPath = new vscode.ThemeIcon(iconName);
 		}
 		
 		if (command) {
@@ -564,12 +711,16 @@ class ActivityItem extends vscode.TreeItem {
 		public readonly label: string,
 		public readonly description: string,
 		iconName: string,
-		public readonly children?: ActivityItem[],
+		public readonly command?: vscode.Command,
 		public readonly tooltip?: string
 	) {
 		super(label, vscode.TreeItemCollapsibleState.None);
 		this.description = description;
 		this.iconPath = new vscode.ThemeIcon(iconName);
+		
+		if (command) {
+			this.command = command;
+		}
 		
 		if (tooltip) {
 			this.tooltip = tooltip;

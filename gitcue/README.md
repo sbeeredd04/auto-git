@@ -1,13 +1,35 @@
 # 🎯 GitCue - AI-Powered Git Assistant for VS Code
 
-[![Version](https://img.shields.io/badge/version-0.3.8-blue.svg?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue)
 [![VS Code](https://img.shields.io/badge/VS%20Code-Extension-007ACC?style=for-the-badge&logo=visual-studio-code)](https://code.visualstudio.com/)
 [![AI Powered](https://img.shields.io/badge/AI-Powered%20by%20Gemini-FF6B6B?style=for-the-badge&logo=google)](https://ai.google.dev/)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **Your intelligent Git companion that automates commits with AI-crafted messages, provides an AI-powered interactive terminal with chat capabilities, and keeps your workflow smooth and effortless.**
+> **Your intelligent Git companion with enhanced interactive sidebar, AI-crafted commit messages, smart repository management, and seamless VS Code integration for effortless version control.**
 
-GitCue transforms your Git workflow by intelligently analyzing code changes, generating meaningful commit messages using Google's Gemini AI, and providing an interactive terminal with real-time error analysis and chat capabilities.
+GitCue transforms your Git workflow with an enhanced interactive sidebar featuring actionable buttons, real-time status cards, and one-click actions. It intelligently analyzes code changes, generates meaningful commit messages using Google's Gemini AI, and provides a professional UI with improved space utilization and modern design.
+
+---
+
+## 🚀 What's New in v4.0.0
+
+### 🎨 Enhanced Interactive Sidebar
+- **Smart Status Cards**: Real-time GitCue status, file changes, and repository overview
+- **One-Click Actions**: Direct commit, terminal access, and settings from sidebar
+- **Professional UI**: Modern interface with proper icons and organized sections
+- **Better Space Utilization**: Actionable buttons and interactive elements instead of plain text
+- **Enhanced Activity Feed**: Improved activity tracking with visual indicators
+
+### 🔧 Improved User Experience
+- **Intuitive Navigation**: Quick access to all GitCue features
+- **Visual Feedback**: Clear status indicators and tooltips
+- **Responsive Design**: Better organization with collapsible sections
+- **Interactive Elements**: Clickable items for immediate actions
+
+### 📊 Smart Repository Management
+- **Repository Info Card**: Branch details, commit counts, and change status
+- **Configuration Panel**: Easy access to all settings with inline actions
+- **Activity Summary**: Enhanced tracking with categorized activities
 
 ---
 
