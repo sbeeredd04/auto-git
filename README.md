@@ -1,4 +1,5 @@
 # Auto-Git v4.0.0
+=======
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
@@ -19,6 +20,7 @@ Auto-Git is a cross-platform CLI tool that intelligently analyzes your code chan
 - **One-Click Actions**: Direct commit, terminal access, and configuration from sidebar
 - **Enhanced Activity Feed**: Improved activity tracking with visual indicators and commands
 - **Professional UI**: Modern interface with proper icons, tooltips, and organized sections
+=======
 
 ### 🧠 Intelligent Commit Mode
 - **AI-Driven Decisions**: Gemini analyzes changes and decides when to commit based on significance
@@ -31,7 +33,6 @@ Auto-Git is a cross-platform CLI tool that intelligently analyzes your code chan
 - **80% API Usage Reduction**: Prevents redundant calls for unchanged files
 - **Rate Limiting**: 15 calls per minute with sliding window protection
 - **Debug Logging**: Clear feedback when API calls are optimized
-
 ### 📦 Push Control System
 - **No-Push Mode**: Commit locally without pushing to remote
 - **Flexible Configuration**: Command line, environment variables, or config file
@@ -269,6 +270,24 @@ graph TD
     E --> F[Sliding Window Cleanup]
 ```
 
+=======
+```
+
+#### 2. **Plugin-Style Modularity**
+- Each major component is a separate module with well-defined interfaces
+- Loose coupling through dependency injection
+- Configurable behavior through the configuration system
+
+#### 3. **Rate Limiting & Optimization**
+```mermaid
+graph TD
+    A[API Request] --> B{Rate Limiter Check}
+    B -->|Under Limit| C[Execute Request]
+    B -->|Over Limit| D[Queue/Delay Request]
+    C --> E[Update Rate Counter]
+    E --> F[Sliding Window Cleanup]
+```
+
 ## 🚀 Quick Start
 
 ### 1. Install Auto-Git
@@ -362,6 +381,18 @@ auto-git debug
 auto-git config
 ```
 
+=======
+```
+
+### Verification
+
+```bash
+# Check installation
+auto-git debug
+
+# Verify API key setup
+auto-git config
+```
 ## 📝 Usage
 
 ### Commit Modes
@@ -524,6 +555,220 @@ export AUTO_GIT_BUFFER_TIME_SECONDS="30"
 # Development/Debug
 export AUTO_GIT_DEBUG="true"
 export NODE_ENV="development"
+```
+
+### Watch Patterns
+
+Configure which files and directories to monitor:
+
+```bash
+# Watch everything (default)
+auto-git watch
+
+# Watch specific patterns
+auto-git watch --paths "src/**,*.js,*.md"
+
+# Watch single directory
+auto-git watch --paths "src/"
+```
+
+### Advanced Configuration
+
+#### Rate Limiting Configuration
+```json
+{
+  "rateLimiting": {
+    "maxCallsPerMinute": 15,      // Max API calls per minute
+    "bufferTimeSeconds": 30,      // User cancellation window
+    "slidingWindowSize": 60000    // Rate limit window (ms)
+  }
+}
+```
+
+#### File Watching Configuration
+```json
+{
+  "watchOptions": {
+    "ignored": [
+      "**/node_modules/**",       // Dependencies
+      "**/.git/**",              // Git metadata
+      "**/dist/**",              // Build outputs
+      "**/coverage/**",          // Test coverage
+      "**/*.log",                // Log files
+      "**/.DS_Store"             // macOS files
+    ],
+    "persistent": true,           // Keep process alive
+    "ignoreInitial": true,        // Skip initial file scan
+    "followSymlinks": false,      // Security consideration
+    "depth": undefined,           // Unlimited depth
+    "awaitWriteFinish": {
+      "stabilityThreshold": 100,  // File stability (ms)
+      "pollInterval": 50          // Polling interval (ms)
+    }
+  }
+}
+```
+
+## 🧠 Intelligent Commit Guide
+
+The Intelligent Commit system represents the core innovation of Auto-Git, using advanced AI analysis to determine when and how to commit your changes.
+
+### How It Works
+
+#### 1. **Change Detection & Optimization**
+```mermaid
+graph LR
+    A[File Change] --> B[Generate Diff]
+    B --> C[Create Hash]
+    C --> D{Hash Changed?}
+    D -->|No| E[Skip AI Call<br/>Save API Usage]
+    D -->|Yes| F[Proceed to Analysis]
+    
+    style E fill:#e8f5e8
+    style F fill:#f3e5f5
+```
+
+The system creates a hash of the diff content to avoid redundant API calls when files are saved multiple times without actual changes.
+
+#### 2. **AI Analysis Process**
+```mermaid
+sequenceDiagram
+    participant W as Watcher
+    participant AI as AI Engine
+    participant G as Gemini API
+    participant U as User
+    
+    W->>AI: Analyze diff content
+    AI->>G: Send structured analysis request
+    Note over G: Function calling analysis:<br/>- Significance level<br/>- Completeness check<br/>- Best practices review
+    G-->>AI: Return analysis result
+    AI-->>W: Decision + reasoning
+    
+    alt Should Commit
+        W->>U: Show 30s buffer countdown
+        U->>W: Cancel or proceed
+    else Skip Commit
+        W->>W: Continue monitoring
+    end
+```
+
+#### 3. **Function Calling Analysis**
+
+The AI uses structured function calling to provide consistent analysis:
+
+```typescript
+interface CommitAnalysis {
+  shouldCommit: boolean;       // Primary decision
+  reason: string;             // Explanation for decision
+  significance: 'low' | 'medium' | 'high';  // Change importance
+  commitMessage?: string;     // Suggested message (if committing)
+}
+```
+
+### Analysis Criteria
+
+#### Significance Levels
+
+| Level | Description | Examples |
+|-------|-------------|----------|
+| **High** | Major changes requiring immediate commit | New features, critical fixes, breaking changes, major refactoring |
+| **Medium** | Standard development changes | Bug fixes, minor features, code improvements, documentation updates |
+| **Low** | Minor changes that may not warrant commit | Formatting, comments, trivial config changes, debugging code |
+
+#### Completeness Assessment
+
+The AI evaluates whether changes represent a complete unit of work:
+
+✅ **Complete Work (Commit)**
+- Finished features or bug fixes
+- Complete documentation updates
+- Finalized configuration changes
+- Working code with proper error handling
+
+❌ **Incomplete Work (Skip)**
+- Work-in-progress features
+- Debugging or temporary code
+- Broken functionality
+- Missing documentation or tests
+
+#### Best Practices Check
+
+The AI ensures commits follow conventional commit guidelines:
+
+- **Atomic Commits**: One logical change per commit
+- **Meaningful Messages**: Clear, descriptive commit messages
+- **Working Code**: No broken functionality committed
+- **Proper Scope**: Changes are focused and related
+
+### Example Workflow
+
+#### Scenario: Adding a new feature
+
+```bash
+# Start intelligent watching
+auto-git watch --mode intelligent
+
+# 1. Create new feature file
+echo "export function newFeature() { return 'hello'; }" > feature.js
+# AI Analysis: Incomplete work, skip commit
+
+# 2. Add tests
+echo "import { newFeature } from './feature.js';" > feature.test.js
+# AI Analysis: Still incomplete, skip commit
+
+# 3. Complete implementation with documentation
+cat >> feature.js << EOF
+/**
+ * New feature implementation
+ * @returns {string} Greeting message
+ */
+export function newFeature() {
+  return 'Hello from new feature!';
+}
+EOF
+
+# AI Analysis: Complete feature, HIGH significance
+# Decision: COMMIT with message "feat: add new feature implementation"
+# Buffer: 30 seconds to cancel
+# Result: Automatic commit and push
+```
+
+### When AI Skips Commits
+
+The AI will skip commits for:
+
+- **Incomplete Features**: Partial implementations without proper completion
+- **Debugging Code**: Console logs, temporary variables, debugging statements
+- **Work-in-Progress**: Code marked with TODO, FIXME, or similar indicators
+- **Minor Formatting**: Whitespace changes, code formatting without logic changes
+- **Configuration Tweaks**: Minor config adjustments without functional impact
+- **Broken Code**: Syntax errors or non-functional implementations
+
+### Customization Options
+
+#### Adjust Sensitivity
+```bash
+# More aggressive committing (lower threshold)
+export AUTO_GIT_COMMIT_THRESHOLD="low"
+
+# More conservative committing (higher threshold)
+export AUTO_GIT_COMMIT_THRESHOLD="high"
+```
+
+#### Buffer Time Adjustment
+```bash
+# Longer buffer for review
+export AUTO_GIT_BUFFER_TIME_SECONDS="60"
+
+# Immediate commits (careful!)
+export AUTO_GIT_BUFFER_TIME_SECONDS="0"
+```
+
+## 📚 Examples
+
+### Basic Usage Examples
+
+=======
 ```
 
 ### Watch Patterns
@@ -1041,6 +1286,120 @@ graph LR
     H --> C
     I --> C
 ```
+
+#### Error Handling Flow
+```mermaid
+graph TD
+    A[Error Occurs] --> B[Error Handler]
+    B --> C{Error Type}
+    C -->|API Error| D[Rate Limit Check]
+    C -->|Git Error| E[Repository Check]
+    C -->|Config Error| F[Validation Help]
+    C -->|System Error| G[Debug Info]
+    
+    D --> H[User Message]
+    E --> H
+    F --> H
+    G --> H
+    
+    H --> I[Log Error]
+    I --> J[Recovery Action]
+```
+
+### Module Dependencies
+
+```mermaid
+graph TD
+    CLI[auto-git.js] --> WATCHER[watcher.js]
+    CLI --> CONFIG[config.js]
+    CLI --> REPL[repl.js]
+    CLI --> LOGGER[logger.js]
+    
+    WATCHER --> GIT[git.js]
+    WATCHER --> GEMINI[gemini.js]
+    WATCHER --> ERROR[errorHandler.js]
+    
+    GEMINI --> RATE[rateLimiter.js]
+    GEMINI --> CONFIG
+    
+    REPL --> MARKDOWN[markdown.js]
+    REPL --> GIT
+    
+    ERROR --> LOGGER
+    
+    subgraph "External Dependencies"
+        CHOK[chokidar]
+        COMM[commander]
+        GENAI[@google/genai]
+        EXEC[execa]
+    end
+    
+    WATCHER --> CHOK
+    CLI --> COMM
+    GEMINI --> GENAI
+    GIT --> EXEC
+```
+
+## 💻 Development
+
+### Development Environment Setup
+
+#### Prerequisites
+- Node.js ≥18.0.0
+- Git ≥2.0.0
+- Google Gemini API key
+
+#### Initial Setup
+```bash
+# Clone repository
+git clone https://github.com/sbeeredd04/auto-git.git
+cd auto-git
+
+# Install dependencies
+npm install
+
+# Link for local development
+npm link
+
+# Verify installation
+auto-git --version
+```
+
+#### Development Configuration
+```bash
+# Set up development environment
+export NODE_ENV=development
+export AUTO_GIT_DEBUG=true
+export GEMINI_API_KEY="your-development-api-key"
+
+# Create development config
+cat > ~/.auto-gitrc.json << EOF
+{
+  "commitMode": "periodic",
+  "rateLimiting": {
+    "maxCallsPerMinute": 5,
+    "bufferTimeSeconds": 10
+  },
+  "watchPaths": ["lib/**", "utils/**", "bin/**"],
+  "debounceMs": 1000
+}
+EOF
+```
+
+### Testing Locally
+
+#### Basic Functionality Tests
+```bash
+# Test configuration
+auto-git config
+
+# Test debug information
+auto-git debug
+
+# Test commit functionality
+auto-git commit --verbose
+
+=======
 
 #### Error Handling Flow
 ```mermaid
