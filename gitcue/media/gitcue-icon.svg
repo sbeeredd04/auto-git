@@ -1,0 +1,52 @@
+<svg width="24" height="24" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Iris gradient fading to black at the edges -->
+    <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#36D1DC"/>
+      <stop offset="60%"  stop-color="#5B86E5"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <!-- Soft glow around iris -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Iris with gradient to black and a crisp black border -->
+  <circle
+    cx="100" cy="100" r="70"
+    fill="url(#irisGrad)"
+    filter="url(#glow)"
+    stroke="#000000"
+    stroke-width="4"
+  />
+
+  <!-- Inner reflective ring -->
+  <circle
+    cx="100" cy="100" r="45"
+    fill="none"
+    stroke="#fff"
+    stroke-opacity="0.2"
+    stroke-width="3"
+  />
+
+  <!-- Subtle swirl detail -->
+  <path
+    d="M100,60 C130,85 70,115 100,140"
+    fill="none"
+    stroke="#fff"
+    stroke-opacity="0.1"
+    stroke-width="2"
+  />
+
+  <!-- Catch‑lights -->
+  <circle cx="110" cy="80" r="10" fill="#fff" fill-opacity="0.6"/>
+  <circle cx="130" cy="100" r="5"  fill="#fff" fill-opacity="0.4"/>
+
+  <!-- Pupil -->
+  <circle cx="100" cy="100" r="20" fill="#000"/>
+</svg> 

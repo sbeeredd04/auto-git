@@ -1,8 +1,8 @@
 {
   "name": "gitcue",
   "displayName": "GitCue",
-  "description": "GitCue — your Git helper extension for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.",
-  "version": "0.3.8",
+  "description": "GitCue — AI-powered Git assistant with enhanced interactive sidebar, smart commit automation, and seamless VS Code integration for effortless version control.",
+  "version": "0.4.0",
   "publisher": "sbeeredd04",
   "icon": "icon.png",
   "galleryBanner": {
@@ -89,6 +89,31 @@
         "command": "gitcue.dashboard",
         "title": "GitCue: Dashboard",
         "icon": "$(dashboard)"
+      },
+      {
+        "command": "gitcue.resetConfig",
+        "title": "GitCue: Reset Configuration",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitcue.exportConfig",
+        "title": "GitCue: Export Configuration",
+        "icon": "$(export)"
+      },
+      {
+        "command": "gitcue.importConfig",
+        "title": "GitCue: Import Configuration",
+        "icon": "$(import)"
+      },
+      {
+        "command": "gitcue.openDocumentation",
+        "title": "GitCue: Open Documentation",
+        "icon": "$(book)"
+      },
+      {
+        "command": "gitcue.refreshViews",
+        "title": "GitCue: Refresh Views",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -148,6 +173,21 @@
         {
           "command": "gitcue.dashboard",
           "when": "scmProvider == git"
+        },
+        {
+          "command": "gitcue.resetConfig"
+        },
+        {
+          "command": "gitcue.exportConfig"
+        },
+        {
+          "command": "gitcue.importConfig"
+        },
+        {
+          "command": "gitcue.openDocumentation"
+        },
+        {
+          "command": "gitcue.refreshViews"
         }
       ]
     },
@@ -294,6 +334,20 @@
           "name": "GitCue Status",
           "when": "scmProvider == git"
         }
+      ],
+      "gitcue": [
+        {
+          "id": "gitcueDashboard",
+          "name": "Dashboard"
+        },
+        {
+          "id": "gitcueActivity",
+          "name": "Activity"
+        },
+        {
+          "id": "gitcueSettings",
+          "name": "Settings"
+        }
       ]
     },
     "viewsContainers": {
@@ -301,7 +355,26 @@
         {
           "id": "gitcue",
           "title": "GitCue",
-          "icon": "$(git-branch)"
+          "icon": "media/gitcue-icon.svg"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "gitcue.refreshViews",
+          "when": "view == gitcueDashboard",
+          "group": "inline"
+        },
+        {
+          "command": "gitcue.refreshViews",
+          "when": "view == gitcueActivity",
+          "group": "inline"
+        },
+        {
+          "command": "gitcue.refreshViews",
+          "when": "view == gitcueSettings",
+          "group": "inline"
         }
       ]
     }
@@ -332,6 +405,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@google/genai": "^1.0.1"
+    "@google/genai": "^1.0.1",
+    "@sbeeredd04/auto-git": "^3.10.1"
   }
 }
