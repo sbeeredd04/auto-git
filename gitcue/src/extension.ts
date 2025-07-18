@@ -19,42 +19,46 @@ class GitCueExtension {
 	private statusBarItem: vscode.StatusBarItem;
 	private outputChannel: vscode.OutputChannel;
 	private statusProvider: GitCueStatusProvider;
-	private terminal: vscode.Terminal | undefined;
-	
-	// Services
+	private terminals: vscode.Terminal[] = [];
+	private terminalCounter = 0;
 	private dashboardService: DashboardService;
 	private activityLogger: ActivityLogger;
 	private commitService: CommitService;
 	private fileWatcherService: FileWatcherService;
 
 	constructor(private context: vscode.ExtensionContext) {
-		this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 		this.outputChannel = vscode.window.createOutputChannel('GitCue');
 		this.statusProvider = new GitCueStatusProvider();
-		
-		// Initialize services
 		this.dashboardService = DashboardService.getInstance();
 		this.activityLogger = ActivityLogger.getInstance();
 		this.commitService = CommitService.getInstance();
 		this.fileWatcherService = FileWatcherService.getInstance();
 		
-		// Set up activity logger callback
-		this.activityLogger.setUpdateCallback(() => this.updateDashboards());
-		
-		// Set up logger
-		logger.setVerbose(this.getConfig().terminalVerbose);
-		
+		this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 		this.setupStatusBar();
+		this.updateStatusBar();
 		this.registerCommands();
 		this.registerViews();
 		
-		// Auto-start watching if configured
+		// Set up activity logger callback for real-time updates
+		this.activityLogger.setUpdateCallback(() => {
+			this.updateStatusBar();
+			this.updateDashboards();
+		});
+		
+		// Auto-watch initialization
 		const config = this.getConfig();
 		if (config.autoWatch) {
 			this.startWatching();
 		}
 		
-		logger.info('GitCue extension initialized v0.3.8', 'STARTUP');
+		// Clean up terminals when they are disposed
+		vscode.window.onDidCloseTerminal((terminal) => {
+			const index = this.terminals.indexOf(terminal);
+			if (index > -1) {
+				this.terminals.splice(index, 1);
+			}
+		});
 	}
 
 	private getConfig(): GitCueConfig {
@@ -63,7 +67,6 @@ class GitCueExtension {
 
 	private setupStatusBar() {
 		this.statusBarItem.command = 'gitcue.openDashboard';
-		this.updateStatusBar();
 		this.statusBarItem.show();
 	}
 
@@ -143,13 +146,17 @@ class GitCueExtension {
 	private async startWatching() {
 		const success = await this.fileWatcherService.startWatching();
 		if (success) {
+			this.updateStatusBar();
 			this.updateDashboards();
+			this.statusProvider.refresh();
 		}
 	}
 
 	private stopWatching() {
 		this.fileWatcherService.stopWatching();
+		this.updateStatusBar();
 		this.updateDashboards();
+		this.statusProvider.refresh();
 	}
 
 	private openDashboard() {
@@ -253,13 +260,20 @@ class GitCueExtension {
 	}
 
 	private openTerminal() {
-		if (!this.terminal) {
-			this.terminal = vscode.window.createTerminal({
-				name: 'GitCue',
-				pty: new GitCuePty(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath)
-			});
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+		if (!workspaceFolder) {
+			vscode.window.showErrorMessage('No workspace folder found');
+			return;
 		}
-		this.terminal.show();
+
+		const pty = new GitCuePty(workspaceFolder.uri.fsPath);
+		const terminal = vscode.window.createTerminal({
+			name: `GitCue AI ${this.terminalCounter + 1}`,
+			pty: pty
+		});
+		this.terminals.push(terminal);
+		this.terminalCounter++;
+		terminal.show();
 	}
 
 	private showStatus() {
@@ -287,9 +301,8 @@ class GitCueExtension {
 		this.statusBarItem.dispose();
 		this.outputChannel.dispose();
 		logger.dispose();
-		if (this.terminal) {
-			this.terminal.dispose();
-		}
+		this.terminals.forEach(terminal => terminal.dispose());
+		this.terminals = [];
 	}
 }
 

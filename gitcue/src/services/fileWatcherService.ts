@@ -81,8 +81,8 @@ export class FileWatcherService {
 		this.activityLogger.updateWatchStatus({ isWatching: true });
 		this.activityLogger.logActivity('watch_start', 'File watching started', `Patterns: ${watchPatterns.join(', ')}`);
 		
-		// Set global variable for status provider
-		(global as any).gitCueIsWatching = true;
+		// Trigger callbacks for UI updates
+		this.activityLogger.updateWatchStatus({ isWatching: true });
 		
 		if (config.enableNotifications) {
 			vscode.window.showInformationMessage('GitCue: Started watching for changes');
@@ -115,8 +115,8 @@ export class FileWatcherService {
 		this.activityLogger.resetWatchStatus();
 		this.activityLogger.logActivity('watch_stop', 'File watching stopped');
 		
-		// Set global variable for status provider
-		(global as any).gitCueIsWatching = false;
+		// Trigger callbacks for UI updates
+		this.activityLogger.updateWatchStatus({ isWatching: false });
 		
 		const config = configManager.getConfig();
 		if (config.enableNotifications) {

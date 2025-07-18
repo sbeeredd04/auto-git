@@ -221,6 +221,15 @@ export class CommitService {
 
 			const timer = setInterval(() => {
 				timeLeft--;
+				
+				// Send timer update to webview
+				if (!cancelled && timeLeft > 0) {
+					panel.webview.postMessage({
+						action: 'updateTimer',
+						timeLeft: timeLeft
+					});
+				}
+				
 				if (timeLeft <= 0 || cancelled) {
 					clearInterval(timer);
 					panel.dispose();

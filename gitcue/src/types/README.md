@@ -1,198 +1,164 @@
-# 📝 Types Directory
+# 🎯 Types Directory
 
-The Types directory contains comprehensive TypeScript type definitions and interfaces that define the data structures, contracts, and type safety throughout the GitCue extension. This directory ensures type consistency, improved developer experience, and runtime safety.
+The Types directory contains all TypeScript interface definitions and type declarations for GitCue. This module provides type safety, IntelliSense support, and clear API contracts throughout the extension.
 
-## 🏗️ Type Architecture Overview
+## 🏗️ Architecture Overview
 
 ```mermaid
 graph TB
-    subgraph "Type Categories"
-        subgraph "Core Configuration"
-            CORE_CONFIG[GitCueConfig<br/>Main Configuration]
-            EXT_CONFIG[GitCueExtensionConfig<br/>Extended Settings]
-            WATCH_CONFIG[WatchOptions<br/>File Watching]
+    subgraph "Type System Architecture"
+        subgraph "Core Types"
+            CONFIG[GitCueConfig<br/>Extension Configuration]
+            WATCH[WatchStatus<br/>File Monitoring State]
+            ACTIVITY[ActivityLogEntry<br/>Activity Tracking]
         end
         
-        subgraph "State Management"
-            WATCH_STATUS[WatchStatus<br/>Current State]
-            ACTIVITY[ActivityLogEntry<br/>Event Tracking]
-            DASHBOARD[DashboardState<br/>UI State]
+        subgraph "UI Types"
+            DASH[DashboardState<br/>UI State Management]
+            BUFFER[BufferNotification<br/>Commit Buffer System]
+            PREVIEW[CommitPreview<br/>Preview Interface]
         end
         
-        subgraph "UI Components"
-            BUFFER[BufferNotification<br/>User Notifications]
-            PREVIEW[CommitPreviewOptions<br/>Preview UI]
-            WEBVIEW[WebviewOptions<br/>Panel Data]
+        subgraph "Service Types"
+            INTERFACES[Service Interfaces]
+            EVENTS[Event Types]
+            CALLBACKS[Callback Types]
         end
         
-        subgraph "Service Contracts"
-            COMMIT[CommitService Types]
-            WATCHER[FileWatcher Types]
-            LOGGER[Logger Types]
+        subgraph "Export Structure"
+            INDEX[index.ts<br/>Main Exports]
+            INTERFACES_FILE[interfaces.ts<br/>Type Definitions]
         end
     end
     
-    CORE_CONFIG --> EXT_CONFIG
-    CORE_CONFIG --> WATCH_CONFIG
+    CONFIG --> DASH
+    WATCH --> ACTIVITY
+    BUFFER --> PREVIEW
+    INTERFACES --> EVENTS
+    EVENTS --> CALLBACKS
     
-    WATCH_STATUS --> ACTIVITY
-    ACTIVITY --> DASHBOARD
+    CONFIG --> INDEX
+    DASH --> INDEX
+    INTERFACES --> INTERFACES_FILE
+    INDEX --> INTERFACES_FILE
     
-    DASHBOARD --> BUFFER
-    DASHBOARD --> PREVIEW
-    DASHBOARD --> WEBVIEW
-    
-    COMMIT --> CORE_CONFIG
-    WATCHER --> WATCH_STATUS
-    LOGGER --> ACTIVITY
-    
-    style CORE_CONFIG fill:#e1f5fe
-    style WATCH_STATUS fill:#f3e5f5
-    style BUFFER fill:#e8f5e8
-    style COMMIT fill:#fff3e0
+    style CONFIG fill:#e3f2fd
+    style WATCH fill:#e8f5e8
+    style DASH fill:#fff3e0
+    style BUFFER fill:#f3e5f5
 ```
 
 ---
 
-## 🔧 Core Configuration Types
+## 🎨 Core Configuration Types
 
 ### GitCueConfig Interface
 
-**Purpose**: Defines the main configuration structure for GitCue settings and behavior.
+**Purpose**: Defines the complete configuration structure for GitCue extension settings.
 
 ```typescript
 export interface GitCueConfig {
-  // Core AI settings
-  geminiApiKey: string;                    // Google Gemini API key
-  commitMode: 'periodic' | 'intelligent'; // Commit behavior mode
-  autoPush: boolean;                       // Automatic push after commit
+  // Core AI Integration
+  geminiApiKey: string;                    // Gemini API key for AI features
   
-  // File watching configuration
-  watchPaths: string[];                    // Patterns to watch
-  debounceMs: number;                      // Debounce timing (ms)
-  bufferTimeSeconds: number;               // Buffer notification time
+  // Commit Behavior
+  commitMode: 'periodic' | 'intelligent'; // Commit strategy
+  autoPush: boolean;                       // Auto-push to remote
+  bufferTimeSeconds: number;               // Buffer time for commit cancellation
   
-  // Rate limiting and API
-  maxCallsPerMinute: number;               // API rate limit
-  enableNotifications: boolean;            // Enable UI notifications
-  autoWatch: boolean;                      // Auto-start watching
+  // File Watching
+  watchPaths: string[];                    // Glob patterns for files to watch
+  debounceMs: number;                      // Debounce time for file changes
+  autoWatch: boolean;                      // Auto-start watching on extension load
   
-  // Interactive terminal settings
-  interactiveOnError: boolean;             // Enable AI error analysis
-  enableSuggestions: boolean;              // Enable AI suggestions
-  terminalVerbose: boolean;                // Verbose terminal output
-  sessionPersistence: boolean;             // Save session history
-  maxHistorySize: number;                  // Max command history entries
+  // Rate Limiting & Performance
+  maxCallsPerMinute: number;               // API rate limiting
+  enableNotifications: boolean;            // Show VS Code notifications
+  
+  // Interactive Terminal
+  interactiveOnError: boolean;             // Show AI suggestions on command errors
+  enableSuggestions: boolean;              // Enable AI-powered suggestions
+  terminalVerbose: boolean;                // Verbose terminal logging
+  sessionPersistence: boolean;             // Save command history across sessions
+  maxHistorySize: number;                  // Maximum command history entries
+  
+  // Advanced Watch Configuration
+  watchOptions: {
+    ignored: string[];                     // Patterns to ignore
+    persistent: boolean;                   // Keep watching process alive
+    ignoreInitial: boolean;                // Ignore initial file scan
+    followSymlinks: boolean;               // Follow symbolic links
+    depth?: number;                        // Maximum directory depth
+  };
 }
 ```
 
-### Configuration Hierarchy
+### Configuration Usage Examples
 
-```mermaid
-graph TD
-    subgraph "Configuration Inheritance"
-        BASE[Base GitCueConfig]
-        EXTENDED[GitCueExtensionConfig]
-        WATCH_OPTS[WatchOptions]
-        INTERACTIVE[InteractiveConfig]
-    end
-    
-    BASE --> EXTENDED
-    BASE --> WATCH_OPTS
-    BASE --> INTERACTIVE
-    
-    subgraph "Configuration Sources"
-        CLI[Command Line]
-        ENV[Environment Variables]
-        FILE[Configuration File]
-        DEFAULT[Default Values]
-    end
-    
-    CLI --> BASE
-    ENV --> BASE
-    FILE --> BASE
-    DEFAULT --> BASE
-    
-    subgraph "Configuration Consumers"
-        SERVICES[Services]
-        COMPONENTS[UI Components]
-        TERMINAL[Terminal]
-        AI[AI Utils]
-    end
-    
-    EXTENDED --> SERVICES
-    EXTENDED --> COMPONENTS
-    EXTENDED --> TERMINAL
-    EXTENDED --> AI
-    
-    style BASE fill:#e3f2fd
-    style EXTENDED fill:#f3e5f5
-    style WATCH_OPTS fill:#e8f5e8
+```typescript
+// Basic configuration access
+const config = configManager.getConfig();
+
+// Type-safe property access
+if (config.commitMode === 'intelligent') {
+  // AI-powered commit logic
+}
+
+// Configuration validation
+const isValid = config.geminiApiKey && config.geminiApiKey.length > 0;
 ```
 
 ---
 
-## 📊 State Management Types
+## 📊 Activity & State Management
 
 ### WatchStatus Interface
 
-**Purpose**: Tracks the current state of file watching and GitCue activity.
+**Purpose**: Tracks real-time file watching state and activity metrics.
 
 ```typescript
 export interface WatchStatus {
-  // Core watching state
-  isWatching: boolean;                     // Currently monitoring files
+  isWatching: boolean;                     // Current watching state
   filesChanged: number;                    // Count of changed files
-  lastChange: string;                      // Timestamp of last change
-  lastCommit: string;                      // Timestamp of last commit
-  
-  // Commit state
-  pendingCommit: boolean;                  // Commit in buffer period
+  lastChange: string;                      // Last file change timestamp
+  lastCommit: string;                      // Last commit information
+  pendingCommit: boolean;                  // Commit in progress
   aiAnalysisInProgress: boolean;           // AI analysis running
-  
-  // Activity tracking
   activityHistory: ActivityLogEntry[];     // Recent activity log
-  changedFiles: Set<string>;               // Currently changed files
+  changedFiles: Set<string>;               // Set of changed file paths
 }
 ```
 
-### Activity Tracking Types
+### ActivityLogEntry Interface
 
-```mermaid
-sequenceDiagram
-    participant Event as System Event
-    participant Logger as ActivityLogger
-    participant Entry as ActivityLogEntry
-    participant State as WatchStatus
-    participant UI as UI Components
-    
-    Event->>Logger: Trigger activity
-    Logger->>Entry: Create log entry
-    Entry->>State: Update watch status
-    State->>Logger: Notify state change
-    Logger->>UI: Update interfaces
-    
-    Note over Entry: ActivityLogEntry {<br/>  timestamp: string<br/>  type: ActivityType<br/>  message: string<br/>  details?: string<br/>}
-```
+**Purpose**: Structured logging for all GitCue activities and events.
 
 ```typescript
 export interface ActivityLogEntry {
   timestamp: string;                       // ISO timestamp
-  type: ActivityType;                      // Event category
+  type: ActivityType;                      // Activity category
   message: string;                         // Human-readable message
-  details?: string;                        // Optional additional info
+  details?: string;                        // Additional context
 }
 
-export type ActivityType = 
+type ActivityType = 
   | 'file_change'                          // File modification detected
   | 'ai_analysis'                          // AI analysis started/completed
-  | 'commit'                              // Commit executed
-  | 'error'                               // Error occurred
-  | 'watch_start'                         // File watching started
-  | 'watch_stop';                         // File watching stopped
+  | 'commit'                               // Commit operation
+  | 'error'                                // Error occurrence
+  | 'watch_start'                          // File watching started
+  | 'watch_stop'                           // File watching stopped
+  | 'buffer_start'                         // Commit buffer started
+  | 'buffer_cancel';                       // Commit buffer cancelled
 ```
 
-### Dashboard State Management
+---
+
+## 🖥️ UI Component Types
+
+### DashboardState Interface
+
+**Purpose**: Manages state for dashboard and webview components.
 
 ```typescript
 export interface DashboardState {
@@ -213,10 +179,6 @@ export interface DashboardState {
   };
 }
 ```
-
----
-
-## 🖥️ UI Component Types
 
 ### Buffer Notification System
 
@@ -258,14 +220,9 @@ export interface BufferNotification {
 
 export interface BufferNotificationOptions {
   message: string;                         // Commit message
-  status: string;                          // Git status info
-  timeLeft: number;                        // Seconds remaining
-  config: GitCueConfig;                    // Current config
-  
-  // Additional context
-  workspacePath?: string;                  // Current workspace
-  significance?: 'low' | 'medium' | 'high'; // Change significance
-  reasoning?: string;                      // AI reasoning
+  status: string;                          // Git status output
+  timeLeft: number;                        // Remaining buffer time
+  config: GitCueConfig;                    // Extension configuration
 }
 ```
 
@@ -274,469 +231,271 @@ export interface BufferNotificationOptions {
 ```typescript
 export interface CommitPreviewOptions {
   message: string;                         // Generated commit message
-  status: string;                          // Git repository status
-  workspacePath: string;                   // Workspace directory
-  config: GitCueConfig;                    // Current configuration
-  
-  // Preview metadata
-  filesChanged?: string[];                 // List of changed files
-  diffSummary?: string;                    // Summary of changes
-  aiGenerated?: boolean;                   // AI-generated message
-  canEdit?: boolean;                       // Allow message editing
+  status: string;                          // Git status output
+  workspacePath: string;                   // Repository path
+  config: GitCueConfig;                    // Extension configuration
+}
+
+export interface CommitPreviewResult {
+  action: 'commit' | 'cancel' | 'edit';    // User action
+  commitMessage?: string;                  // Modified commit message
+  shouldPush?: boolean;                    // Push to remote
 }
 ```
 
 ---
 
-## 🔄 Service Integration Types
+## 🔧 Service Integration Types
 
-### Commit Service Types
-
-```mermaid
-graph TB
-    subgraph "Commit Service Type Flow"
-        ANALYSIS[CommitAnalysis]
-        DECISION[CommitDecision]
-        MESSAGE[CommitMessage]
-        RESULT[CommitResult]
-    end
-    
-    subgraph "AI Integration Types"
-        AI_REQUEST[AIAnalysisRequest]
-        AI_RESPONSE[AIAnalysisResponse]
-        RATE_LIMIT[RateLimitInfo]
-    end
-    
-    subgraph "Git Integration Types"
-        GIT_STATUS[GitStatusInfo]
-        DIFF_INFO[DiffAnalysis]
-        REPO_INFO[RepositoryInfo]
-    end
-    
-    ANALYSIS --> DECISION
-    DECISION --> MESSAGE
-    MESSAGE --> RESULT
-    
-    AI_REQUEST --> AI_RESPONSE
-    AI_RESPONSE --> ANALYSIS
-    
-    GIT_STATUS --> ANALYSIS
-    DIFF_INFO --> ANALYSIS
-    REPO_INFO --> ANALYSIS
-    
-    style ANALYSIS fill:#f3e5f5
-    style AI_REQUEST fill:#fff3e0
-    style GIT_STATUS fill:#e8f5e8
-```
+### Service Interfaces
 
 ```typescript
-// Commit analysis types
-export interface CommitAnalysis {
-  shouldCommit: boolean;                   // AI recommendation
-  reason: string;                          // Analysis reasoning
-  significance: 'low' | 'medium' | 'high'; // Change importance
-  confidence: number;                      // Confidence score (0-1)
-  
-  // Additional metadata
-  filesAnalyzed: number;                   // Number of files
-  linesChanged: number;                    // Total line changes
-  commitType?: ConventionalCommitType;     // Suggested commit type
+// Callback types for service communication
+export type UpdateCallback = () => void;
+export type MessageCallback = (message: any) => void;
+export type ErrorCallback = (error: Error) => void;
+
+// Service method signatures
+export interface ServiceMethod<T = any> {
+  execute: (...args: any[]) => Promise<T>;
+  onError?: ErrorCallback;
+  onSuccess?: (result: T) => void;
 }
 
-export type ConventionalCommitType = 
-  | 'feat'     | 'fix'      | 'docs'     | 'style'
-  | 'refactor' | 'test'     | 'chore'    | 'perf'
-  | 'ci'       | 'build'    | 'revert';
-
-// Git repository types
-export interface GitStatusInfo {
-  branch: string;                          // Current branch
-  ahead: number;                           // Commits ahead of remote
-  behind: number;                          // Commits behind remote
-  staged: string[];                        // Staged files
-  unstaged: string[];                      // Unstaged files
-  untracked: string[];                     // Untracked files
-  hasRemote: boolean;                      // Remote repository exists
+// Event system types
+export interface GitCueEvent {
+  type: string;
+  data?: any;
+  timestamp: number;
 }
 ```
 
-### File Watcher Service Types
+### Advanced Configuration Types
 
 ```typescript
-// File watching configuration
-export interface WatchOptions {
-  ignored: string[];                       // Ignore patterns
-  persistent: boolean;                     // Keep process alive
-  ignoreInitial: boolean;                  // Skip initial scan
-  followSymlinks: boolean;                 // Follow symbolic links
-  depth?: number;                          // Maximum depth
-  
-  // Performance options
-  awaitWriteFinish?: {
-    stabilityThreshold: number;            // File stability timeout
-    pollInterval: number;                  // Polling interval
+// Watch configuration with advanced options
+export interface WatchConfiguration {
+  patterns: string[];                      // File patterns to watch
+  ignored: string[];                       // Patterns to ignore
+  options: {
+    usePolling?: boolean;                  // Use polling instead of events
+    pollInterval?: number;                 // Polling interval (ms)
+    followSymlinks?: boolean;              // Follow symbolic links
+    depth?: number;                        // Maximum directory depth
+    ignoreInitial?: boolean;               // Ignore initial file scan
   };
-  
-  // Custom filters
-  usePolling?: boolean;                    // Use polling instead of events
-  interval?: number;                       // Polling interval
-  binaryInterval?: number;                 // Binary file polling
 }
 
-// File change event types
-export interface FileChangeEvent {
-  type: 'add' | 'change' | 'unlink';       // Change type
-  path: string;                            // File path
-  timestamp: number;                       // Event timestamp
-  size?: number;                           // File size
-  isDirectory: boolean;                    // Directory flag
+// AI Analysis configuration
+export interface AIAnalysisConfig {
+  model: string;                           // AI model to use
+  maxTokens: number;                       // Maximum response tokens
+  temperature: number;                     // Response creativity (0-1)
+  timeout: number;                         // Request timeout (ms)
+  retryCount: number;                      // Number of retries
 }
 ```
 
 ---
 
-## 🧪 Utility and Helper Types
+## 📱 Terminal Integration Types
 
-### Type Guards and Validators
+### Terminal Session Types
 
 ```typescript
-// Type guard functions
-export function isGitCueConfig(obj: any): obj is GitCueConfig {
-  return obj &&
-    typeof obj.geminiApiKey === 'string' &&
-    ['periodic', 'intelligent'].includes(obj.commitMode) &&
-    typeof obj.autoPush === 'boolean' &&
-    Array.isArray(obj.watchPaths) &&
-    typeof obj.debounceMs === 'number';
+export interface TerminalSession {
+  id: string;                              // Unique session identifier
+  name: string;                            // Display name
+  workspaceRoot: string;                   // Working directory
+  history: string[];                       // Command history
+  createdAt: Date;                         // Session creation time
+  isActive: boolean;                       // Session active state
 }
 
-export function isActivityLogEntry(obj: any): obj is ActivityLogEntry {
-  return obj &&
-    typeof obj.timestamp === 'string' &&
-    typeof obj.message === 'string' &&
-    ['file_change', 'ai_analysis', 'commit', 'error', 'watch_start', 'watch_stop'].includes(obj.type);
+export interface TerminalCommand {
+  input: string;                           // User input
+  output?: string;                         // Command output
+  error?: string;                          // Error output
+  exitCode?: number;                       // Exit code
+  timestamp: Date;                         // Execution time
+  duration?: number;                       // Execution duration (ms)
+}
+```
+
+---
+
+## 🎯 Type Utilities
+
+### Type Guards
+
+```typescript
+// Type guard functions for runtime type checking
+export function isGitCueConfig(obj: any): obj is GitCueConfig {
+  return obj && typeof obj.geminiApiKey === 'string' && 
+         typeof obj.commitMode === 'string';
 }
 
 export function isWatchStatus(obj: any): obj is WatchStatus {
-  return obj &&
-    typeof obj.isWatching === 'boolean' &&
-    typeof obj.filesChanged === 'number' &&
-    Array.isArray(obj.activityHistory);
+  return obj && typeof obj.isWatching === 'boolean' && 
+         typeof obj.filesChanged === 'number';
+}
+
+export function isActivityLogEntry(obj: any): obj is ActivityLogEntry {
+  return obj && typeof obj.timestamp === 'string' && 
+         typeof obj.type === 'string' && 
+         typeof obj.message === 'string';
 }
 ```
 
-### Utility Types
+### Type Validation
 
 ```typescript
-// Partial type utilities
-export type PartialConfig = Partial<GitCueConfig>;
-export type RequiredConfig = Required<GitCueConfig>;
-export type ConfigKeys = keyof GitCueConfig;
-
-// Status update types
-export type WatchStatusUpdate = Partial<WatchStatus>;
-export type ActivityUpdate = Pick<ActivityLogEntry, 'type' | 'message'> & {
-  details?: string;
-};
-
-// Event handler types
-export type ActivityCallback = (activity: ActivityLogEntry) => void;
-export type StatusCallback = (status: WatchStatus) => void;
-export type ConfigCallback = (config: GitCueConfig) => void;
-
-// Promise utility types
-export type AsyncResult<T> = Promise<T | null>;
-export type ServiceResult<T> = Promise<{ success: boolean; data?: T; error?: string }>;
-```
-
----
-
-## 🔍 Advanced Type Patterns
-
-### Conditional Types
-
-```typescript
-// Configuration validation types
-export type ValidatedConfig<T extends PartialConfig> = T extends { geminiApiKey: string }
-  ? T extends { commitMode: 'periodic' | 'intelligent' }
-    ? GitCueConfig
-    : never
-  : never;
-
-// Service state types
-export type ServiceState<T extends string> = 
-  T extends 'commit' ? CommitServiceState :
-  T extends 'watcher' ? FileWatcherState :
-  T extends 'dashboard' ? DashboardServiceState :
-  never;
-
-interface CommitServiceState {
-  isGenerating: boolean;
-  lastMessage: string;
-  pendingCommits: number;
+// Configuration validation helpers
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
 }
 
-interface FileWatcherState {
-  isWatching: boolean;
-  watchedPaths: string[];
-  lastChange: Date;
-}
-
-interface DashboardServiceState {
-  openPanels: number;
-  lastUpdate: Date;
-  isVisible: boolean;
-}
-```
-
-### Template Literal Types
-
-```typescript
-// Activity type templates
-export type ActivityMessage<T extends ActivityType> = 
-  T extends 'file_change' ? `File changed: ${string}` :
-  T extends 'commit' ? `Commit: ${string}` :
-  T extends 'error' ? `Error: ${string}` :
-  string;
-
-// Configuration key templates
-export type ConfigPath = 
-  | 'geminiApiKey'
-  | 'commitMode'
-  | 'autoPush'
-  | `watchPaths.${number}`
-  | `watchOptions.${keyof WatchOptions}`;
-```
-
----
-
-## 🛠️ Development Utilities
-
-### Type Testing Utilities
-
-```typescript
-// Type assertion utilities for testing
-export function assertIsGitCueConfig(obj: unknown): asserts obj is GitCueConfig {
-  if (!isGitCueConfig(obj)) {
-    throw new Error('Invalid GitCueConfig object');
-  }
-}
-
-export function assertIsWatchStatus(obj: unknown): asserts obj is WatchStatus {
-  if (!isWatchStatus(obj)) {
-    throw new Error('Invalid WatchStatus object');
-  }
-}
-
-// Mock type generators for testing
-export function createMockConfig(overrides: PartialConfig = {}): GitCueConfig {
-  return {
-    geminiApiKey: 'test-key',
-    commitMode: 'intelligent',
-    autoPush: true,
-    watchPaths: ['src/**'],
-    debounceMs: 30000,
-    bufferTimeSeconds: 30,
-    maxCallsPerMinute: 15,
-    enableNotifications: true,
-    autoWatch: false,
-    interactiveOnError: true,
-    enableSuggestions: true,
-    terminalVerbose: false,
-    sessionPersistence: true,
-    maxHistorySize: 100,
-    ...overrides
-  };
-}
-
-export function createMockWatchStatus(overrides: Partial<WatchStatus> = {}): WatchStatus {
-  return {
-    isWatching: false,
-    filesChanged: 0,
-    lastChange: '',
-    lastCommit: '',
-    pendingCommit: false,
-    aiAnalysisInProgress: false,
-    activityHistory: [],
-    changedFiles: new Set(),
-    ...overrides
-  };
-}
-```
-
-### Type Documentation
-
-```typescript
-/**
- * GitCue Configuration Interface
- * 
- * Defines the complete configuration structure for GitCue extension.
- * This interface ensures type safety across all configuration operations.
- * 
- * @example
- * ```typescript
- * const config: GitCueConfig = {
- *   geminiApiKey: process.env.GEMINI_API_KEY,
- *   commitMode: 'intelligent',
- *   autoPush: true,
- *   // ... other required properties
- * };
- * ```
- * 
- * @see {@link https://github.com/sbeeredd04/Auto-Commit/tree/main/gitcue#configuration}
- */
-export interface GitCueConfig {
-  // ... interface definition
-}
-
-/**
- * Activity Log Entry Interface
- * 
- * Represents a single activity event in GitCue's activity tracking system.
- * Used for logging file changes, commits, errors, and system events.
- * 
- * @example
- * ```typescript
- * const logEntry: ActivityLogEntry = {
- *   timestamp: new Date().toISOString(),
- *   type: 'commit',
- *   message: 'Successfully committed changes',
- *   details: 'feat: add new feature implementation'
- * };
- * ```
- */
-export interface ActivityLogEntry {
-  // ... interface definition
+export interface ConfigValidator {
+  validate(config: Partial<GitCueConfig>): ValidationResult;
+  validateProperty(key: keyof GitCueConfig, value: any): boolean;
 }
 ```
 
 ---
 
-## 📚 Type Export Structure
+## 📚 Usage Examples
 
-### Index Exports
-
-```typescript
-// src/types/index.ts
-export * from './interfaces';
-
-// Re-export commonly used types
-export type {
-  GitCueConfig,
-  WatchStatus,
-  ActivityLogEntry,
-  DashboardState,
-  BufferNotification,
-  CommitPreviewOptions
-} from './interfaces';
-
-// Export utility types
-export type {
-  PartialConfig,
-  ActivityCallback,
-  StatusCallback,
-  ConfigCallback,
-  AsyncResult,
-  ServiceResult
-} from './interfaces';
-
-// Export type guards
-export {
-  isGitCueConfig,
-  isActivityLogEntry,
-  isWatchStatus,
-  assertIsGitCueConfig,
-  assertIsWatchStatus
-} from './interfaces';
-```
-
-### Interface Organization
-
-```mermaid
-graph TB
-    subgraph "Type Organization"
-        INTERFACES[interfaces.ts]
-        INDEX[index.ts]
-        GUARDS[Type Guards]
-        UTILS[Utility Types]
-    end
-    
-    subgraph "Export Categories"
-        CORE[Core Interfaces]
-        STATE[State Types]
-        UI[UI Types]
-        SERVICE[Service Types]
-        UTIL[Utility Types]
-    end
-    
-    INTERFACES --> INDEX
-    GUARDS --> INDEX
-    UTILS --> INDEX
-    
-    INDEX --> CORE
-    INDEX --> STATE
-    INDEX --> UI
-    INDEX --> SERVICE
-    INDEX --> UTIL
-    
-    subgraph "Consumers"
-        SERVICES[Services]
-        COMPONENTS[Components]
-        TERMINAL[Terminal]
-        TESTS[Tests]
-    end
-    
-    CORE --> SERVICES
-    STATE --> SERVICES
-    UI --> COMPONENTS
-    SERVICE --> SERVICES
-    UTIL --> TESTS
-    
-    style INTERFACES fill:#e3f2fd
-    style INDEX fill:#f3e5f5
-    style CORE fill:#e8f5e8
-    style UTIL fill:#fff3e0
-```
-
----
-
-## 🧪 Testing Type Safety
-
-### Type Testing Examples
+### Basic Type Usage
 
 ```typescript
-// Type safety tests
-describe('Type Safety', () => {
-  it('should validate GitCueConfig structure', () => {
-    const validConfig: GitCueConfig = createMockConfig();
-    expect(isGitCueConfig(validConfig)).toBe(true);
-    
-    const invalidConfig = { ...validConfig, commitMode: 'invalid' };
-    expect(isGitCueConfig(invalidConfig)).toBe(false);
-  });
+import { GitCueConfig, WatchStatus, ActivityLogEntry } from '../types';
+
+// Service implementation with proper types
+class ExampleService {
+  private config: GitCueConfig;
+  private watchStatus: WatchStatus;
   
-  it('should enforce activity log entry types', () => {
-    const validEntry: ActivityLogEntry = {
+  constructor(config: GitCueConfig) {
+    this.config = config;
+    this.watchStatus = {
+      isWatching: false,
+      filesChanged: 0,
+      lastChange: 'None',
+      lastCommit: 'None',
+      pendingCommit: false,
+      aiAnalysisInProgress: false,
+      activityHistory: [],
+      changedFiles: new Set()
+    };
+  }
+  
+  logActivity(type: ActivityLogEntry['type'], message: string) {
+    const entry: ActivityLogEntry = {
       timestamp: new Date().toISOString(),
-      type: 'commit',
-      message: 'Test commit',
-      details: 'Additional details'
+      type,
+      message
     };
     
-    expect(isActivityLogEntry(validEntry)).toBe(true);
-  });
-  
-  it('should provide proper type inference', () => {
-    const config = createMockConfig({ commitMode: 'periodic' });
+    this.watchStatus.activityHistory.push(entry);
+  }
+}
+```
+
+### Advanced Type Usage
+
+```typescript
+// Generic service with type parameters
+interface GenericService<T, U> {
+  process(input: T): Promise<U>;
+  validate(input: T): boolean;
+}
+
+// Buffer notification with type safety
+class BufferService implements GenericService<BufferNotificationOptions, BufferNotification> {
+  async process(options: BufferNotificationOptions): Promise<BufferNotification> {
+    // Type-safe buffer creation
+    const panel = vscode.window.createWebviewPanel(/* ... */);
+    const timer = setTimeout(() => {}, options.timeLeft * 1000);
     
-    // TypeScript should infer the correct type
-    if (config.commitMode === 'periodic') {
-      expect(config.commitMode).toBe('periodic');
-    }
-  });
-});
+    return {
+      panel,
+      timer,
+      cancelled: false
+    };
+  }
+  
+  validate(options: BufferNotificationOptions): boolean {
+    return options.message.length > 0 && 
+           options.timeLeft > 0 && 
+           options.config.bufferTimeSeconds > 0;
+  }
+}
 ```
 
 ---
 
-The Types directory provides comprehensive type safety and clear contracts for all data structures used throughout GitCue, ensuring robust development experience, runtime safety, and maintainable code architecture. 
+## 🔍 Type Export Structure
+
+### Main Exports (index.ts)
+
+```typescript
+// Core configuration and state types
+export type { GitCueConfig, WatchStatus, ActivityLogEntry } from './interfaces';
+
+// UI component types
+export type { DashboardState, BufferNotification, CommitPreviewOptions } from './interfaces';
+
+// Service integration types
+export type { UpdateCallback, MessageCallback, ServiceMethod } from './interfaces';
+
+// Terminal types
+export type { TerminalSession, TerminalCommand } from './interfaces';
+
+// Type utilities
+export { isGitCueConfig, isWatchStatus, isActivityLogEntry } from './interfaces';
+```
+
+### Complete Interface Definitions (interfaces.ts)
+
+Contains all interface definitions with comprehensive JSDoc documentation, validation rules, and usage examples.
+
+---
+
+## 🧪 Testing Types
+
+### Test Utilities
+
+```typescript
+// Mock data generators for testing
+export interface MockDataGenerator {
+  generateConfig(): GitCueConfig;
+  generateWatchStatus(): WatchStatus;
+  generateActivityEntry(): ActivityLogEntry;
+  generateDashboardState(): DashboardState;
+}
+
+// Test helpers
+export interface TestHelpers {
+  createMockConfig(overrides?: Partial<GitCueConfig>): GitCueConfig;
+  createMockWatchStatus(overrides?: Partial<WatchStatus>): WatchStatus;
+  validateTypeStructure<T>(obj: T, schema: any): boolean;
+}
+```
+
+---
+
+## 🚀 Future Enhancements
+
+### Planned Type Additions
+
+1. **Plugin System Types**: Interface definitions for future plugin architecture
+2. **Advanced AI Types**: More sophisticated AI interaction types
+3. **Performance Metrics**: Types for performance monitoring and optimization
+4. **Cloud Integration**: Types for cloud-based features and synchronization
+5. **Collaboration Types**: Types for team collaboration features
+
+---
+
+The Types directory provides a robust foundation for type safety throughout GitCue, ensuring reliable code, excellent developer experience, and maintainable architecture as the extension grows and evolves. 

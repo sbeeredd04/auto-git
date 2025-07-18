@@ -1,9 +1,19 @@
 import * as vscode from 'vscode';
 import { GitCueConfig } from '../types/interfaces';
+import { configManager } from '../utils/config';
+import { ActivityLogger } from './activityLogger';
+import { FileWatcherService } from './fileWatcherService';
 
 export class GitCueStatusProvider implements vscode.TreeDataProvider<GitCueStatusItem> {
 	private _onDidChangeTreeData: vscode.EventEmitter<GitCueStatusItem | undefined | null | void> = new vscode.EventEmitter<GitCueStatusItem | undefined | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<GitCueStatusItem | undefined | null | void> = this._onDidChangeTreeData.event;
+	private activityLogger: ActivityLogger;
+	private fileWatcherService: FileWatcherService;
+
+	constructor() {
+		this.activityLogger = ActivityLogger.getInstance();
+		this.fileWatcherService = FileWatcherService.getInstance();
+	}
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
@@ -15,69 +25,66 @@ export class GitCueStatusProvider implements vscode.TreeDataProvider<GitCueStatu
 
 	getChildren(element?: GitCueStatusItem): Thenable<GitCueStatusItem[]> {
 		if (!element) {
+			// Root items
 			const config = this.getConfig();
+			const watchStatus = this.activityLogger.getWatchStatus();
 			const isWatching = this.getWatchingStatus();
 			
 			return Promise.resolve([
 				new GitCueStatusItem(
-					`Status: ${isWatching ? 'Active' : 'Idle'}`, 
-					vscode.TreeItemCollapsibleState.None, 
-					isWatching ? 'check' : 'circle-outline',
-					isWatching ? 'GitCue is actively watching for changes' : 'GitCue is not currently watching'
+					`Status: ${isWatching ? 'Watching' : 'Idle'}`,
+					vscode.TreeItemCollapsibleState.None,
+					isWatching ? 'eye' : 'eye-closed',
+					isWatching ? 'Currently watching for file changes' : 'Not watching - click to start'
 				),
 				new GitCueStatusItem(
-					`Mode: ${config.commitMode}`, 
-					vscode.TreeItemCollapsibleState.None, 
-					config.commitMode === 'intelligent' ? 'brain' : 'clock',
+					`Files Changed: ${watchStatus.filesChanged}`,
+					vscode.TreeItemCollapsibleState.None,
+					'file-code',
+					`${watchStatus.filesChanged} files have been modified`
+				),
+				new GitCueStatusItem(
+					`Last Change: ${watchStatus.lastChange}`,
+					vscode.TreeItemCollapsibleState.None,
+					'clock',
+					`Most recent file change: ${watchStatus.lastChange}`
+				),
+				new GitCueStatusItem(
+					`Commit Mode: ${config.commitMode}`,
+					vscode.TreeItemCollapsibleState.None,
+					'git-commit',
 					`Current commit mode: ${config.commitMode}`
 				),
 				new GitCueStatusItem(
-					`API: ${config.geminiApiKey ? 'Configured' : 'Not Set'}`, 
-					vscode.TreeItemCollapsibleState.None, 
-					config.geminiApiKey ? 'key' : 'warning',
-					config.geminiApiKey ? 'Gemini API key is configured' : 'Gemini API key needs to be set'
-				),
-				new GitCueStatusItem(
-					`Auto Push: ${config.autoPush ? 'On' : 'Off'}`, 
-					vscode.TreeItemCollapsibleState.None, 
-					config.autoPush ? 'cloud-upload' : 'cloud',
+					`Auto Push: ${config.autoPush ? 'Enabled' : 'Disabled'}`,
+					vscode.TreeItemCollapsibleState.None,
+					config.autoPush ? 'arrow-up' : 'arrow-down',
 					`Auto push to remote: ${config.autoPush ? 'enabled' : 'disabled'}`
 				),
 				new GitCueStatusItem(
-					`Watch Paths: ${config.watchPaths.length}`, 
-					vscode.TreeItemCollapsibleState.None, 
-					'folder',
-					`Monitoring ${config.watchPaths.length} path pattern(s)`
+					`API Key: ${config.geminiApiKey ? 'Configured' : 'Not Set'}`,
+					vscode.TreeItemCollapsibleState.None,
+					config.geminiApiKey ? 'key' : 'warning',
+					config.geminiApiKey ? 'Gemini API key is configured' : 'Gemini API key needs to be configured'
+				),
+				new GitCueStatusItem(
+					`Pending Commit: ${watchStatus.pendingCommit ? 'Yes' : 'No'}`,
+					vscode.TreeItemCollapsibleState.None,
+					watchStatus.pendingCommit ? 'loading' : 'check',
+					watchStatus.pendingCommit ? 'Commit is pending' : 'No pending commits'
 				)
 			]);
 		}
+		
 		return Promise.resolve([]);
 	}
 
 	private getConfig(): GitCueConfig {
-		const config = vscode.workspace.getConfiguration('gitcue');
-		return {
-			geminiApiKey: config.get('geminiApiKey') || process.env.GEMINI_API_KEY || '',
-			commitMode: config.get('commitMode') || 'periodic',
-			autoPush: config.get('autoPush') ?? true,
-			watchPaths: config.get('watchPaths') || ['**/*'],
-			debounceMs: config.get('debounceMs') || 30000,
-			bufferTimeSeconds: config.get('bufferTimeSeconds') || 30,
-			maxCallsPerMinute: config.get('maxCallsPerMinute') || 15,
-			enableNotifications: config.get('enableNotifications') ?? true,
-			autoWatch: config.get('autoWatch') ?? false,
-			// Interactive terminal settings
-			interactiveOnError: config.get('interactiveOnError') ?? false,
-			enableSuggestions: config.get('enableSuggestions') ?? false,
-			terminalVerbose: config.get('terminalVerbose') ?? false,
-			sessionPersistence: config.get('sessionPersistence') ?? false,
-			maxHistorySize: config.get('maxHistorySize') || 100
-		};
+		return configManager.getConfig();
 	}
 
 	private getWatchingStatus(): boolean {
-		// This will be injected by the main extension
-		return (global as any).gitCueIsWatching || false;
+		return this.fileWatcherService.getIsWatching();
 	}
 }
 

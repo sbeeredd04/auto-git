@@ -1,1035 +1,902 @@
 # 🧪 Test Directory
 
-The Test directory contains comprehensive testing infrastructure for the GitCue extension, including unit tests, integration tests, and testing utilities. The testing framework ensures reliability, maintainability, and quality across all extension components.
+The Test directory contains comprehensive test suites for GitCue extension functionality, including unit tests, integration tests, and end-to-end testing scenarios. This ensures reliability, maintainability, and quality across all extension features.
 
-## 🏗️ Testing Architecture Overview
+## 🏗️ Testing Architecture
 
 ```mermaid
 graph TB
-    subgraph "Testing Framework"
-        subgraph "Test Types"
-            UNIT[Unit Tests<br/>Individual Components]
-            INTEGRATION[Integration Tests<br/>Component Interaction]
-            E2E[End-to-End Tests<br/>Complete Workflows]
-            PERFORMANCE[Performance Tests<br/>Load & Speed]
+    subgraph "Test Structure"
+        subgraph "Core Test Files"
+            EXT_TEST[extension.test.ts<br/>Main Extension Tests]
+            UNIT_TESTS[Unit Tests<br/>Service & Component Tests]
+            INTEGRATION[Integration Tests<br/>Cross-Service Tests]
+            E2E[End-to-End Tests<br/>User Workflow Tests]
         end
         
-        subgraph "Test Infrastructure"
-            RUNNER[VS Code Test Runner]
-            MOCKS[Mock Objects]
-            FIXTURES[Test Fixtures]
-            HELPERS[Test Helpers]
+        subgraph "Test Categories"
+            SERVICE_TESTS[Service Tests<br/>CommitService, FileWatcher, etc.]
+            UTIL_TESTS[Utils Tests<br/>AI, Config, Logger, Markdown]
+            UI_TESTS[UI Tests<br/>Dashboard, Terminal, StatusBar]
+            API_TESTS[API Tests<br/>Gemini AI Integration]
         end
         
-        subgraph "Coverage & Quality"
-            COVERAGE[Code Coverage]
-            LINTING[ESLint Testing]
-            TYPE_CHECK[TypeScript Validation]
-            SNAPSHOT[Snapshot Testing]
+        subgraph "Test Utilities"
+            MOCKS[Mock Objects<br/>Service & API Mocks]
+            FIXTURES[Test Fixtures<br/>Sample Data & Configs]
+            HELPERS[Test Helpers<br/>Setup & Teardown]
+            STUBS[VS Code Stubs<br/>API Simulation]
         end
         
-        subgraph "Test Targets"
-            SERVICES[Service Tests]
-            TERMINAL[Terminal Tests]
-            UTILS[Utility Tests]
-            TYPES[Type Safety Tests]
+        subgraph "Test Execution"
+            RUNNER[Test Runner<br/>VS Code Test Framework]
+            COVERAGE[Code Coverage<br/>Istanbul/NYC]
+            REPORTING[Test Reports<br/>Results & Metrics]
+            CI_CD[CI/CD Integration<br/>GitHub Actions]
         end
     end
     
-    UNIT --> RUNNER
-    INTEGRATION --> RUNNER
-    E2E --> RUNNER
-    PERFORMANCE --> RUNNER
+    EXT_TEST --> SERVICE_TESTS
+    EXT_TEST --> UTIL_TESTS
+    EXT_TEST --> UI_TESTS
+    EXT_TEST --> API_TESTS
     
-    RUNNER --> MOCKS
-    RUNNER --> FIXTURES
-    RUNNER --> HELPERS
+    SERVICE_TESTS --> MOCKS
+    UTIL_TESTS --> FIXTURES
+    UI_TESTS --> STUBS
+    API_TESTS --> HELPERS
     
-    MOCKS --> COVERAGE
-    FIXTURES --> LINTING
-    HELPERS --> TYPE_CHECK
+    MOCKS --> RUNNER
+    FIXTURES --> RUNNER
+    HELPERS --> RUNNER
+    STUBS --> RUNNER
     
-    COVERAGE --> SERVICES
-    LINTING --> TERMINAL
-    TYPE_CHECK --> UTILS
-    SNAPSHOT --> TYPES
+    RUNNER --> COVERAGE
+    COVERAGE --> REPORTING
+    REPORTING --> CI_CD
     
-    style UNIT fill:#e8f5e8
-    style INTEGRATION fill:#f3e5f5
-    style E2E fill:#fff3e0
-    style RUNNER fill:#e3f2fd
+    style EXT_TEST fill:#e3f2fd
+    style SERVICE_TESTS fill:#f3e5f5
+    style UTIL_TESTS fill:#e8f5e8
+    style MOCKS fill:#fff3e0
 ```
 
 ---
 
-## 🎯 Testing Strategy
+## 🎯 Test Categories
 
-### Test Pyramid Structure
+### Extension Core Tests
 
-```mermaid
-graph TD
-    subgraph "Test Pyramid"
-        E2E[E2E Tests<br/>10%<br/>High-level workflows]
-        INTEGRATION[Integration Tests<br/>20%<br/>Service interactions]
-        UNIT[Unit Tests<br/>70%<br/>Individual functions]
-    end
-    
-    subgraph "Test Characteristics"
-        FAST[Fast Execution]
-        RELIABLE[Reliable Results]
-        ISOLATED[Isolated Components]
-        MAINTAINABLE[Easy Maintenance]
-    end
-    
-    subgraph "Test Coverage Areas"
-        AI_LOGIC[AI Integration Logic]
-        FILE_WATCHING[File Watching System]
-        CONFIG[Configuration Management]
-        UI_COMPONENTS[UI Components]
-        ERROR_HANDLING[Error Handling]
-    end
-    
-    UNIT --> FAST
-    UNIT --> ISOLATED
-    INTEGRATION --> RELIABLE
-    E2E --> MAINTAINABLE
-    
-    FAST --> AI_LOGIC
-    RELIABLE --> FILE_WATCHING
-    ISOLATED --> CONFIG
-    MAINTAINABLE --> UI_COMPONENTS
-    RELIABLE --> ERROR_HANDLING
-    
-    style UNIT fill:#e8f5e8
-    style INTEGRATION fill:#f3e5f5
-    style E2E fill:#fff3e0
-```
-
-### Testing Principles
-
-1. **Test-Driven Development (TDD)**: Write tests before implementation
-2. **Behavior-Driven Testing**: Focus on expected behavior rather than implementation
-3. **Isolation**: Each test should be independent and not affect others
-4. **Repeatability**: Tests should produce consistent results across runs
-5. **Fast Feedback**: Quick test execution for rapid development cycles
-6. **Comprehensive Coverage**: Cover happy paths, edge cases, and error scenarios
-
----
-
-## 🔧 Test Infrastructure
-
-### VS Code Extension Testing Setup
+**Purpose**: Tests the main extension functionality including activation, command registration, and lifecycle management.
 
 ```typescript
+// extension.test.ts
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { describe, it, beforeEach, afterEach } from 'mocha';
+import { activate, deactivate } from '../extension';
 
-// Test suite configuration
-export function run(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const mocha = new Mocha({
-      ui: 'bdd',
-      color: true,
-      timeout: 10000,
-      reporter: 'spec'
-    });
+suite('Extension Test Suite', () => {
+  vscode.window.showInformationMessage('Start all tests.');
+
+  test('Extension should activate successfully', async () => {
+    // Test extension activation
+    const context = createMockContext();
+    await activate(context);
     
-    // Add test files
-    const testsRoot = path.resolve(__dirname, '..');
-    glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
-      if (err) {
-        return reject(err);
-      }
-      
-      files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
-      
-      try {
-        mocha.run(failures => {
-          if (failures > 0) {
-            reject(new Error(`${failures} tests failed.`));
-          } else {
-            resolve();
-          }
-        });
-      } catch (err) {
-        reject(err);
-      }
+    assert.ok(context.subscriptions.length > 0);
+    assert.ok(vscode.commands.getCommands().then(commands => 
+      commands.includes('gitcue.commit')
+    ));
+  });
+
+  test('Extension should register all commands', async () => {
+    const expectedCommands = [
+      'gitcue.commit',
+      'gitcue.watchToggle',
+      'gitcue.openDashboard',
+      'gitcue.reset',
+      'gitcue.configure',
+      'gitcue.showStatus',
+      'gitcue.cancelCommit',
+      'gitcue.openInteractiveTerminal',
+      'gitcue.openAITerminal',
+      'gitcue.dashboard'
+    ];
+    
+    const commands = await vscode.commands.getCommands();
+    expectedCommands.forEach(command => {
+      assert.ok(commands.includes(command), `Command ${command} not registered`);
     });
   });
-}
-```
 
-### Mock Framework Setup
-
-```mermaid
-graph LR
-    subgraph "Mock System"
-        VSCODE_MOCKS[VS Code API Mocks]
-        GEMINI_MOCKS[Gemini AI Mocks]
-        FS_MOCKS[File System Mocks]
-        GIT_MOCKS[Git Command Mocks]
-    end
-    
-    subgraph "Mock Features"
-        STUB[Method Stubbing]
-        SPY[Function Spying]
-        FAKE[Fake Objects]
-        PARTIAL[Partial Mocks]
-    end
-    
-    subgraph "Test Scenarios"
-        SUCCESS[Success Paths]
-        ERROR[Error Scenarios]
-        EDGE[Edge Cases]
-        ASYNC[Async Operations]
-    end
-    
-    VSCODE_MOCKS --> STUB
-    GEMINI_MOCKS --> SPY
-    FS_MOCKS --> FAKE
-    GIT_MOCKS --> PARTIAL
-    
-    STUB --> SUCCESS
-    SPY --> ERROR
-    FAKE --> EDGE
-    PARTIAL --> ASYNC
-    
-    style VSCODE_MOCKS fill:#e3f2fd
-    style GEMINI_MOCKS fill:#f3e5f5
-    style FS_MOCKS fill:#e8f5e8
-    style SUCCESS fill:#fff3e0
-```
-
----
-
-## 🔬 Unit Testing
-
-### Service Testing Framework
-
-```typescript
-describe('GitCue Services', () => {
-  describe('CommitService', () => {
-    let commitService: CommitService;
-    let mockActivityLogger: jest.Mocked<ActivityLogger>;
-    let mockGeminiAPI: jest.Mock;
-    
-    beforeEach(() => {
-      // Reset all mocks
-      jest.clearAllMocks();
-      
-      // Create mock instances
-      mockActivityLogger = {
-        logActivity: jest.fn(),
-        updateWatchStatus: jest.fn(),
-        setCommitCompleted: jest.fn()
-      } as any;
-      
-      mockGeminiAPI = jest.fn();
-      
-      // Initialize service with mocks
-      commitService = CommitService.getInstance();
-      commitService.setDependencies(mockActivityLogger, mockGeminiAPI);
-    });
-    
-    describe('generateCommitMessage', () => {
-      it('should generate commit message with AI', async () => {
-        // Arrange
-        const mockDiff = 'diff --git a/test.js...';
-        const mockConfig = createMockConfig();
-        const expectedMessage = 'feat: add new feature';
-        
-        mockGeminiAPI.mockResolvedValue({
-          response: { text: () => expectedMessage }
-        });
-        
-        // Act
-        const result = await commitService.generateCommitMessage('/test/path', mockConfig);
-        
-        // Assert
-        expect(result).toBe(expectedMessage);
-        expect(mockGeminiAPI).toHaveBeenCalledWith(expect.stringContaining(mockDiff));
-        expect(mockActivityLogger.logActivity).toHaveBeenCalledWith(
-          'ai_analysis', 
-          'Generated commit message with AI'
-        );
-      });
-      
-      it('should handle AI API errors gracefully', async () => {
-        // Arrange
-        const mockError = new Error('API rate limit exceeded');
-        mockGeminiAPI.mockRejectedValue(mockError);
-        
-        // Act & Assert
-        await expect(
-          commitService.generateCommitMessage('/test/path', createMockConfig())
-        ).rejects.toThrow('API rate limit exceeded');
-        
-        expect(mockActivityLogger.logActivity).toHaveBeenCalledWith(
-          'error',
-          'AI commit message generation failed',
-          mockError.message
-        );
-      });
-    });
-    
-    describe('analyzeChangesWithAI', () => {
-      it('should return commit decision from AI', async () => {
-        // Arrange
-        const mockDecision = {
-          shouldCommit: true,
-          reason: 'Complete feature implementation',
-          significance: 'MEDIUM'
-        };
-        
-        mockGeminiAPI.mockResolvedValue({
-          response: {
-            functionCalls: () => [{ 
-              name: 'should_commit_changes', 
-              args: mockDecision 
-            }]
-          }
-        });
-        
-        // Act
-        const result = await commitService.analyzeChangesWithAI('/test/path');
-        
-        // Assert
-        expect(result).toEqual(mockDecision);
-        expect(result.shouldCommit).toBe(true);
-        expect(result.significance).toBe('MEDIUM');
-      });
-    });
-  });
-  
-  describe('FileWatcherService', () => {
-    let fileWatcherService: FileWatcherService;
-    let mockChokidar: jest.Mocked<any>;
-    let mockCommitService: jest.Mocked<CommitService>;
-    
-    beforeEach(() => {
-      mockChokidar = {
-        watch: jest.fn().mockReturnValue({
-          on: jest.fn(),
-          close: jest.fn()
-        })
-      };
-      
-      mockCommitService = {
-        commitWithBuffer: jest.fn()
-      } as any;
-      
-      fileWatcherService = FileWatcherService.getInstance();
-    });
-    
-    it('should start file watching with correct patterns', async () => {
-      // Arrange
-      const watchPatterns = ['src/**', '*.js'];
-      
-      // Act
-      await fileWatcherService.startWatching();
-      
-      // Assert
-      expect(mockChokidar.watch).toHaveBeenCalledWith(
-        watchPatterns,
-        expect.objectContaining({
-          ignored: expect.arrayContaining(['**/node_modules/**']),
-          persistent: true,
-          ignoreInitial: true
-        })
-      );
-    });
-    
-    it('should filter ignored files correctly', () => {
-      // Arrange
-      const testCases = [
-        { file: 'src/test.js', expected: false },
-        { file: 'node_modules/package.json', expected: true },
-        { file: '.git/index.lock', expected: true },
-        { file: 'dist/bundle.js', expected: true }
-      ];
-      
-      // Act & Assert
-      testCases.forEach(({ file, expected }) => {
-        const result = fileWatcherService.shouldIgnoreFile(file, file);
-        expect(result).toBe(expected);
-      });
-    });
+  test('Extension should deactivate cleanly', async () => {
+    await deactivate();
+    // Assert cleanup was performed
+    assert.ok(true, 'Deactivation completed without errors');
   });
 });
 ```
 
-### Utility Testing
+### Service Layer Tests
+
+**Purpose**: Tests individual services for correct functionality, error handling, and state management.
 
 ```typescript
-describe('GitCue Utils', () => {
-  describe('ConfigManager', () => {
-    let configManager: ConfigManager;
-    let mockVSCodeConfig: jest.Mocked<vscode.WorkspaceConfiguration>;
-    
-    beforeEach(() => {
-      mockVSCodeConfig = {
-        get: jest.fn(),
-        update: jest.fn(),
-        has: jest.fn(),
-        inspect: jest.fn()
-      } as any;
-      
-      jest.spyOn(vscode.workspace, 'getConfiguration')
-        .mockReturnValue(mockVSCodeConfig);
-      
-      configManager = ConfigManager.getInstance();
-    });
-    
-    it('should load configuration with defaults', () => {
-      // Arrange
-      mockVSCodeConfig.get
-        .mockReturnValueOnce('test-api-key')
-        .mockReturnValueOnce('intelligent')
-        .mockReturnValueOnce(true);
-      
-      // Act
-      const config = configManager.getConfig();
-      
-      // Assert
-      expect(config).toMatchObject({
-        geminiApiKey: 'test-api-key',
-        commitMode: 'intelligent',
-        autoPush: true
-      });
-    });
-    
-    it('should validate configuration correctly', () => {
-      // Arrange
-      mockVSCodeConfig.get
-        .mockReturnValueOnce('')  // Empty API key
-        .mockReturnValueOnce('invalid')  // Invalid commit mode
-        .mockReturnValueOnce(500);  // Invalid debounce time
-      
-      // Act
-      const validation = configManager.validateConfig();
-      
-      // Assert
-      expect(validation.valid).toBe(false);
-      expect(validation.errors).toContain('Gemini API key is required');
-      expect(validation.errors).toContain('Commit mode must be either "periodic" or "intelligent"');
-    });
+// services/commitService.test.ts
+import * as assert from 'assert';
+import { CommitService } from '../services/commitService';
+import { createMockConfig, createMockWorkspace } from './helpers/testUtils';
+
+suite('CommitService Tests', () => {
+  let commitService: CommitService;
+  let mockConfig: GitCueConfig;
+  let mockWorkspace: string;
+
+  setup(() => {
+    commitService = CommitService.getInstance();
+    mockConfig = createMockConfig();
+    mockWorkspace = createMockWorkspace();
   });
-  
-  describe('MarkdownRenderer', () => {
-    let renderer: MarkdownRenderer;
+
+  test('should generate commit message with AI', async () => {
+    const mockDiff = 'diff --git a/test.js b/test.js\n+console.log("test");';
+    const mockStatus = 'M test.js';
     
-    beforeEach(() => {
-      renderer = new MarkdownRenderer({
-        maxWidth: 80,
-        colors: {
-          header: '\x1b[36m',
-          code: '\x1b[33m',
-          bold: '\x1b[1m',
-          reset: '\x1b[0m'
-        }
-      });
-    });
+    const message = await commitService.generateCommitMessage(mockWorkspace, mockConfig);
     
-    it('should render headers with proper formatting', () => {
-      // Test cases for different header levels
-      const testCases = [
-        { input: '# Main Header', expected: /Main Header.*═+/ },
-        { input: '## Sub Header', expected: /Sub Header.*─+/ },
-        { input: '### Small Header', expected: /Small Header.*·+/ }
-      ];
-      
-      testCases.forEach(({ input, expected }) => {
-        const result = renderer.render(input);
-        expect(result).toMatch(expected);
-      });
-    });
+    assert.ok(message.length > 0);
+    assert.ok(message.includes('test') || message.includes('add') || message.includes('update'));
+  });
+
+  test('should handle commit with buffer notification', async () => {
+    const mockMessage = 'test: add test functionality';
+    const mockStatus = 'M test.js';
     
-    it('should handle inline formatting correctly', () => {
-      const input = 'Text with **bold** and `code` and *italic*';
-      const result = renderer.render(input);
-      
-      expect(result).toContain('\x1b[1m');  // Bold formatting
-      expect(result).toContain('\x1b[33m'); // Code formatting
-      expect(result).toContain('\x1b[0m');  // Reset formatting
-    });
+    // Mock the buffer notification
+    const bufferPromise = commitService.commitWithBuffer(mockWorkspace, mockConfig);
     
-    it('should create proper text boxes', () => {
-      const content = 'Test box content';
-      const title = 'Test Title';
-      const result = renderer.createBox(content, title);
-      
-      expect(result).toContain('╭─ Test Title');
-      expect(result).toContain('Test box content');
-      expect(result).toContain('╰─');
-    });
+    // Simulate user cancellation
+    setTimeout(() => {
+      commitService.cancelBufferedCommit();
+    }, 100);
+    
+    await bufferPromise;
+    assert.ok(true, 'Buffer notification handled correctly');
+  });
+
+  test('should validate commit analysis', async () => {
+    const mockDiff = 'diff --git a/feature.js b/feature.js\n+function newFeature() { return "complete"; }';
+    
+    const analysis = await commitService.analyzeChangesWithAI(mockWorkspace);
+    
+    assert.ok(typeof analysis.shouldCommit === 'boolean');
+    assert.ok(typeof analysis.reason === 'string');
+    assert.ok(['LOW', 'MEDIUM', 'HIGH'].includes(analysis.significance));
+  });
+});
+```
+
+### Utils Testing
+
+**Purpose**: Tests utility functions for configuration, AI integration, logging, and markdown rendering.
+
+```typescript
+// utils/ai.test.ts
+import * as assert from 'assert';
+import { 
+  makeCommitDecisionWithAI, 
+  generateErrorSuggestion, 
+  testAIConnection,
+  formatAISuggestion 
+} from '../utils/ai';
+
+suite('AI Utils Tests', () => {
+  test('should make commit decision with AI', async () => {
+    const mockDiff = 'diff --git a/src/feature.js b/src/feature.js\n+export function newFeature() { return true; }';
+    const mockStatus = 'A src/feature.js';
+    
+    const decision = await makeCommitDecisionWithAI(mockDiff, mockStatus);
+    
+    assert.ok(typeof decision.shouldCommit === 'boolean');
+    assert.ok(typeof decision.reason === 'string');
+    assert.ok(decision.reason.length > 0);
+    assert.ok(['LOW', 'MEDIUM', 'HIGH'].includes(decision.significance));
+  });
+
+  test('should generate error suggestions', async () => {
+    const errorContext = 'Command: git push\nError: Permission denied (publickey)';
+    
+    const suggestion = await generateErrorSuggestion(errorContext);
+    
+    assert.ok(suggestion.length > 0);
+    assert.ok(suggestion.includes('ssh') || suggestion.includes('key') || suggestion.includes('authentication'));
+  });
+
+  test('should format AI suggestions correctly', () => {
+    const suggestion = '# Solution\nTry running `git status` to check your repository state.';
+    const formatted = formatAISuggestion(suggestion);
+    
+    assert.ok(formatted.includes('Solution'));
+    assert.ok(formatted.includes('git status'));
+  });
+
+  test('should test AI connection', async () => {
+    const isConnected = await testAIConnection();
+    assert.ok(typeof isConnected === 'boolean');
+  });
+});
+```
+
+### Configuration Tests
+
+**Purpose**: Tests configuration loading, validation, and management.
+
+```typescript
+// utils/config.test.ts
+import * as assert from 'assert';
+import { ConfigManager } from '../utils/config';
+import { createMockConfig } from './helpers/testUtils';
+
+suite('Configuration Tests', () => {
+  let configManager: ConfigManager;
+
+  setup(() => {
+    configManager = ConfigManager.getInstance();
+  });
+
+  test('should load default configuration', () => {
+    const config = configManager.getConfig();
+    
+    assert.ok(config);
+    assert.ok(['periodic', 'intelligent'].includes(config.commitMode));
+    assert.ok(typeof config.autoPush === 'boolean');
+    assert.ok(Array.isArray(config.watchPaths));
+    assert.ok(typeof config.debounceMs === 'number');
+  });
+
+  test('should validate configuration', () => {
+    const validConfig = createMockConfig();
+    const result = configManager.validateConfig();
+    
+    assert.ok(typeof result.valid === 'boolean');
+    assert.ok(Array.isArray(result.errors));
+    
+    if (!result.valid) {
+      console.log('Validation errors:', result.errors);
+    }
+  });
+
+  test('should optimize watch patterns', () => {
+    const patterns = configManager.getOptimizedWatchPatterns();
+    
+    assert.ok(Array.isArray(patterns));
+    assert.ok(patterns.length > 0);
+    assert.ok(patterns.every(pattern => typeof pattern === 'string'));
+  });
+
+  test('should handle configuration updates', async () => {
+    const originalMode = configManager.getConfig().commitMode;
+    const newMode = originalMode === 'periodic' ? 'intelligent' : 'periodic';
+    
+    await configManager.updateConfig('commitMode', newMode);
+    
+    const updatedConfig = configManager.getConfig();
+    assert.strictEqual(updatedConfig.commitMode, newMode);
+  });
+});
+```
+
+### Markdown Rendering Tests
+
+**Purpose**: Tests markdown rendering functionality for terminal output.
+
+```typescript
+// utils/markdown.test.ts
+import * as assert from 'assert';
+import { MarkdownRenderer, renderMarkdown, createErrorSuggestionBox } from '../utils/markdown';
+
+suite('Markdown Renderer Tests', () => {
+  let renderer: MarkdownRenderer;
+
+  setup(() => {
+    renderer = new MarkdownRenderer();
+  });
+
+  test('should render headers correctly', () => {
+    const markdown = '# Test Header\n## Subheader\n### Sub-subheader';
+    const rendered = renderer.render(markdown);
+    
+    assert.ok(rendered.includes('Test Header'));
+    assert.ok(rendered.includes('Subheader'));
+    assert.ok(rendered.includes('Sub-subheader'));
+  });
+
+  test('should render code blocks', () => {
+    const markdown = '```bash\ngit status\ngit add .\n```';
+    const rendered = renderer.render(markdown);
+    
+    assert.ok(rendered.includes('git status'));
+    assert.ok(rendered.includes('git add .'));
+  });
+
+  test('should render lists', () => {
+    const markdown = '- First item\n- Second item\n- Third item';
+    const rendered = renderer.render(markdown);
+    
+    assert.ok(rendered.includes('First item'));
+    assert.ok(rendered.includes('Second item'));
+    assert.ok(rendered.includes('Third item'));
+  });
+
+  test('should create bordered boxes', () => {
+    const content = 'This is test content';
+    const title = 'Test Box';
+    const box = renderer.createBox(content, title);
+    
+    assert.ok(box.includes('╭'));
+    assert.ok(box.includes('╮'));
+    assert.ok(box.includes('╰'));
+    assert.ok(box.includes('╯'));
+    assert.ok(box.includes(title));
+    assert.ok(box.includes(content));
+  });
+
+  test('should handle text wrapping', () => {
+    const longText = 'This is a very long text that should be wrapped at a certain width to ensure proper display in terminal environments.';
+    const wrapped = renderer.wrapText(longText, 40);
+    
+    const lines = wrapped.split('\n');
+    assert.ok(lines.length > 1);
+    assert.ok(lines.every(line => line.length <= 40));
+  });
+
+  test('should create error suggestion boxes', () => {
+    const suggestion = 'Try running git status to check your repository state.';
+    const box = createErrorSuggestionBox(suggestion);
+    
+    assert.ok(box.includes(suggestion));
+    assert.ok(box.includes('╭'));
+    assert.ok(box.includes('╰'));
   });
 });
 ```
 
 ---
 
-## 🔗 Integration Testing
+## 🔧 Test Utilities & Helpers
 
-### Service Integration Tests
+### Mock Objects
 
-```typescript
-describe('GitCue Integration', () => {
-  describe('File Watching to Commit Flow', () => {
-    let fileWatcher: FileWatcherService;
-    let commitService: CommitService;
-    let activityLogger: ActivityLogger;
-    
-    beforeEach(async () => {
-      // Initialize services
-      fileWatcher = FileWatcherService.getInstance();
-      commitService = CommitService.getInstance();
-      activityLogger = ActivityLogger.getInstance();
-      
-      // Clear any existing state
-      activityLogger.resetWatchStatus();
-    });
-    
-    it('should coordinate file changes to commits', async () => {
-      // Arrange
-      const mockGitDiff = 'diff --git a/test.js...';
-      const mockConfig = createMockConfig({ commitMode: 'intelligent' });
-      
-      jest.spyOn(commitService, 'analyzeChangesWithAI')
-        .mockResolvedValue({
-          shouldCommit: true,
-          reason: 'Complete feature',
-          significance: 'MEDIUM'
-        });
-      
-      // Act
-      await fileWatcher.startWatching();
-      
-      // Simulate file change
-      const testFile = vscode.Uri.file('/test/path/test.js');
-      await fileWatcher.handleFileChange(testFile, new Set(), null);
-      
-      // Assert
-      const watchStatus = activityLogger.getWatchStatus();
-      expect(watchStatus.isWatching).toBe(true);
-      expect(watchStatus.filesChanged).toBeGreaterThan(0);
-      
-      // Verify activity logging
-      const activities = watchStatus.activityHistory;
-      expect(activities).toContainEqual(
-        expect.objectContaining({
-          type: 'file_change',
-          message: expect.stringContaining('test.js')
-        })
-      );
-    });
-    
-    it('should handle AI rate limiting gracefully', async () => {
-      // Arrange
-      const rateLimitError = new Error('Rate limit exceeded');
-      jest.spyOn(commitService, 'generateCommitMessage')
-        .mockRejectedValue(rateLimitError);
-      
-      // Act
-      await fileWatcher.startWatching();
-      
-      // Simulate multiple rapid file changes
-      for (let i = 0; i < 20; i++) {
-        const testFile = vscode.Uri.file(`/test/path/test${i}.js`);
-        await fileWatcher.handleFileChange(testFile, new Set(), null);
-      }
-      
-      // Assert
-      const activities = activityLogger.getWatchStatus().activityHistory;
-      const errorActivities = activities.filter(a => a.type === 'error');
-      expect(errorActivities.length).toBeGreaterThan(0);
-      expect(errorActivities[0].message).toContain('Rate limit');
-    });
-  });
-  
-  describe('Dashboard and Services Integration', () => {
-    let dashboard: DashboardService;
-    let activityLogger: ActivityLogger;
-    
-    beforeEach(() => {
-      dashboard = DashboardService.getInstance();
-      activityLogger = ActivityLogger.getInstance();
-    });
-    
-    it('should update dashboard when activity changes', async () => {
-      // Arrange
-      const mockPanel = {
-        webview: {
-          postMessage: jest.fn()
-        }
-      } as any;
-      
-      jest.spyOn(dashboard, 'createDashboard')
-        .mockReturnValue(mockPanel);
-      
-      // Act
-      const panel = dashboard.createDashboard(() => {});
-      activityLogger.logActivity('commit', 'Test commit completed');
-      
-      // Simulate dashboard update
-      const currentState = {
-        isWatching: true,
-        config: createMockConfig(),
-        watchStatus: activityLogger.getWatchStatus()
-      };
-      dashboard.updateDashboards(currentState);
-      
-      // Assert
-      expect(panel.webview.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'updateState',
-          state: expect.objectContaining({
-            isWatching: true,
-            watchStatus: expect.objectContaining({
-              activityHistory: expect.arrayContaining([
-                expect.objectContaining({
-                  type: 'commit',
-                  message: 'Test commit completed'
-                })
-              ])
-            })
-          })
-        })
-      );
-    });
-  });
-});
-```
-
----
-
-## 🌍 End-to-End Testing
-
-### Complete Workflow Tests
+**Purpose**: Provides realistic mock objects for testing without external dependencies.
 
 ```typescript
-describe('GitCue E2E Tests', () => {
-  let extension: GitCueExtension;
-  let testWorkspace: string;
-  
-  beforeEach(async () => {
-    // Setup test workspace
-    testWorkspace = await createTestWorkspace();
-    await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(testWorkspace));
-    
-    // Initialize extension
-    const context = {
-      subscriptions: [],
-      workspaceState: {
-        get: jest.fn(),
-        update: jest.fn()
-      },
-      globalState: {
-        get: jest.fn(),
-        update: jest.fn()
-      }
-    } as any;
-    
-    extension = new GitCueExtension(context);
-  });
-  
-  afterEach(async () => {
-    // Cleanup test workspace
-    await cleanupTestWorkspace(testWorkspace);
-    extension.dispose();
-  });
-  
-  it('should complete full AI commit workflow', async () => {
-    // Arrange
-    await setupGitRepository(testWorkspace);
-    await createTestFile(testWorkspace, 'test.js', 'console.log("test");');
-    
-    // Mock AI responses
-    jest.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        candidates: [{
-          content: {
-            parts: [{ text: 'feat: add test console log' }]
-          }
-        }]
-      })
-    } as any);
-    
-    // Act
-    await vscode.commands.executeCommand('gitcue.commitWithPreview');
-    
-    // Wait for AI processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Assert
-    const gitLog = await executeGitCommand('log --oneline -1');
-    expect(gitLog).toContain('feat: add test console log');
-  });
-  
-  it('should handle terminal AI chat workflow', async () => {
-    // Arrange
-    await vscode.commands.executeCommand('gitcue.openTerminal');
-    
-    // Act
-    const terminal = vscode.window.activeTerminal;
-    expect(terminal).toBeDefined();
-    
-    // Simulate terminal commands
-    terminal?.sendText('ai');
-    await delay(1000);
-    
-    terminal?.sendText('explain git rebase');
-    await delay(2000);
-    
-    // Assert through logs (since terminal output is hard to capture)
-    const logger = ExtensionLogger.getInstance();
-    const outputLog = logger.getLastOutput();
-    expect(outputLog).toContain('AI');
-  });
-  
-  it('should persist configuration across sessions', async () => {
-    // Arrange
-    const testConfig = {
-      commitMode: 'periodic',
-      autoPush: false,
-      debounceMs: 5000
-    };
-    
-    // Act
-    await vscode.workspace.getConfiguration('gitcue').update('commitMode', 'periodic');
-    await vscode.workspace.getConfiguration('gitcue').update('autoPush', false);
-    await vscode.workspace.getConfiguration('gitcue').update('debounceMs', 5000);
-    
-    // Reload extension
-    extension.dispose();
-    extension = new GitCueExtension(context);
-    
-    // Assert
-    const configManager = ConfigManager.getInstance();
-    const loadedConfig = configManager.getConfig();
-    
-    expect(loadedConfig.commitMode).toBe('periodic');
-    expect(loadedConfig.autoPush).toBe(false);
-    expect(loadedConfig.debounceMs).toBe(5000);
-  });
-});
-```
+// helpers/testUtils.ts
+import * as vscode from 'vscode';
+import { GitCueConfig, WatchStatus, ActivityLogEntry } from '../../types/interfaces';
 
----
-
-## 📊 Performance Testing
-
-### Load and Performance Tests
-
-```typescript
-describe('GitCue Performance', () => {
-  describe('File Watching Performance', () => {
-    it('should handle large numbers of file changes efficiently', async () => {
-      // Arrange
-      const fileWatcher = FileWatcherService.getInstance();
-      const startTime = Date.now();
-      const fileCount = 1000;
-      
-      // Act
-      await fileWatcher.startWatching();
-      
-      const promises = Array.from({ length: fileCount }, (_, i) => {
-        const testFile = vscode.Uri.file(`/test/path/test${i}.js`);
-        return fileWatcher.handleFileChange(testFile, new Set(), null);
-      });
-      
-      await Promise.all(promises);
-      
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      
-      // Assert
-      expect(duration).toBeLessThan(5000); // Should complete within 5 seconds
-      
-      const watchStatus = ActivityLogger.getInstance().getWatchStatus();
-      expect(watchStatus.filesChanged).toBe(fileCount);
-    });
-    
-    it('should maintain memory usage under limits', async () => {
-      // Arrange
-      const initialMemory = process.memoryUsage();
-      const activityLogger = ActivityLogger.getInstance();
-      
-      // Act - Generate many activities
-      for (let i = 0; i < 10000; i++) {
-        activityLogger.logActivity('file_change', `File ${i} changed`);
-      }
-      
-      const finalMemory = process.memoryUsage();
-      const memoryIncrease = finalMemory.heapUsed - initialMemory.heapUsed;
-      
-      // Assert - Memory increase should be reasonable
-      expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024); // Less than 50MB
-    });
-  });
-  
-  describe('AI Response Performance', () => {
-    it('should handle AI requests within time limits', async () => {
-      // Arrange
-      const mockAIResponse = 'feat: add new feature';
-      jest.spyOn(global, 'fetch').mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({
-          candidates: [{ content: { parts: [{ text: mockAIResponse }] } }]
-        })
-      } as any);
-      
-      // Act
-      const startTime = Date.now();
-      const result = await generateCommitMessageWithAI('test diff', 'test status');
-      const endTime = Date.now();
-      
-      const duration = endTime - startTime;
-      
-      // Assert
-      expect(duration).toBeLessThan(3000); // Should complete within 3 seconds
-      expect(result).toBe(mockAIResponse);
-    });
-  });
-});
-```
-
----
-
-## 🛠️ Testing Utilities
-
-### Test Helper Functions
-
-```typescript
-// Test workspace management
-export async function createTestWorkspace(): Promise<string> {
-  const tempDir = os.tmpdir();
-  const workspacePath = path.join(tempDir, `gitcue-test-${Date.now()}`);
-  
-  await fs.mkdir(workspacePath, { recursive: true });
-  return workspacePath;
-}
-
-export async function cleanupTestWorkspace(workspacePath: string): Promise<void> {
-  await fs.rmdir(workspacePath, { recursive: true });
-}
-
-export async function setupGitRepository(workspacePath: string): Promise<void> {
-  await executeCommand('git init', workspacePath);
-  await executeCommand('git config user.email "test@example.com"', workspacePath);
-  await executeCommand('git config user.name "Test User"', workspacePath);
-}
-
-export async function createTestFile(
-  workspacePath: string, 
-  fileName: string, 
-  content: string
-): Promise<void> {
-  const filePath = path.join(workspacePath, fileName);
-  await fs.writeFile(filePath, content, 'utf8');
-}
-
-// Mock factories
-export function createMockConfig(overrides: Partial<GitCueConfig> = {}): GitCueConfig {
+export function createMockConfig(overrides?: Partial<GitCueConfig>): GitCueConfig {
   return {
-    geminiApiKey: 'test-api-key',
+    geminiApiKey: 'test-api-key-12345',
     commitMode: 'intelligent',
     autoPush: true,
-    watchPaths: ['src/**', '*.js'],
-    debounceMs: 30000,
-    bufferTimeSeconds: 30,
-    maxCallsPerMinute: 15,
-    enableNotifications: true,
+    watchPaths: ['src/**', '*.js', '*.ts'],
+    debounceMs: 5000, // Shorter for testing
+    bufferTimeSeconds: 10, // Shorter for testing
+    maxCallsPerMinute: 30,
+    enableNotifications: false, // Disabled for testing
     autoWatch: false,
     interactiveOnError: true,
     enableSuggestions: true,
     terminalVerbose: false,
-    sessionPersistence: true,
-    maxHistorySize: 100,
+    sessionPersistence: false,
+    maxHistorySize: 50,
+    watchOptions: {
+      ignored: ['node_modules/**', '.git/**', 'dist/**'],
+      persistent: true,
+      ignoreInitial: true,
+      followSymlinks: false,
+      depth: 3
+    },
     ...overrides
   };
 }
 
-export function createMockVSCodeContext(): vscode.ExtensionContext {
+export function createMockWatchStatus(overrides?: Partial<WatchStatus>): WatchStatus {
+  return {
+    isWatching: false,
+    filesChanged: 0,
+    lastChange: 'None',
+    lastCommit: 'None',
+    pendingCommit: false,
+    aiAnalysisInProgress: false,
+    activityHistory: [],
+    changedFiles: new Set(),
+    ...overrides
+  };
+}
+
+export function createMockActivityEntry(overrides?: Partial<ActivityLogEntry>): ActivityLogEntry {
+  return {
+    timestamp: new Date().toISOString(),
+    type: 'file_change',
+    message: 'Test file changed',
+    details: 'src/test.js',
+    ...overrides
+  };
+}
+
+export function createMockContext(): vscode.ExtensionContext {
   return {
     subscriptions: [],
     workspaceState: {
       get: jest.fn(),
-      update: jest.fn()
+      update: jest.fn(),
+      keys: jest.fn()
     },
     globalState: {
       get: jest.fn(),
-      update: jest.fn()
+      update: jest.fn(),
+      keys: jest.fn()
     },
-    extensionPath: '/test/extension/path',
-    storagePath: '/test/storage/path',
-    globalStoragePath: '/test/global/storage/path'
+    extensionUri: vscode.Uri.file('/test/extension'),
+    extensionPath: '/test/extension',
+    asAbsolutePath: (relativePath: string) => `/test/extension/${relativePath}`,
+    storageUri: vscode.Uri.file('/test/storage'),
+    storagePath: '/test/storage',
+    globalStorageUri: vscode.Uri.file('/test/global-storage'),
+    globalStoragePath: '/test/global-storage',
+    logUri: vscode.Uri.file('/test/logs'),
+    logPath: '/test/logs',
+    extensionMode: vscode.ExtensionMode.Test,
+    secrets: {
+      get: jest.fn(),
+      store: jest.fn(),
+      delete: jest.fn(),
+      onDidChange: jest.fn()
+    }
   } as any;
 }
 
-// Assertion helpers
-export function expectActivityLog(
-  activities: ActivityLogEntry[],
-  type: ActivityType,
-  messageContains: string
-): void {
-  const matchingActivity = activities.find(
-    activity => activity.type === type && activity.message.includes(messageContains)
-  );
-  
-  expect(matchingActivity).toBeDefined();
-}
-
-export function expectConfigValid(config: GitCueConfig): void {
-  expect(config.geminiApiKey).toBeTruthy();
-  expect(['periodic', 'intelligent']).toContain(config.commitMode);
-  expect(config.debounceMs).toBeGreaterThan(0);
-  expect(config.bufferTimeSeconds).toBeGreaterThan(0);
-  expect(config.maxCallsPerMinute).toBeGreaterThan(0);
+export function createMockWorkspace(): string {
+  return '/test/workspace';
 }
 ```
 
----
+### Test Fixtures
 
-## 📈 Coverage and Reporting
-
-### Test Coverage Configuration
-
-```json
-{
-  "nyc": {
-    "extension": [".ts"],
-    "exclude": [
-      "**/*.test.ts",
-      "**/test/**",
-      "coverage/**"
-    ],
-    "reporter": ["text", "html", "lcov"],
-    "all": true,
-    "instrument": true,
-    "sourceMap": true,
-    "produce-source-map": true,
-    "report-dir": "coverage",
-    "temp-dir": ".nyc_output"
-  }
-}
-```
-
-### Coverage Targets
-
-```mermaid
-graph TB
-    subgraph "Coverage Targets"
-        OVERALL[Overall Coverage<br/>≥ 85%]
-        SERVICES[Services<br/>≥ 90%]
-        UTILS[Utils<br/>≥ 95%]
-        TYPES[Types<br/>≥ 80%]
-        TERMINAL[Terminal<br/>≥ 85%]
-    end
-    
-    subgraph "Coverage Types"
-        STATEMENTS[Statement Coverage]
-        BRANCHES[Branch Coverage]
-        FUNCTIONS[Function Coverage]
-        LINES[Line Coverage]
-    end
-    
-    OVERALL --> STATEMENTS
-    SERVICES --> BRANCHES
-    UTILS --> FUNCTIONS
-    TYPES --> LINES
-    
-    style OVERALL fill:#e8f5e8
-    style SERVICES fill:#f3e5f5
-    style UTILS fill:#fff3e0
-    style STATEMENTS fill:#e3f2fd
-```
-
----
-
-## 🚀 Running Tests
-
-### Test Scripts
-
-```json
-{
-  "scripts": {
-    "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "mocha --require ts-node/register 'src/**/*.test.ts'",
-    "test:integration": "mocha --require ts-node/register 'src/test/integration/**/*.test.ts'",
-    "test:e2e": "mocha --require ts-node/register 'src/test/e2e/**/*.test.ts'",
-    "test:watch": "mocha --require ts-node/register --watch 'src/**/*.test.ts'",
-    "test:coverage": "nyc npm run test",
-    "test:performance": "mocha --require ts-node/register 'src/test/performance/**/*.test.ts'"
-  }
-}
-```
-
-### Test Execution Flow
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant CI as CI/CD Pipeline
-    participant Tests as Test Suite
-    participant Coverage as Coverage Report
-    participant Results as Test Results
-    
-    Dev->>Tests: Run local tests
-    Tests->>Dev: Immediate feedback
-    
-    Dev->>CI: Push to repository
-    CI->>Tests: Run full test suite
-    Tests->>Coverage: Generate coverage
-    Coverage->>Results: Compile results
-    Results->>CI: Return status
-    CI->>Dev: Provide feedback
-```
-
----
-
-## 📚 Best Practices
-
-### Writing Effective Tests
-
-1. **Descriptive Test Names**: Use clear, descriptive names that explain what is being tested
-2. **Arrange-Act-Assert**: Follow the AAA pattern for test structure
-3. **Single Responsibility**: Each test should verify one specific behavior
-4. **Test Data Isolation**: Use fresh test data for each test
-5. **Mock External Dependencies**: Mock all external services and APIs
-6. **Test Edge Cases**: Include tests for boundary conditions and error scenarios
-
-### Test Maintenance
+**Purpose**: Provides sample data and configurations for consistent testing.
 
 ```typescript
-// ✅ Good: Clear, descriptive test
-describe('CommitService.generateCommitMessage', () => {
-  it('should generate conventional commit message for feature addition', async () => {
-    // Arrange
-    const gitDiff = 'diff --git a/feature.js\n+export function newFeature()';
-    const config = createMockConfig();
+// fixtures/testData.ts
+export const sampleGitDiff = `
+diff --git a/src/feature.js b/src/feature.js
+new file mode 100644
+index 0000000..abc123
+--- /dev/null
++++ b/src/feature.js
+@@ -0,0 +1,10 @@
++/**
++ * New feature implementation
++ * @returns {string} Feature result
++ */
++export function newFeature() {
++  const result = processData();
++  return result;
++}
++
++function processData() {
++  return 'Feature implemented successfully';
++}
+`;
+
+export const sampleGitStatus = `
+A  src/feature.js
+M  src/index.js
+?? tests/feature.test.js
+`;
+
+export const sampleErrorMessages = {
+  gitPushError: 'Permission denied (publickey)',
+  gitPullError: 'Your branch is behind origin/main',
+  gitCommitError: 'nothing to commit, working tree clean',
+  mergeConflict: 'Automatic merge failed; fix conflicts and then commit the result'
+};
+
+export const sampleCommitMessages = [
+  'feat: add new feature implementation',
+  'fix: resolve authentication issue',
+  'docs: update README with new instructions',
+  'refactor: improve code structure',
+  'test: add comprehensive test suite'
+];
+
+export const sampleAIResponses = {
+  commitDecision: {
+    shouldCommit: true,
+    reason: 'Complete feature implementation with proper documentation',
+    significance: 'HIGH' as const,
+    suggestedMessage: 'feat: implement new data processing feature'
+  },
+  errorSuggestion: `
+# SSH Key Authentication Error
+
+The error suggests that your SSH key is not configured properly or not added to your GitHub account.
+
+## Quick Fix:
+\`\`\`bash
+ssh-add ~/.ssh/id_rsa
+git push
+\`\`\`
+
+## Alternative Solutions:
+1. Generate a new SSH key: \`ssh-keygen -t rsa -b 4096 -C "your_email@example.com"\`
+2. Add the key to your GitHub account
+3. Test the connection: \`ssh -T git@github.com\`
+  `
+};
+```
+
+### Integration Test Helpers
+
+**Purpose**: Provides helpers for testing service interactions and workflows.
+
+```typescript
+// helpers/integrationHelpers.ts
+import { CommitService } from '../../services/commitService';
+import { FileWatcherService } from '../../services/fileWatcherService';
+import { ActivityLogger } from '../../services/activityLogger';
+import { DashboardService } from '../../services/dashboardService';
+
+export class TestOrchestrator {
+  private commitService: CommitService;
+  private fileWatcherService: FileWatcherService;
+  private activityLogger: ActivityLogger;
+  private dashboardService: DashboardService;
+
+  constructor() {
+    this.commitService = CommitService.getInstance();
+    this.fileWatcherService = FileWatcherService.getInstance();
+    this.activityLogger = ActivityLogger.getInstance();
+    this.dashboardService = DashboardService.getInstance();
+  }
+
+  async simulateFileChange(filePath: string): Promise<void> {
+    // Simulate file change event
+    this.activityLogger.setFileChanged(
+      filePath.split('/').pop() || filePath, 
+      filePath
+    );
+  }
+
+  async simulateCommitWorkflow(): Promise<void> {
+    // Simulate complete commit workflow
+    await this.simulateFileChange('src/test.js');
     
-    // Act
-    const message = await commitService.generateCommitMessage('/test', config);
+    // Wait for debounce
+    await new Promise(resolve => setTimeout(resolve, 100));
     
-    // Assert
-    expect(message).toMatch(/^feat:/);
-    expect(message).toContain('new feature');
+    // Trigger commit analysis
+    const config = { 
+      commitMode: 'intelligent' as const,
+      bufferTimeSeconds: 1 
+    };
+    
+    await this.commitService.commitWithBuffer('/test/workspace', config as any);
+  }
+
+  getActivityHistory(): any[] {
+    return this.activityLogger.getWatchStatus().activityHistory;
+  }
+
+  cleanup(): void {
+    this.activityLogger.clearActivity();
+    this.fileWatcherService.stopWatching();
+  }
+}
+```
+
+---
+
+## 🎯 Test Execution & Coverage
+
+### Test Runner Configuration
+
+**Purpose**: Configures VS Code test framework and execution environment.
+
+```typescript
+// runTest.ts
+import * as path from 'path';
+import { runTests } from '@vscode/test-electron';
+
+async function main() {
+  try {
+    // Test extension root
+    const extensionDevelopmentPath = path.resolve(__dirname, '../');
+    
+    // Test runner
+    const extensionTestsPath = path.resolve(__dirname, './suite/index');
+    
+    // Run tests
+    await runTests({ 
+      extensionDevelopmentPath, 
+      extensionTestsPath,
+      launchArgs: ['--disable-extensions']
+    });
+  } catch (err) {
+    console.error('Failed to run tests:', err);
+    process.exit(1);
+  }
+}
+
+main();
+```
+
+### Test Suite Configuration
+
+**Purpose**: Configures test suite execution and reporting.
+
+```typescript
+// suite/index.ts
+import * as path from 'path';
+import * as Mocha from 'mocha';
+import * as glob from 'glob';
+
+export function run(): Promise<void> {
+  const mocha = new Mocha({
+    ui: 'tdd',
+    color: true,
+    timeout: 10000,
+    reporter: 'spec'
+  });
+
+  const testsRoot = path.resolve(__dirname, '..');
+
+  return new Promise((c, e) => {
+    glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
+      if (err) {
+        return e(err);
+      }
+
+      // Add test files to the test suite
+      files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
+
+      try {
+        // Run the mocha test
+        mocha.run(failures => {
+          if (failures > 0) {
+            e(new Error(`${failures} tests failed.`));
+          } else {
+            c();
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        e(err);
+      }
+    });
+  });
+}
+```
+
+### Coverage Configuration
+
+**Purpose**: Measures test coverage and generates reports.
+
+```json
+// .nycrc.json
+{
+  "extends": "@istanbuljs/nyc-config-typescript",
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/test/**",
+    "**/*.test.ts",
+    "**/*.d.ts"
+  ],
+  "reporter": [
+    "text",
+    "html",
+    "lcov"
+  ],
+  "report-dir": "coverage",
+  "check-coverage": true,
+  "lines": 80,
+  "functions": 80,
+  "branches": 70,
+  "statements": 80
+}
+```
+
+---
+
+## 📊 Test Scenarios & Use Cases
+
+### End-to-End Test Scenarios
+
+**Purpose**: Tests complete user workflows and interactions.
+
+```typescript
+// e2e/userWorkflows.test.ts
+import * as assert from 'assert';
+import { TestOrchestrator } from '../helpers/integrationHelpers';
+
+suite('User Workflow Tests', () => {
+  let orchestrator: TestOrchestrator;
+
+  setup(() => {
+    orchestrator = new TestOrchestrator();
+  });
+
+  teardown(() => {
+    orchestrator.cleanup();
+  });
+
+  test('Complete file change to commit workflow', async () => {
+    // 1. User makes file changes
+    await orchestrator.simulateFileChange('src/newFeature.js');
+    
+    // 2. AI analyzes changes
+    await orchestrator.simulateCommitWorkflow();
+    
+    // 3. Verify activity was logged
+    const history = orchestrator.getActivityHistory();
+    assert.ok(history.length > 0);
+    
+    // 4. Verify file change was recorded
+    const fileChangeEntry = history.find(entry => entry.type === 'file_change');
+    assert.ok(fileChangeEntry);
+    assert.ok(fileChangeEntry.message.includes('newFeature.js'));
+  });
+
+  test('AI terminal error analysis workflow', async () => {
+    // Test the AI terminal error analysis workflow
+    // This would involve simulating a command failure and AI analysis
+    assert.ok(true, 'AI terminal workflow test placeholder');
+  });
+
+  test('Configuration change workflow', async () => {
+    // Test configuration changes and their effects
+    assert.ok(true, 'Configuration workflow test placeholder');
   });
 });
+```
 
-// ❌ Avoid: Vague test names and multiple assertions
-describe('CommitService', () => {
-  it('should work', async () => {
-    const result = await commitService.doSomething();
-    expect(result).toBeTruthy();
-    expect(result.length).toBeGreaterThan(0);
-    expect(result.includes('commit')).toBe(true);
+### Performance Tests
+
+**Purpose**: Tests performance characteristics and resource usage.
+
+```typescript
+// performance/performanceTests.test.ts
+import * as assert from 'assert';
+import { performance } from 'perf_hooks';
+
+suite('Performance Tests', () => {
+  test('AI response time should be reasonable', async () => {
+    const start = performance.now();
+    
+    // Simulate AI request
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const end = performance.now();
+    const duration = end - start;
+    
+    assert.ok(duration < 5000, `AI response took ${duration}ms, should be under 5000ms`);
+  });
+
+  test('File watching should handle many files efficiently', async () => {
+    const start = performance.now();
+    
+    // Simulate watching many files
+    const fileCount = 100;
+    const files = Array.from({ length: fileCount }, (_, i) => `file${i}.js`);
+    
+    // Process files
+    await Promise.all(files.map(file => Promise.resolve(file)));
+    
+    const end = performance.now();
+    const duration = end - start;
+    
+    assert.ok(duration < 1000, `File processing took ${duration}ms for ${fileCount} files`);
   });
 });
 ```
 
 ---
 
-The Test directory provides comprehensive testing infrastructure that ensures GitCue's reliability, performance, and maintainability through systematic unit, integration, and end-to-end testing with proper coverage and quality assurance. 
+## 🚀 Test Automation & CI/CD
+
+### GitHub Actions Integration
+
+**Purpose**: Automated testing in CI/CD pipeline.
+
+```yaml
+# .github/workflows/test.yml
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Generate coverage report
+      run: npm run coverage
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+```
+
+### Test Commands
+
+**Purpose**: NPM scripts for running different test suites.
+
+```json
+// package.json scripts
+{
+  "scripts": {
+    "test": "npm run compile-tests && npm run test:unit",
+    "test:unit": "node ./out/test/runTest.js",
+    "test:integration": "node ./out/test/runIntegrationTests.js",
+    "test:e2e": "node ./out/test/runE2ETests.js",
+    "test:watch": "npm run compile-tests -- --watch",
+    "coverage": "nyc npm test",
+    "coverage:report": "nyc report --reporter=html",
+    "compile-tests": "tsc -p . --outDir out"
+  }
+}
+```
+
+---
+
+## 📚 Best Practices & Guidelines
+
+### Test Writing Guidelines
+
+1. **Test Structure**: Follow AAA pattern (Arrange, Act, Assert)
+2. **Test Names**: Use descriptive names that explain what is being tested
+3. **Test Isolation**: Each test should be independent and not affect others
+4. **Mock Dependencies**: Use mocks to isolate code under test
+5. **Edge Cases**: Test both happy path and error scenarios
+6. **Performance**: Keep tests fast and avoid unnecessary delays
+
+### Test Coverage Goals
+
+- **Overall Coverage**: 80% or higher
+- **Critical Services**: 90% or higher
+- **Utils Functions**: 85% or higher
+- **Error Handling**: 100% of error paths tested
+- **Integration Points**: All service interactions tested
+
+### Continuous Improvement
+
+1. **Regular Review**: Review test coverage and quality regularly
+2. **Refactoring**: Refactor tests along with production code
+3. **Documentation**: Keep test documentation up to date
+4. **Performance Monitoring**: Monitor test execution time
+5. **Automation**: Continuously improve test automation
+
+---
+
+The Test directory ensures GitCue maintains high quality and reliability through comprehensive testing strategies, automated execution, and continuous integration practices that support confident development and deployment. 

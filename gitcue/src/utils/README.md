@@ -1,147 +1,171 @@
-# 🛠️ Utils Directory
+# 🔧 Utils Directory
 
-The Utils directory contains essential utility functions and helper modules that provide core functionality across the GitCue extension. These utilities handle AI integration, configuration management, logging, and markdown rendering with a focus on reusability and maintainability.
+The Utils directory contains essential utility modules that provide core functionality for AI integration, configuration management, logging, and markdown rendering. These utilities form the foundation of GitCue's advanced features.
 
 ## 🏗️ Architecture Overview
 
 ```mermaid
 graph TB
-    subgraph "Utility Architecture"
+    subgraph "Utils Architecture"
+        subgraph "Core Utilities"
+            AI[ai.ts<br/>AI Integration & Rate Limiting]
+            CONFIG[config.ts<br/>Configuration Management]
+            LOGGER[logger.ts<br/>Enhanced Logging System]
+            MARKDOWN[markdown.ts<br/>Markdown Rendering]
+        end
+        
         subgraph "AI Integration"
-            AI_CORE[AI Utils Core]
-            GEMINI[Gemini Integration]
+            GEMINI[Gemini AI API]
             RATE_LIMIT[Rate Limiting]
-            ERROR_AI[Error Analysis]
+            ERROR_ANALYSIS[Error Analysis]
+            COMMIT_DECISION[Commit Decision AI]
         end
         
-        subgraph "Configuration Management"
-            CONFIG_MGR[Config Manager]
+        subgraph "Configuration System"
+            VSCODE_CONFIG[VS Code Settings]
+            ENV_VARS[Environment Variables]
+            DEFAULT_CONFIG[Default Configuration]
             VALIDATION[Config Validation]
-            DEFAULTS[Default Values]
-            PERSISTENCE[Settings Persistence]
         end
         
-        subgraph "Output & Formatting"
-            LOGGER[Logger Utilities]
-            MARKDOWN[Markdown Renderer]
-            FORMATTER[Text Formatting]
-            COLORS[Color Schemes]
+        subgraph "Logging & Output"
+            STRUCTURED_LOG[Structured Logging]
+            OUTPUT_CHANNEL[VS Code Output]
+            CONSOLE_FORMAT[Console Formatting]
+            STATUS_LOGGING[Status Updates]
         end
         
-        subgraph "External Integrations"
-            VSCODE_API[VS Code API]
-            GEMINI_API[Gemini AI API]
-            FILE_SYSTEM[File System]
+        subgraph "Markdown Processing"
+            PARSER[Markdown Parser]
+            RENDERER[Terminal Renderer]
+            FORMATTER[Color Formatter]
+            WRAPPER[Text Wrapper]
         end
     end
     
-    AI_CORE --> GEMINI
-    AI_CORE --> RATE_LIMIT
-    AI_CORE --> ERROR_AI
+    AI --> GEMINI
+    AI --> RATE_LIMIT
+    AI --> ERROR_ANALYSIS
+    AI --> COMMIT_DECISION
     
-    CONFIG_MGR --> VALIDATION
-    CONFIG_MGR --> DEFAULTS
-    CONFIG_MGR --> PERSISTENCE
+    CONFIG --> VSCODE_CONFIG
+    CONFIG --> ENV_VARS
+    CONFIG --> DEFAULT_CONFIG
+    CONFIG --> VALIDATION
     
-    LOGGER --> FORMATTER
-    LOGGER --> COLORS
+    LOGGER --> STRUCTURED_LOG
+    LOGGER --> OUTPUT_CHANNEL
+    LOGGER --> CONSOLE_FORMAT
+    LOGGER --> STATUS_LOGGING
+    
+    MARKDOWN --> PARSER
+    MARKDOWN --> RENDERER
     MARKDOWN --> FORMATTER
-    MARKDOWN --> COLORS
+    MARKDOWN --> WRAPPER
     
-    GEMINI --> GEMINI_API
-    CONFIG_MGR --> VSCODE_API
-    LOGGER --> VSCODE_API
-    PERSISTENCE --> FILE_SYSTEM
-    
-    style AI_CORE fill:#f3e5f5
-    style CONFIG_MGR fill:#e8f5e8
+    style AI fill:#f3e5f5
+    style CONFIG fill:#e3f2fd
     style LOGGER fill:#fff3e0
-    style MARKDOWN fill:#e3f2fd
+    style MARKDOWN fill:#e8f5e8
 ```
 
 ---
 
-## 🤖 AI Utils (`ai.ts`)
+## 🤖 AI Integration (ai.ts)
 
-**Purpose**: Manages AI integration with Google Gemini, including rate limiting, error analysis, commit decision making, and intelligent suggestions.
+**Purpose**: Provides comprehensive AI integration with Gemini API, including rate limiting, error analysis, commit decision making, and intelligent suggestions.
 
-### 🔄 AI Integration Flow
+### 🔄 AI Service Architecture
 
 ```mermaid
 sequenceDiagram
-    participant Client as Calling Service
+    participant Service as Service Layer
     participant AI as AI Utils
     participant Rate as Rate Limiter
     participant Gemini as Gemini API
     participant Cache as Response Cache
     
-    Client->>AI: Request AI analysis
-    AI->>Rate: Check rate limit
+    Service->>AI: Request AI Analysis
+    AI->>Rate: Check Rate Limit
+    Rate-->>AI: Allow/Deny
     
     alt Rate Limit OK
-        Rate-->>AI: Allow request
-        AI->>Cache: Check cache
-        
-        alt Cache Hit
-            Cache-->>AI: Return cached result
-        else Cache Miss
-            AI->>Gemini: Send API request
-            Gemini-->>AI: Return AI response
-            AI->>Cache: Store result
-        end
-        
-        AI->>Rate: Record successful call
-        AI-->>Client: Return formatted result
-    else Rate Limit Exceeded
-        Rate-->>AI: Deny request
-        AI-->>Client: Return rate limit error
+        AI->>Gemini: Send Request
+        Gemini-->>AI: AI Response
+        AI->>Cache: Cache Response
+        AI-->>Service: Formatted Result
+    else Rate Limited
+        AI-->>Service: Rate Limit Error
     end
+    
+    Service->>AI: Request Error Analysis
+    AI->>Gemini: Analyze Error Context
+    Gemini-->>AI: Suggestions
+    AI-->>Service: Formatted Suggestions
 ```
 
 ### 🎯 Key Features
 
 #### **Intelligent Commit Decision Making**
-
 ```typescript
-// AI-powered commit analysis with function calling
 export async function makeCommitDecisionWithAI(
   gitDiff: string, 
   gitStatus: string
 ): Promise<CommitDecision> {
-  const model = ai.getGenerativeModel({ 
-    model: 'gemini-2.0-flash',
-    tools: [{ functionDeclarations: [getCommitDecisionFunctionDeclaration()] }]
-  });
-  
-  const prompt = `
-    Analyze the following git changes and determine if they warrant a commit:
-    
-    Git Status:
-    ${gitStatus}
-    
-    Git Diff:
-    ${gitDiff}
-    
-    Consider:
-    - Completeness of the change
-    - Significance level (LOW/MEDIUM/HIGH)  
-    - Whether this represents a logical unit of work
-    - Code quality and potential issues
-  `;
-  
-  const result = await model.generateContent(prompt);
-  const functionCall = result.response.functionCalls()?.[0];
-  
-  if (functionCall?.name === 'should_commit_changes') {
-    return functionCall.args as CommitDecision;
-  }
-  
-  throw new Error('Invalid AI response format');
+  // AI-powered analysis of git changes
+  // Returns structured decision with reasoning
+  // Includes significance level and suggested actions
+}
+
+interface CommitDecision {
+  shouldCommit: boolean;
+  reason: string;
+  significance: 'LOW' | 'MEDIUM' | 'HIGH';
+  suggestedMessage?: string;
+  nextSteps?: string[];
+}
+```
+
+#### **Error Analysis & Suggestions**
+```typescript
+export async function generateErrorSuggestion(
+  errorContext: string
+): Promise<string> {
+  // Analyzes command errors and provides actionable suggestions
+  // Includes specific commands and troubleshooting steps
+  // Rate-limited for API efficiency
+}
+
+export async function showAISuggestionInVSCode(
+  errorContext: string
+): Promise<void> {
+  // Displays AI suggestions in VS Code with proper formatting
+  // Includes copy-to-clipboard functionality
+  // Provides immediate actionable feedback
+}
+```
+
+#### **Commit Message Generation**
+```typescript
+export async function generateCommitMessageWithAI(
+  gitDiff: string, 
+  gitStatus: string
+): Promise<string> {
+  // Generates conventional commit messages
+  // Follows semantic versioning patterns
+  // Includes scope and breaking change detection
+}
+
+interface CommitMessage {
+  type: string;
+  scope?: string;
+  description: string;
+  body?: string;
+  breakingChange?: boolean;
 }
 ```
 
 #### **Rate Limiting System**
-
 ```typescript
 class RateLimiter {
   private calls: number[] = [];
@@ -152,121 +176,97 @@ class RateLimiter {
   }
   
   canMakeCall(): boolean {
-    this.cleanupOldCalls();
-    return this.calls.length < this.maxCalls;
-  }
-  
-  recordCall(): void {
-    this.calls.push(Date.now());
+    // Sliding window rate limiting
+    // Prevents API quota exhaustion
+    // Configurable limits per minute
   }
   
   getTimeUntilNextCall(): number {
-    if (this.canMakeCall()) return 0;
-    
-    this.cleanupOldCalls();
-    if (this.calls.length === 0) return 0;
-    
-    const oldestCall = Math.min(...this.calls);
-    const timeElapsed = Date.now() - oldestCall;
-    return Math.max(0, 60000 - timeElapsed);
-  }
-  
-  private cleanupOldCalls(): void {
-    const oneMinuteAgo = Date.now() - 60000;
-    this.calls = this.calls.filter(timestamp => timestamp > oneMinuteAgo);
+    // Returns milliseconds until next call allowed
+    // Enables user feedback and queue management
   }
 }
 ```
 
-#### **Error Analysis with Concise Suggestions**
+### 🎨 AI Response Formatting
 
+#### **Markdown Formatting**
 ```typescript
-export async function generateErrorSuggestion(errorContext: string): Promise<string> {
-  const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
-  
-  const prompt = `
-    Analyze this error and provide a concise, actionable solution:
-    
-    ${errorContext}
-    
-    Requirements:
-    - Keep response under 200 words
-    - Focus on the most likely fix first
-    - Provide specific commands when possible
-    - Use markdown formatting for clarity
-    - Include alternative solutions if relevant
-  `;
-  
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+export function formatAISuggestion(suggestion: string): string {
+  // Formats AI responses with proper markdown
+  // Includes code blocks, headers, and lists
+  // Optimizes for terminal and webview display
+}
+
+export function formatGitCommand(command: string): string {
+  // Syntax highlighting for git commands
+  // Visual emphasis for important parts
+  // Consistent formatting across interfaces
 }
 ```
 
-### 🔧 AI Utils Methods
-
-| Method | Description | Parameters | Returns |
-|--------|-------------|------------|---------|
-| `makeCommitDecisionWithAI()` | AI-powered commit decision | `gitDiff`, `gitStatus` | `CommitDecision` |
-| `generateCommitMessageWithAI()` | Generate commit message | `gitDiff`, `gitStatus` | `string` |
-| `generateErrorSuggestion()` | Analyze errors with AI | `errorContext` | `string` |
-| `generateErrorSuggestionWithRateLimit()` | Rate-limited error analysis | `errorContext` | `string` |
-| `testAIConnection()` | Test Gemini API connectivity | None | `boolean` |
-| `formatAISuggestion()` | Format AI response | `suggestion` | `string` |
+#### **Visual Enhancement**
+```typescript
+export function createBox(message: string, title?: string): string {
+  // Creates visual boxes for important information
+  // Includes borders, padding, and titles
+  // Responsive to terminal width
+}
+```
 
 ---
 
-## ⚙️ Config Manager (`config.ts`)
+## ⚙️ Configuration Management (config.ts)
 
 **Purpose**: Centralized configuration management with validation, defaults, and VS Code settings integration.
 
-### 🔄 Configuration Management Flow
+### 🔄 Configuration Architecture
 
 ```mermaid
-graph TD
+graph TB
     subgraph "Configuration Sources"
         VSCODE[VS Code Settings]
         ENV[Environment Variables]
-        DEFAULTS[Default Values]
-        WORKSPACE[Workspace Config]
+        DEFAULT[Default Values]
+        RUNTIME[Runtime Overrides]
     end
     
-    subgraph "Configuration Processing"
-        LOAD[Load Settings]
-        MERGE[Merge Sources]
-        VALIDATE[Validate Config]
-        CACHE[Cache Result]
+    subgraph "Configuration Manager"
+        LOADER[Config Loader]
+        VALIDATOR[Validation Engine]
+        CACHE[Config Cache]
+        EVENTS[Change Events]
     end
     
     subgraph "Configuration Consumers"
-        SERVICES[Services]
-        COMPONENTS[UI Components]
+        SERVICES[Service Layer]
+        AI_UTILS[AI Utils]
         TERMINAL[Terminal]
-        AI[AI Utils]
+        WATCHER[File Watcher]
     end
     
-    VSCODE --> LOAD
-    ENV --> LOAD
-    DEFAULTS --> LOAD
-    WORKSPACE --> LOAD
+    VSCODE --> LOADER
+    ENV --> LOADER
+    DEFAULT --> LOADER
+    RUNTIME --> LOADER
     
-    LOAD --> MERGE
-    MERGE --> VALIDATE
-    VALIDATE --> CACHE
+    LOADER --> VALIDATOR
+    VALIDATOR --> CACHE
+    CACHE --> EVENTS
     
-    CACHE --> SERVICES
-    CACHE --> COMPONENTS
-    CACHE --> TERMINAL
-    CACHE --> AI
+    EVENTS --> SERVICES
+    EVENTS --> AI_UTILS
+    EVENTS --> TERMINAL
+    EVENTS --> WATCHER
     
-    style LOAD fill:#e3f2fd
-    style VALIDATE fill:#f3e5f5
+    style LOADER fill:#e3f2fd
+    style VALIDATOR fill:#f3e5f5
     style CACHE fill:#e8f5e8
 ```
 
 ### 🎯 Key Features
 
-#### **Comprehensive Configuration Interface**
-
+#### **GitCueExtensionConfig Interface**
 ```typescript
 export interface GitCueExtensionConfig {
   // Core settings
@@ -298,299 +298,301 @@ export interface GitCueExtensionConfig {
 }
 ```
 
-#### **Smart Configuration Loading**
-
+#### **ConfigManager Class**
 ```typescript
 export class ConfigManager {
   private static instance: ConfigManager;
   
   getConfig(): GitCueExtensionConfig {
-    const config = vscode.workspace.getConfiguration('gitcue');
-    
-    return {
-      // Core settings with validation
-      geminiApiKey: config.get('geminiApiKey', ''),
-      commitMode: config.get('commitMode', 'intelligent') as 'periodic' | 'intelligent',
-      autoPush: config.get('autoPush', true),
-      
-      // File watching with intelligent defaults
-      watchPaths: config.get('watchPaths', ['src/**', '*.js', '*.ts', '*.py', '*.md']),
-      debounceMs: Math.max(1000, config.get('debounceMs', 30000)),
-      bufferTimeSeconds: Math.max(5, config.get('bufferTimeSeconds', 30)),
-      
-      // Rate limiting
-      maxCallsPerMinute: Math.max(1, Math.min(60, config.get('maxCallsPerMinute', 15))),
-      
-      // UI settings
-      enableNotifications: config.get('enableNotifications', true),
-      autoWatch: config.get('autoWatch', false),
-      
-      // Terminal settings
-      interactiveOnError: config.get('interactiveOnError', true),
-      enableSuggestions: config.get('enableSuggestions', true),
-      terminalVerbose: config.get('terminalVerbose', false),
-      sessionPersistence: config.get('sessionPersistence', true),
-      maxHistorySize: Math.max(10, Math.min(1000, config.get('maxHistorySize', 100))),
-      
-      // Watch options
-      watchOptions: this.getWatchOptions()
-    };
+    // Loads and merges configuration from all sources
+    // Applies defaults for missing values
+    // Validates configuration integrity
+  }
+  
+  validateConfig(): { valid: boolean; errors: string[] } {
+    // Comprehensive configuration validation
+    // Checks required fields and value ranges
+    // Provides detailed error messages
+  }
+  
+  getOptimizedWatchPatterns(): string[] {
+    // Optimizes watch patterns for performance
+    // Removes duplicates and conflicting patterns
+    // Applies intelligent defaults
+  }
+  
+  async updateConfig(
+    key: string, 
+    value: any, 
+    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
+  ): Promise<void> {
+    // Updates configuration with validation
+    // Supports workspace and global settings
+    // Triggers configuration change events
   }
 }
 ```
 
-#### **Configuration Validation**
+### 🛠️ Configuration Utilities
 
+#### **Specialized Configuration Getters**
 ```typescript
-validateConfig(): { valid: boolean; errors: string[] } {
-  const config = this.getConfig();
-  const errors: string[] = [];
-  
-  // Validate API key
-  if (!config.geminiApiKey || config.geminiApiKey.trim() === '') {
-    errors.push('Gemini API key is required');
-  }
-  
-  // Validate commit mode
-  if (!['periodic', 'intelligent'].includes(config.commitMode)) {
-    errors.push('Commit mode must be either "periodic" or "intelligent"');
-  }
-  
-  // Validate numeric values
-  if (config.debounceMs < 1000) {
-    errors.push('Debounce time must be at least 1000ms');
-  }
-  
-  if (config.bufferTimeSeconds < 5) {
-    errors.push('Buffer time must be at least 5 seconds');
-  }
-  
-  if (config.maxCallsPerMinute < 1 || config.maxCallsPerMinute > 60) {
-    errors.push('Max calls per minute must be between 1 and 60');
-  }
-  
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+getWatchPatterns(): string[] {
+  // Returns optimized file watching patterns
+  // Includes default patterns and user customizations
+}
+
+getWatchOptions() {
+  // Returns watch configuration with defaults
+  // Includes performance optimizations
+}
+
+getInteractiveConfig() {
+  // Returns terminal-specific configuration
+  // Includes AI integration settings
+}
+
+getCommitConfig() {
+  // Returns commit-specific configuration
+  // Includes AI decision making settings
 }
 ```
 
-### 🔧 Config Manager Methods
-
-| Method | Description | Parameters | Returns |
-|--------|-------------|------------|---------|
-| `getConfig()` | Get current configuration | None | `GitCueExtensionConfig` |
-| `validateConfig()` | Validate configuration | None | `ValidationResult` |
-| `getOptimizedWatchPatterns()` | Get optimized watch patterns | None | `string[]` |
-| `updateConfig()` | Update configuration value | `key`, `value`, `target` | `Promise<void>` |
-| `resetConfig()` | Reset to defaults | None | `Promise<void>` |
-| `getConfigForDisplay()` | Get config for UI display | None | `Record<string, any>` |
+#### **Configuration Display**
+```typescript
+getConfigForDisplay(): Record<string, any> {
+  // Returns configuration formatted for display
+  // Masks sensitive information (API keys)
+  // Includes computed values and status
+}
+```
 
 ---
 
-## 📝 Logger Utilities (`logger.ts`)
+## 📝 Enhanced Logging (logger.ts)
 
-**Purpose**: Structured logging system with multiple output channels, color formatting, and VS Code integration.
+**Purpose**: Comprehensive logging system with structured output, multiple log levels, and VS Code integration.
 
 ### 🔄 Logging Architecture
 
 ```mermaid
 graph TB
     subgraph "Logging System"
-        subgraph "Log Levels"
-            SUCCESS[Success Messages]
-            ERROR[Error Messages]
-            WARNING[Warning Messages]
-            INFO[Info Messages]
-            DEBUG[Debug Messages]
-        end
-        
-        subgraph "Output Channels"
-            VSCODE_OUTPUT[VS Code Output]
-            CONSOLE[Console Output]
-            STATUS[Status Bar]
-            NOTIFICATIONS[VS Code Notifications]
-        end
-        
-        subgraph "Formatting"
-            COLORS[Color Formatting]
-            TIMESTAMPS[Timestamp Addition]
-            STRUCTURE[Message Structure]
-            SECTIONS[Section Dividers]
-        end
+        LOGGER[ExtensionLogger]
+        CHANNEL[Output Channel]
+        FORMATTER[Message Formatter]
+        LEVELS[Log Levels]
     end
     
-    SUCCESS --> VSCODE_OUTPUT
-    ERROR --> VSCODE_OUTPUT
-    WARNING --> VSCODE_OUTPUT
-    INFO --> VSCODE_OUTPUT
-    DEBUG --> CONSOLE
+    subgraph "Log Types"
+        SUCCESS[Success Messages]
+        ERROR[Error Messages]
+        WARNING[Warning Messages]
+        INFO[Info Messages]
+        DEBUG[Debug Messages]
+        STATUS[Status Updates]
+    end
     
-    VSCODE_OUTPUT --> COLORS
-    CONSOLE --> COLORS
-    STATUS --> STRUCTURE
-    NOTIFICATIONS --> STRUCTURE
+    subgraph "Output Targets"
+        VSCODE[VS Code Output]
+        CONSOLE[Console Output]
+        INTERACTIVE[Interactive Terminal]
+        DASHBOARD[Dashboard Display]
+    end
     
-    COLORS --> TIMESTAMPS
-    TIMESTAMPS --> SECTIONS
+    LOGGER --> CHANNEL
+    LOGGER --> FORMATTER
+    LOGGER --> LEVELS
     
+    SUCCESS --> LOGGER
+    ERROR --> LOGGER
+    WARNING --> LOGGER
+    INFO --> LOGGER
+    DEBUG --> LOGGER
+    STATUS --> LOGGER
+    
+    CHANNEL --> VSCODE
+    FORMATTER --> CONSOLE
+    FORMATTER --> INTERACTIVE
+    FORMATTER --> DASHBOARD
+    
+    style LOGGER fill:#fff3e0
     style SUCCESS fill:#e8f5e8
     style ERROR fill:#ffebee
     style WARNING fill:#fff3e0
-    style INFO fill:#e3f2fd
 ```
 
 ### 🎯 Key Features
 
-#### **Structured Logging with Color Support**
-
+#### **ExtensionLogger Class**
 ```typescript
 export class ExtensionLogger {
   private outputChannel: vscode.OutputChannel;
   private verbose: boolean = false;
   
+  constructor(channelName: string = 'GitCue') {
+    this.outputChannel = vscode.window.createOutputChannel(channelName);
+  }
+  
   success(message: string, details?: string): void {
-    const timestamp = new Date().toLocaleTimeString();
-    const prefix = `✅ [${timestamp}] SUCCESS`;
-    
-    this.outputChannel.appendLine(`${prefix}: ${message}`);
-    if (details) {
-      this.outputChannel.appendLine(`   Details: ${details}`);
-    }
-    
-    if (this.verbose) {
-      this.outputChannel.show(true);
-    }
+    // Logs success messages with green formatting
+    // Includes optional details and timestamps
+    // Shows in VS Code output channel
   }
   
   error(message: string, details?: string): void {
-    const timestamp = new Date().toLocaleTimeString();
-    const prefix = `❌ [${timestamp}] ERROR`;
-    
-    this.outputChannel.appendLine(`${prefix}: ${message}`);
-    if (details) {
-      this.outputChannel.appendLine(`   Details: ${details}`);
-      this.outputChannel.appendLine(`   Stack: ${new Error().stack}`);
-    }
-    
-    this.outputChannel.show(true);
-    vscode.window.showErrorMessage(`GitCue: ${message}`);
+    // Logs error messages with red formatting
+    // Includes stack traces and error details
+    // Provides actionable error information
+  }
+  
+  warning(message: string, details?: string): void {
+    // Logs warning messages with yellow formatting
+    // Includes context and potential actions
+    // Non-blocking notifications
+  }
+  
+  info(message: string, title: string = 'INFO'): void {
+    // Logs informational messages
+    // Categorizes with custom titles
+    // Supports verbose mode filtering
+  }
+  
+  debug(message: string): void {
+    // Debug-level logging for development
+    // Only shows when verbose mode enabled
+    // Includes detailed diagnostic information
   }
 }
 ```
 
 #### **Specialized Logging Methods**
-
 ```typescript
-// Configuration display logging
+status(message: string, type: 'info' | 'success' | 'warning' | 'error' | 'processing' = 'info'): void {
+  // Status updates with visual indicators
+  // Includes emoji and color coding
+  // Formatted for dashboard display
+}
+
+section(title: string, subtitle?: string): void {
+  // Creates visual sections in logs
+  // Includes headers and separators
+  // Improves log readability
+}
+
 config(title: string, items: Record<string, any>): void {
-  this.section(title);
-  
-  Object.entries(items).forEach(([key, value]) => {
-    const displayValue = typeof value === 'object' 
-      ? JSON.stringify(value, null, 2)
-      : String(value);
-    this.outputChannel.appendLine(`  ${key}: ${displayValue}`);
-  });
-  
-  this.space();
+  // Logs configuration in structured format
+  // Includes key-value pairs and validation
+  // Masks sensitive information
 }
 
-// File change event logging
 fileChange(event: string, path: string): void {
-  const timestamp = new Date().toLocaleTimeString();
-  const fileName = path.split('/').pop() || path;
-  
-  this.outputChannel.appendLine(`📁 [${timestamp}] ${event.toUpperCase()}: ${fileName}`);
-  this.outputChannel.appendLine(`   Path: ${path}`);
+  // Logs file system events
+  // Includes timestamps and file paths
+  // Supports watch debugging
 }
 
-// AI suggestion formatting
+commitSummary(message: string, hasRemote: boolean): void {
+  // Logs commit operations with summary
+  // Includes commit message and push status
+  // Provides operation feedback
+}
+
+interactiveInfo(message: string): void {
+  // Logs interactive terminal events
+  // Includes session information
+  // Supports terminal debugging
+}
+
 aiSuggestion(message: string): void {
-  this.outputChannel.appendLine('🤖 AI SUGGESTION');
-  this.outputChannel.appendLine('─'.repeat(50));
-  this.outputChannel.appendLine(message);
-  this.outputChannel.appendLine('─'.repeat(50));
+  // Logs AI-generated suggestions
+  // Includes suggestion quality metrics
+  // Supports AI debugging and improvement
 }
 ```
 
-### 🔧 Logger Methods
+### 🎨 Visual Formatting
 
-| Method | Description | Parameters | Use Case |
-|--------|-------------|------------|----------|
-| `success()` | Log success messages | `message`, `details?` | Commit completion, operations |
-| `error()` | Log error messages | `message`, `details?` | API failures, exceptions |
-| `warning()` | Log warning messages | `message`, `details?` | Rate limits, validation |
-| `info()` | Log informational messages | `message`, `title?` | Status updates, progress |
-| `debug()` | Log debug information | `message` | Development debugging |
-| `config()` | Display configuration | `title`, `items` | Settings overview |
-| `fileChange()` | Log file changes | `event`, `path` | File monitoring |
-| `aiSuggestion()` | Format AI responses | `message` | AI error analysis |
+#### **Message Formatting**
+```typescript
+// Visual separators and sections
+divider(): void {
+  // Creates visual dividers in logs
+  // Separates logical sections
+  // Improves readability
+}
+
+space(): void {
+  // Adds whitespace for visual separation
+  // Prevents log crowding
+  // Improves user experience
+}
+
+stage(message: string, type: 'info' | 'success' | 'error' | 'processing' = 'info'): void {
+  // Logs process stages with visual indicators
+  // Includes progress indicators
+  // Shows operation flow
+}
+```
 
 ---
 
-## 🎨 Markdown Renderer (`markdown.ts`)
+## 🎨 Markdown Rendering (markdown.ts)
 
-**Purpose**: Professional markdown rendering for terminal output with color support, proper formatting, and visual enhancements.
+**Purpose**: Advanced markdown rendering system for terminal output with color support, formatting, and visual enhancements.
 
-### 🔄 Markdown Processing Pipeline
+### 🔄 Markdown Architecture
 
 ```mermaid
-graph LR
+graph TB
     subgraph "Markdown Processing"
-        INPUT[Raw Markdown]
-        PARSE[Content Parsing]
-        ELEMENTS[Element Extraction]
-        FORMAT[Format Application]
-        OUTPUT[Rendered Output]
+        PARSER[Markdown Parser]
+        RENDERER[Terminal Renderer]
+        FORMATTER[Color Formatter]
+        WRAPPER[Text Wrapper]
     end
     
-    subgraph "Element Types"
-        HEADERS[Headers # ## ###]
-        CODE[Code Blocks ```]
-        INLINE[Inline Code `]
-        LISTS[Bullet Lists -]
-        BOLD[Bold Text **]
-        ITALIC[Italic Text *]
-        QUOTES[Block Quotes >]
+    subgraph "Rendering Features"
+        HEADERS[Headers (H1-H6)]
+        LISTS[Lists (Ordered/Unordered)]
+        CODE[Code Blocks]
+        INLINE[Inline Formatting]
+        LINKS[Links]
+        QUOTES[Blockquotes]
     end
     
-    subgraph "Formatting Features"
-        COLORS[ANSI Colors]
-        BOXES[Text Boxes]
-        WRAPPING[Line Wrapping]
-        SPACING[Visual Spacing]
+    subgraph "Visual Enhancements"
+        COLORS[Color Schemes]
+        BOXES[Visual Boxes]
+        SEPARATORS[Separators]
+        ICONS[Icons & Emojis]
     end
     
-    INPUT --> PARSE
-    PARSE --> ELEMENTS
-    ELEMENTS --> FORMAT
-    FORMAT --> OUTPUT
+    PARSER --> RENDERER
+    RENDERER --> FORMATTER
+    FORMATTER --> WRAPPER
     
-    ELEMENTS --> HEADERS
-    ELEMENTS --> CODE
-    ELEMENTS --> INLINE
-    ELEMENTS --> LISTS
-    ELEMENTS --> BOLD
-    ELEMENTS --> ITALIC
-    ELEMENTS --> QUOTES
+    HEADERS --> RENDERER
+    LISTS --> RENDERER
+    CODE --> RENDERER
+    INLINE --> RENDERER
+    LINKS --> RENDERER
+    QUOTES --> RENDERER
     
-    FORMAT --> COLORS
-    FORMAT --> BOXES
-    FORMAT --> WRAPPING
-    FORMAT --> SPACING
+    COLORS --> FORMATTER
+    BOXES --> FORMATTER
+    SEPARATORS --> FORMATTER
+    ICONS --> FORMATTER
     
-    style INPUT fill:#f3e5f5
-    style ELEMENTS fill:#e8f5e8
-    style FORMAT fill:#fff3e0
-    style OUTPUT fill:#e3f2fd
+    style PARSER fill:#e3f2fd
+    style RENDERER fill:#f3e5f5
+    style COLORS fill:#e8f5e8
+    style BOXES fill:#fff3e0
 ```
 
 ### 🎯 Key Features
 
-#### **Professional Markdown Rendering**
-
+#### **MarkdownRenderer Class**
 ```typescript
 export class MarkdownRenderer {
   private options: Required<MarkdownRenderOptions>;
@@ -599,192 +601,145 @@ export class MarkdownRenderer {
     this.options = {
       maxWidth: options.maxWidth || 80,
       colors: {
-        header: options.colors?.header || '\x1b[1;36m',    // Bright cyan
-        code: options.colors?.code || '\x1b[1;33m',        // Bright yellow
-        bold: options.colors?.bold || '\x1b[1m',           // Bold
-        italic: options.colors?.italic || '\x1b[3m',       // Italic
-        list: options.colors?.list || '\x1b[36m',          // Cyan
-        quote: options.colors?.quote || '\x1b[2m',         // Dim
-        reset: options.colors?.reset || '\x1b[0m',         // Reset
-        dim: options.colors?.dim || '\x1b[2m',             // Dim
+        header: options.colors?.header || '\x1b[1;36m',
+        code: options.colors?.code || '\x1b[1;33m',
+        bold: options.colors?.bold || '\x1b[1m',
+        italic: options.colors?.italic || '\x1b[3m',
+        list: options.colors?.list || '\x1b[36m',
+        quote: options.colors?.quote || '\x1b[2m',
+        reset: options.colors?.reset || '\x1b[0m',
+        dim: options.colors?.dim || '\x1b[2m',
         ...options.colors
       }
     };
   }
   
   render(content: string): string {
-    const lines = content.split('\n');
-    const rendered: string[] = [];
-    
-    for (const line of lines) {
-      rendered.push(this.processLine(line));
-    }
-    
-    return rendered.join('\n');
+    // Renders markdown content with full formatting
+    // Includes headers, lists, code blocks, and inline formatting
+    // Supports color themes and terminal width adaptation
+  }
+  
+  createBox(text: string, title?: string): string {
+    // Creates visual boxes with borders
+    // Includes optional titles and padding
+    // Responsive to terminal width
+  }
+  
+  wrapText(text: string, width?: number): string {
+    // Intelligent text wrapping
+    // Preserves formatting and indentation
+    // Handles ANSI color codes properly
   }
 }
 ```
 
-#### **Advanced Element Processing**
-
+#### **Rendering Options**
 ```typescript
-private processLine(line: string): string {
-  // Headers (# ## ###)
-  if (line.match(/^#{1,6}\s/)) {
-    const level = line.match(/^#+/)?.[0].length || 1;
-    const text = line.replace(/^#+\s*/, '');
-    const headerChar = level === 1 ? '═' : level === 2 ? '─' : '·';
-    
-    return `${this.options.colors.header}${text}${this.options.colors.reset}\n` +
-           `${this.options.colors.dim}${headerChar.repeat(text.length)}${this.options.colors.reset}`;
-  }
-  
-  // Code blocks (```)
-  if (line.startsWith('```')) {
-    return `${this.options.colors.code}${line}${this.options.colors.reset}`;
-  }
-  
-  // Lists (- or *)
-  if (line.match(/^\s*[-*]\s/)) {
-    const indent = line.match(/^\s*/)?.[0] || '';
-    const content = line.replace(/^\s*[-*]\s/, '');
-    return `${indent}${this.options.colors.list}•${this.options.colors.reset} ${this.processInlineFormatting(content)}`;
-  }
-  
-  // Block quotes (>)
-  if (line.startsWith('>')) {
-    const content = line.replace(/^>\s?/, '');
-    return `${this.options.colors.quote}▌ ${content}${this.options.colors.reset}`;
-  }
-  
-  return this.processInlineFormatting(line);
+export interface MarkdownRenderOptions {
+  maxWidth?: number;
+  colors?: {
+    header: string;
+    code: string;
+    bold: string;
+    italic: string;
+    list: string;
+    quote: string;
+    reset: string;
+    dim: string;
+  };
+}
+```
+
+### 🎨 Visual Formatting
+
+#### **Utility Functions**
+```typescript
+export function renderMarkdown(
+  content: string, 
+  options?: MarkdownRenderOptions
+): string {
+  // Convenience function for quick markdown rendering
+  // Uses default options with customization support
+  // Optimized for common use cases
 }
 
+export function createErrorSuggestionBox(suggestion: string): string {
+  // Creates specialized boxes for error suggestions
+  // Includes error-specific styling and icons
+  // Optimized for AI suggestion display
+}
+```
+
+#### **Advanced Features**
+```typescript
 private processInlineFormatting(line: string): string {
-  // Inline code (`code`)
-  line = line.replace(/`([^`]+)`/g, 
-    `${this.options.colors.code}$1${this.options.colors.reset}`);
-  
-  // Bold text (**bold**)
-  line = line.replace(/\*\*([^*]+)\*\*/g, 
-    `${this.options.colors.bold}$1${this.options.colors.reset}`);
-  
-  // Italic text (*italic*)
-  line = line.replace(/\*([^*]+)\*/g, 
-    `${this.options.colors.italic}$1${this.options.colors.reset}`);
-  
-  return line;
+  // Processes inline markdown formatting
+  // Supports **bold**, *italic*, `code`, and links
+  // Maintains color consistency
+}
+
+private stripAnsi(text: string): string {
+  // Removes ANSI color codes for length calculation
+  // Enables proper text wrapping and alignment
+  // Preserves visual formatting
 }
 ```
-
-#### **Text Box Creation**
-
-```typescript
-createBox(text: string, title?: string): string {
-  const maxWidth = this.options.maxWidth;
-  const lines = this.wrapText(text, maxWidth - 4).split('\n');
-  const width = Math.max(
-    maxWidth,
-    Math.max(...lines.map(line => this.stripAnsi(line).length)) + 4,
-    title ? title.length + 4 : 0
-  );
-  
-  const topBorder = title 
-    ? `╭─ ${title} ${'─'.repeat(Math.max(0, width - title.length - 4))}╮`
-    : `╭${'─'.repeat(width - 2)}╮`;
-  
-  const bottomBorder = `╰${'─'.repeat(width - 2)}╯`;
-  
-  const contentLines = lines.map(line => {
-    const padding = width - this.stripAnsi(line).length - 3;
-    return `│ ${line}${' '.repeat(Math.max(0, padding))}│`;
-  });
-  
-  return [topBorder, ...contentLines, bottomBorder].join('\n');
-}
-```
-
-### 🔧 Markdown Renderer Methods
-
-| Method | Description | Parameters | Returns |
-|--------|-------------|------------|---------|
-| `render()` | Render markdown content | `content` | `string` |
-| `createBox()` | Create bordered text box | `text`, `title?` | `string` |
-| `wrapText()` | Wrap text to specified width | `text`, `width?` | `string` |
-| `processLine()` | Process single markdown line | `line` | `string` |
-| `processInlineFormatting()` | Apply inline formatting | `line` | `string` |
 
 ---
 
-## 🔗 Utility Integration Patterns
+## 🔗 Utils Integration
 
-### Cross-Utility Communication
+### Cross-Module Communication
 
 ```mermaid
 sequenceDiagram
-    participant Service as Calling Service
+    participant Service as Service Layer
     participant Config as ConfigManager
+    participant Logger as ExtensionLogger
     participant AI as AI Utils
-    participant Logger as Logger
     participant Markdown as MarkdownRenderer
     
-    Service->>Config: Get configuration
-    Config-->>Service: Return config
+    Service->>Config: Get Configuration
+    Config-->>Service: Return Config
     
-    Service->>AI: Request AI analysis
-    AI->>Config: Get API settings
-    Config-->>AI: Return API config
-    AI->>Logger: Log API request
-    AI-->>Service: Return AI response
+    Service->>AI: Request AI Analysis
+    AI->>Logger: Log AI Request
+    AI->>Config: Get AI Settings
+    AI-->>Service: Return Analysis
     
-    Service->>Markdown: Format response
-    Markdown-->>Service: Return formatted text
-    
-    Service->>Logger: Log completion
-    Logger->>Markdown: Format log output
+    Service->>Logger: Log Operation
+    Logger->>Markdown: Format Message
+    Markdown-->>Logger: Rendered Output
+    Logger-->>Service: Log Complete
 ```
 
-### Utility Factory Pattern
+### Shared Utilities
 
 ```typescript
-// Utility factory for consistent initialization
-export class UtilityFactory {
-  private static configManager: ConfigManager;
-  private static logger: ExtensionLogger;
-  private static markdownRenderer: MarkdownRenderer;
-  
-  static getConfigManager(): ConfigManager {
-    if (!this.configManager) {
-      this.configManager = ConfigManager.getInstance();
-    }
-    return this.configManager;
-  }
-  
-  static getLogger(): ExtensionLogger {
-    if (!this.logger) {
-      this.logger = new ExtensionLogger('GitCue');
-    }
-    return this.logger;
-  }
-  
-  static getMarkdownRenderer(): MarkdownRenderer {
-    if (!this.markdownRenderer) {
-      this.markdownRenderer = new MarkdownRenderer({
-        maxWidth: 80,
-        colors: {
-          header: '\x1b[1;36m',
-          code: '\x1b[1;33m',
-          bold: '\x1b[1m',
-          italic: '\x1b[3m',
-          list: '\x1b[36m',
-          quote: '\x1b[2m',
-          reset: '\x1b[0m',
-          dim: '\x1b[2m'
-        }
-      });
-    }
-    return this.markdownRenderer;
-  }
+// Singleton pattern for global access
+export const configManager = ConfigManager.getInstance();
+export const logger = new ExtensionLogger('GitCue');
+
+// Utility functions for common operations
+export function formatOperationResult(
+  operation: string, 
+  success: boolean, 
+  details?: string
+): string {
+  // Formats operation results consistently
+  // Includes success/failure indicators
+  // Supports additional context
+}
+
+export function createProgressIndicator(
+  current: number, 
+  total: number, 
+  message: string
+): string {
+  // Creates visual progress indicators
+  // Includes percentage and progress bars
+  // Supports custom messages
 }
 ```
 
@@ -792,146 +747,141 @@ export class UtilityFactory {
 
 ## 🧪 Testing Utilities
 
-### Utility Testing Framework
+### Mock and Test Helpers
 
 ```typescript
-describe('Utils Testing', () => {
-  describe('ConfigManager', () => {
-    it('should load default configuration', () => {
-      const config = ConfigManager.getInstance().getConfig();
-      expect(config).toBeDefined();
-      expect(config.commitMode).toBe('intelligent');
-    });
-    
-    it('should validate configuration correctly', () => {
-      const result = ConfigManager.getInstance().validateConfig();
-      expect(result).toHaveProperty('valid');
-      expect(result).toHaveProperty('errors');
-    });
-  });
-  
-  describe('MarkdownRenderer', () => {
-    let renderer: MarkdownRenderer;
-    
-    beforeEach(() => {
-      renderer = new MarkdownRenderer();
-    });
-    
-    it('should render headers correctly', () => {
-      const result = renderer.render('# Test Header');
-      expect(result).toContain('Test Header');
-    });
-    
-    it('should create bordered boxes', () => {
-      const result = renderer.createBox('Test content', 'Test Title');
-      expect(result).toContain('╭─ Test Title');
-      expect(result).toContain('Test content');
-      expect(result).toContain('╰─');
-    });
-  });
-  
-  describe('AI Utils', () => {
-    it('should format AI suggestions correctly', () => {
-      const suggestion = 'Test AI suggestion';
-      const formatted = formatAISuggestion(suggestion);
-      expect(formatted).toContain(suggestion);
-    });
-    
-    it('should handle rate limiting', async () => {
-      const rateLimiter = new RateLimiter(1);
-      expect(rateLimiter.canMakeCall()).toBe(true);
-      
-      rateLimiter.recordCall();
-      expect(rateLimiter.canMakeCall()).toBe(false);
-    });
-  });
+// Mock configuration for testing
+export function createMockConfig(overrides?: Partial<GitCueExtensionConfig>): GitCueExtensionConfig {
+  return {
+    geminiApiKey: 'test-key',
+    commitMode: 'intelligent',
+    autoPush: true,
+    watchPaths: ['src/**'],
+    debounceMs: 30000,
+    bufferTimeSeconds: 30,
+    maxCallsPerMinute: 15,
+    enableNotifications: true,
+    autoWatch: false,
+    interactiveOnError: true,
+    enableSuggestions: true,
+    terminalVerbose: false,
+    sessionPersistence: true,
+    maxHistorySize: 100,
+    watchOptions: {
+      ignored: ['node_modules/**', '.git/**'],
+      persistent: true,
+      ignoreInitial: true,
+      followSymlinks: false
+    },
+    ...overrides
+  };
+}
+
+// Test utilities for AI functions
+export function mockAIResponse(response: Partial<CommitDecision>): CommitDecision {
+  return {
+    shouldCommit: true,
+    reason: 'Test reasoning',
+    significance: 'MEDIUM',
+    ...response
+  };
+}
+```
+
+---
+
+## 📚 Usage Examples
+
+### Basic Configuration Usage
+```typescript
+import { configManager } from '../utils/config';
+
+// Get current configuration
+const config = configManager.getConfig();
+
+// Update configuration
+await configManager.updateConfig('commitMode', 'intelligent');
+
+// Validate configuration
+const validation = configManager.validateConfig();
+if (!validation.valid) {
+  console.error('Configuration errors:', validation.errors);
+}
+```
+
+### AI Integration Usage
+```typescript
+import { makeCommitDecisionWithAI, generateErrorSuggestion } from '../utils/ai';
+
+// Make commit decision
+const decision = await makeCommitDecisionWithAI(gitDiff, gitStatus);
+if (decision.shouldCommit) {
+  console.log('Commit recommended:', decision.reason);
+}
+
+// Generate error suggestion
+const errorContext = `Command: git push\nError: ${errorMessage}`;
+const suggestion = await generateErrorSuggestion(errorContext);
+console.log('AI Suggestion:', suggestion);
+```
+
+### Logging Usage
+```typescript
+import logger from '../utils/logger';
+
+// Log different types of messages
+logger.success('Operation completed successfully');
+logger.error('Failed to process request', error.message);
+logger.warning('Configuration incomplete');
+logger.info('Processing files...');
+logger.debug('Debug information');
+
+// Log structured data
+logger.config('GitCue Configuration', {
+  mode: 'intelligent',
+  autoPush: true,
+  apiKey: '***masked***'
 });
 ```
 
----
-
-## 📚 Utility Export Structure
-
-### Index Exports
-
+### Markdown Rendering Usage
 ```typescript
-// src/utils/index.ts
-export * from './ai';
-export * from './config';
-export * from './logger';
-export * from './markdown';
+import { renderMarkdown, createErrorSuggestionBox } from '../utils/markdown';
 
-// Re-export commonly used utilities
-export {
-  ConfigManager,
-  ExtensionLogger,
-  MarkdownRenderer
-} from './config';
+// Render markdown content
+const rendered = renderMarkdown(`
+# AI Suggestion
+Try running these commands:
+\`\`\`bash
+git add .
+git commit -m "fix: resolve merge conflict"
+git push
+\`\`\`
+`);
 
-// Export utility functions
-export {
-  generateErrorSuggestion,
-  generateErrorSuggestionWithRateLimit,
-  testAIConnection,
-  formatAISuggestion,
-  makeCommitDecisionWithAI,
-  generateCommitMessageWithAI
-} from './ai';
-
-// Export markdown utilities
-export {
-  renderMarkdown,
-  createErrorSuggestionBox
-} from './markdown';
-```
-
-### Utility Organization
-
-```mermaid
-graph TB
-    subgraph "Utility Organization"
-        AI_UTILS[ai.ts]
-        CONFIG[config.ts]
-        LOGGER[logger.ts]
-        MARKDOWN[markdown.ts]
-        INDEX[index.ts]
-    end
-    
-    subgraph "Export Categories"
-        AI_EXPORTS[AI Functions]
-        CONFIG_EXPORTS[Config Management]
-        LOG_EXPORTS[Logging Functions]
-        RENDER_EXPORTS[Rendering Utils]
-    end
-    
-    AI_UTILS --> INDEX
-    CONFIG --> INDEX
-    LOGGER --> INDEX
-    MARKDOWN --> INDEX
-    
-    INDEX --> AI_EXPORTS
-    INDEX --> CONFIG_EXPORTS
-    INDEX --> LOG_EXPORTS
-    INDEX --> RENDER_EXPORTS
-    
-    subgraph "Consumers"
-        SERVICES[Services]
-        TERMINAL[Terminal]
-        COMPONENTS[UI Components]
-        EXTENSION[Extension Core]
-    end
-    
-    AI_EXPORTS --> SERVICES
-    CONFIG_EXPORTS --> EXTENSION
-    LOG_EXPORTS --> SERVICES
-    RENDER_EXPORTS --> TERMINAL
-    
-    style INDEX fill:#e3f2fd
-    style AI_EXPORTS fill:#f3e5f5
-    style CONFIG_EXPORTS fill:#e8f5e8
-    style RENDER_EXPORTS fill:#fff3e0
+// Create error suggestion box
+const errorBox = createErrorSuggestionBox('Command failed. Try checking your Git configuration.');
 ```
 
 ---
 
-The Utils directory provides essential, reusable functionality that powers GitCue's core features including AI integration, configuration management, structured logging, and professional output formatting, ensuring consistent behavior across the entire extension. 
+## 🚀 Future Enhancements
+
+### Planned Utilities
+
+1. **Cache Management**: Intelligent caching for AI responses and configuration
+2. **Performance Monitoring**: Utils for tracking extension performance
+3. **Telemetry Utils**: Privacy-focused usage analytics
+4. **Plugin System**: Utilities for extensible plugin architecture
+5. **Cloud Integration**: Utils for cloud-based features and sync
+
+### Optimization Opportunities
+
+1. **Lazy Loading**: Load utilities only when needed
+2. **Memory Management**: Optimize memory usage for large workspaces
+3. **Parallel Processing**: Parallel AI requests and processing
+4. **Offline Support**: Fallback functionality when API unavailable
+
+---
+
+The Utils directory provides essential foundation services that power GitCue's advanced features, ensuring reliable operation, excellent user experience, and maintainable architecture across all extension components. 

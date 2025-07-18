@@ -192,7 +192,7 @@ export class GitCuePty implements vscode.Pseudoterminal {
     this.write('\r\n');
     this.write('╔══════════════════════════════════════════════════════════════════════════════╗\r\n');
     this.write('║                    GitCue AI-Powered Interactive Shell                       ║\r\n');
-    this.write('║                              Enhanced Terminal v0.3.8                       ║\r\n');
+    this.write('║                              Enhanced Terminal v0.3.8                        ║\r\n');
     this.write('╚══════════════════════════════════════════════════════════════════════════════╝\r\n');
     this.write('\r\n');
     
