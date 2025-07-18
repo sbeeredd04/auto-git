@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { DashboardState, GitCueConfig, WatchStatus, BufferNotificationOptions, CommitPreviewOptions } from '../types/interfaces';
+import { getVersion, getTheme, getDashboardConfig } from '../config/extensionConfig';
 
 export class DashboardService {
 	private static instance: DashboardService;
@@ -92,6 +93,9 @@ export class DashboardService {
 	}
 
 	private getDashboardHtml(): string {
+		const theme = getTheme();
+		const version = getVersion();
+		
 		// Return modern polished dashboard HTML
 		return `
 		<!DOCTYPE html>
@@ -250,77 +254,62 @@ export class DashboardService {
 					50% { opacity: 0.5; }
 				}
 				
-				/* Modern Button Styles */
+				/* Clean Button Styles */
 				.btn {
-					width: 10em;
-					position: relative;
-					height: 3.5em;
-					border: 3px ridge var(--vscode-button-background);
-					outline: none;
-					background-color: transparent;
-					color: var(--vscode-foreground);
-					transition: 1s;
-					border-radius: 0.3em;
-					font-size: 16px;
-					font-weight: bold;
-					cursor: pointer;
 					display: inline-flex;
 					align-items: center;
 					justify-content: center;
-					margin: 6px;
-					min-width: 120px;
+					padding: 12px 20px;
+					border: 2px solid transparent;
+					border-radius: 8px;
+					font-size: 14px;
+					font-weight: 500;
 					text-decoration: none;
+					cursor: pointer;
+					transition: all 0.3s ease;
+					margin: 4px;
+					min-width: 120px;
 					font-family: inherit;
-				}
-				
-				.btn::after {
-					content: "";
-					position: absolute;
-					top: -10px;
-					left: 3%;
-					width: 95%;
-					height: 40%;
-					background-color: var(--vscode-editor-background);
-					transition: 0.5s;
-					transform-origin: center;
-				}
-				
-				.btn::before {
-					content: "";
-					transform-origin: center;
-					position: absolute;
-					top: 80%;
-					left: 3%;
-					width: 95%;
-					height: 40%;
-					background-color: var(--vscode-editor-background);
-					transition: 0.5s;
-				}
-				
-				.btn:hover::before, .btn:hover::after {
-					transform: scale(0)
-				}
-				
-				.btn:hover {
-					box-shadow: inset 0px 0px 25px var(--vscode-button-background);
+					outline: none;
+					position: relative;
+					overflow: hidden;
 				}
 				
 				.btn-primary {
-					border-color: var(--vscode-button-background);
-					color: var(--vscode-button-background);
+					background: linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor});
+					color: white;
+					border-color: ${theme.primaryColor};
+					box-shadow: 0 2px 8px rgba(54, 209, 220, 0.2);
 				}
 				
 				.btn-primary:hover {
-					box-shadow: inset 0px 0px 25px var(--vscode-button-background);
+					background: linear-gradient(135deg, ${theme.secondaryColor}, ${theme.primaryColor});
+					transform: translateY(-2px);
+					box-shadow: 0 4px 16px rgba(54, 209, 220, 0.3);
 				}
 				
 				.btn-secondary {
-					border-color: var(--vscode-panel-border);
+					background: var(--vscode-textCodeBlock-background);
 					color: var(--vscode-foreground);
+					border-color: var(--vscode-panel-border);
 				}
 				
 				.btn-secondary:hover {
-					box-shadow: inset 0px 0px 25px var(--vscode-panel-border);
+					background: var(--vscode-list-hoverBackground);
+					border-color: var(--vscode-focusBorder);
+					transform: translateY(-1px);
+					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+				}
+				
+				.btn:active {
+					transform: translateY(0);
+				}
+				
+				.actions-container {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+					gap: 12px;
+					margin-top: 8px;
 				}
 				
 				.btn-icon {
@@ -454,9 +443,14 @@ export class DashboardService {
 						font-size: 24px;
 					}
 					
+					.actions-container {
+						grid-template-columns: 1fr;
+						gap: 8px;
+					}
+					
 					.btn {
 						width: 100%;
-						max-width: 200px;
+						min-width: auto;
 					}
 				}
 			</style>
@@ -466,7 +460,7 @@ export class DashboardService {
 				<div class="header">
 					<h1 class="title">GitCue Dashboard</h1>
 					<p class="subtitle">AI-Powered Git Automation & Monitoring</p>
-					<span class="version-badge">v0.3.8</span>
+					<span class="version-badge">v${version}</span>
 				</div>
 				
 				<div class="dashboard-grid">
@@ -524,7 +518,7 @@ export class DashboardService {
 							</div>
 							<div class="card-title">Quick Actions</div>
 						</div>
-						<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+						<div class="actions-container">
 							<button class="btn btn-primary" onclick="toggleWatching()">
 								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>

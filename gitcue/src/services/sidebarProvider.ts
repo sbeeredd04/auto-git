@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { GitCueConfig, WatchStatus } from '../types/interfaces';
 import { FileWatcherService } from './fileWatcherService';
 import { ActivityLogger } from './activityLogger';
+import { GitService } from './gitService';
 
 export class GitCueDashboardProvider implements vscode.TreeDataProvider<DashboardItem> {
 	private _onDidChangeTreeData: vscode.EventEmitter<DashboardItem | undefined | null | void> = new vscode.EventEmitter<DashboardItem | undefined | null | void>();
@@ -32,14 +33,56 @@ export class GitCueDashboardProvider implements vscode.TreeDataProvider<Dashboar
 	private async getRootItems(): Promise<DashboardItem[]> {
 		const fileWatcher = FileWatcherService.getInstance();
 		const activityLogger = ActivityLogger.getInstance();
+		const gitService = GitService.getInstance();
 		const isWatching = fileWatcher.getIsWatching();
 		const watchStatus = activityLogger.getWatchStatus();
+		const gitInfo = await gitService.getRepositoryInfo();
 		
 		const items: DashboardItem[] = [];
 
+		// Git Repository Section
+		if (gitInfo) {
+			items.push(new DashboardItem(
+				'Git Repository',
+				vscode.TreeItemCollapsibleState.Expanded,
+				'git-repo',
+				[
+					new DashboardItem(
+						`Branch: ${gitInfo.branch}`,
+						vscode.TreeItemCollapsibleState.None,
+						'git-item',
+						[],
+						'git-branch'
+					),
+					new DashboardItem(
+						`Commits: ${gitInfo.commits}`,
+						vscode.TreeItemCollapsibleState.None,
+						'git-item',
+						[],
+						'git-commit'
+					),
+					new DashboardItem(
+						`Uncommitted: ${gitInfo.uncommittedChanges}`,
+						vscode.TreeItemCollapsibleState.None,
+						'git-item',
+						[],
+						'diff'
+					),
+					new DashboardItem(
+						`Staged: ${gitInfo.stagedChanges}`,
+						vscode.TreeItemCollapsibleState.None,
+						'git-item',
+						[],
+						'diff-added'
+					)
+				],
+				'source-control'
+			));
+		}
+
 		// Status Section
 		items.push(new DashboardItem(
-			'Status',
+			'GitCue Status',
 			vscode.TreeItemCollapsibleState.Expanded,
 			'status',
 			[
@@ -62,7 +105,7 @@ export class GitCueDashboardProvider implements vscode.TreeDataProvider<Dashboar
 					vscode.TreeItemCollapsibleState.None,
 					'status-item',
 					[],
-					'git-commit'
+					'clock'
 				)
 			],
 			'pulse'
