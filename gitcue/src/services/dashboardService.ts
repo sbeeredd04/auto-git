@@ -80,7 +80,7 @@ export class DashboardService {
 	createBufferNotification(options: BufferNotificationOptions): vscode.WebviewPanel {
 		const panel = vscode.window.createWebviewPanel(
 			'gitcueBuffer',
-			'⏰ GitCue Commit Buffer',
+			'GitCue Commit Buffer',
 			vscode.ViewColumn.Beside,
 			{
 				enableScripts: true,
@@ -96,7 +96,6 @@ export class DashboardService {
 		const theme = getTheme();
 		const version = getVersion();
 		
-		// Return modern polished dashboard HTML
 		return `
 		<!DOCTYPE html>
 		<html>
@@ -111,29 +110,30 @@ export class DashboardService {
 				}
 				
 				body { 
-					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Pro Text', sans-serif;
 					color: var(--vscode-foreground);
 					background: var(--vscode-editor-background);
 					line-height: 1.6;
 					overflow-x: hidden;
+					min-height: 100vh;
 				}
 				
 				.container {
-					max-width: 1200px;
+					max-width: 1400px;
 					margin: 0 auto;
-					padding: 20px;
+					padding: 24px;
 				}
 				
 				/* Header Styles */
 				.header {
-					text-align: center;
-					margin-bottom: 40px;
-					padding: 30px 0;
 					background: linear-gradient(135deg, var(--vscode-textCodeBlock-background) 0%, var(--vscode-sideBar-background) 100%);
 					border-radius: 16px;
 					border: 1px solid var(--vscode-panel-border);
+					padding: 32px;
+					margin-bottom: 32px;
 					position: relative;
 					overflow: hidden;
+					text-align: center;
 				}
 				
 				.header::before {
@@ -142,12 +142,26 @@ export class DashboardService {
 					top: 0;
 					left: 0;
 					right: 0;
-					height: 3px;
+					height: 4px;
 					background: linear-gradient(90deg, var(--vscode-progressBar-background), var(--vscode-button-background));
 				}
 				
+				.header-icon {
+					width: 48px;
+					height: 48px;
+					margin: 0 auto 16px;
+					background: linear-gradient(135deg, var(--vscode-button-background), var(--vscode-progressBar-background));
+					border-radius: 12px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: white;
+					font-size: 24px;
+					font-weight: bold;
+				}
+				
 				.title {
-					font-size: 32px;
+					font-size: 36px;
 					font-weight: 700;
 					margin-bottom: 8px;
 					background: linear-gradient(45deg, var(--vscode-foreground), var(--vscode-textLink-foreground));
@@ -164,81 +178,140 @@ export class DashboardService {
 				
 				.version-badge {
 					display: inline-block;
-					padding: 4px 12px;
+					padding: 6px 16px;
 					background: var(--vscode-badge-background);
 					color: var(--vscode-badge-foreground);
 					border-radius: 20px;
 					font-size: 12px;
 					font-weight: 600;
 					text-transform: uppercase;
-					letter-spacing: 0.5px;
+					letter-spacing: 0.8px;
 				}
 				
 				/* Grid Layout */
 				.dashboard-grid {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-					gap: 20px;
-					margin-bottom: 30px;
+					grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+					gap: 24px;
+					margin-bottom: 32px;
+				}
+				
+				.dashboard-row {
+					display: grid;
+					grid-template-columns: 2fr 1fr;
+					gap: 24px;
+					margin-bottom: 24px;
 				}
 				
 				/* Card Styles */
 				.card {
 					background: var(--vscode-textCodeBlock-background);
 					border: 1px solid var(--vscode-panel-border);
-					border-radius: 12px;
+					border-radius: 16px;
 					padding: 24px;
 					position: relative;
 					transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 					backdrop-filter: blur(10px);
+					overflow: hidden;
+				}
+				
+				.card::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					height: 2px;
+					background: linear-gradient(90deg, transparent, var(--vscode-button-background), transparent);
+					opacity: 0;
+					transition: opacity 0.3s ease;
 				}
 				
 				.card:hover {
-					transform: translateY(-2px);
-					box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+					transform: translateY(-4px);
+					box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
 					border-color: var(--vscode-focusBorder);
+				}
+				
+				.card:hover::before {
+					opacity: 1;
 				}
 				
 				.card-header {
 					display: flex;
 					align-items: center;
-					margin-bottom: 16px;
+					margin-bottom: 20px;
+					padding-bottom: 16px;
+					border-bottom: 1px solid var(--vscode-panel-border);
 				}
 				
 				.card-icon {
-					width: 24px;
-					height: 24px;
-					margin-right: 12px;
-					font-size: 20px;
+					width: 32px;
+					height: 32px;
+					margin-right: 16px;
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					color: var(--vscode-button-background);
+					background: var(--vscode-button-background);
+					border-radius: 8px;
+					color: white;
+					flex-shrink: 0;
 				}
 				
 				.card-title {
 					font-size: 18px;
 					font-weight: 600;
 					color: var(--vscode-foreground);
+					margin: 0;
+				}
+				
+				.card-body {
+					min-height: 120px;
 				}
 				
 				/* Status Indicators */
+				.status-section {
+					margin: 16px 0;
+				}
+				
 				.status-indicator {
 					display: flex;
 					align-items: center;
 					margin: 12px 0;
+					padding: 12px;
+					background: var(--vscode-sideBar-background);
+					border-radius: 8px;
+					border-left: 3px solid transparent;
+					transition: all 0.2s ease;
+				}
+				
+				.status-indicator:hover {
+					background: var(--vscode-list-hoverBackground);
+				}
+				
+				.status-indicator.active {
+					border-left-color: var(--vscode-testing-iconPassed);
+				}
+				
+				.status-indicator.inactive {
+					border-left-color: var(--vscode-testing-iconFailed);
+				}
+				
+				.status-indicator.pending {
+					border-left-color: var(--vscode-testing-iconQueued);
 				}
 				
 				.status-dot {
-					width: 8px;
-					height: 8px;
+					width: 10px;
+					height: 10px;
 					border-radius: 50%;
-					margin-right: 8px;
-					animation: pulse 2s infinite;
+					margin-right: 12px;
+					flex-shrink: 0;
 				}
 				
 				.status-dot.active {
 					background: var(--vscode-testing-iconPassed);
+					animation: pulse 2s infinite;
 				}
 				
 				.status-dot.inactive {
@@ -247,45 +320,70 @@ export class DashboardService {
 				
 				.status-dot.pending {
 					background: var(--vscode-testing-iconQueued);
+					animation: pulse 2s infinite;
+				}
+				
+				.status-text {
+					flex: 1;
+					font-weight: 500;
+				}
+				
+				.status-value {
+					font-weight: 600;
+					color: var(--vscode-button-background);
 				}
 				
 				@keyframes pulse {
-					0%, 100% { opacity: 1; }
-					50% { opacity: 0.5; }
+					0%, 100% { opacity: 1; transform: scale(1); }
+					50% { opacity: 0.7; transform: scale(1.1); }
 				}
 				
-				/* Clean Button Styles */
+				/* Button Styles */
 				.btn {
 					display: inline-flex;
 					align-items: center;
 					justify-content: center;
 					padding: 12px 20px;
 					border: 2px solid transparent;
-					border-radius: 8px;
+					border-radius: 10px;
 					font-size: 14px;
 					font-weight: 500;
 					text-decoration: none;
 					cursor: pointer;
-					transition: all 0.3s ease;
+					transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 					margin: 4px;
-					min-width: 120px;
+					min-width: 140px;
 					font-family: inherit;
 					outline: none;
 					position: relative;
 					overflow: hidden;
 				}
 				
+				.btn::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: -100%;
+					width: 100%;
+					height: 100%;
+					background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+					transition: left 0.5s ease;
+				}
+				
+				.btn:hover::before {
+					left: 100%;
+				}
+				
 				.btn-primary {
-					background: linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor});
+					background: linear-gradient(135deg, var(--vscode-button-background), var(--vscode-progressBar-background));
 					color: white;
-					border-color: ${theme.primaryColor};
-					box-shadow: 0 2px 8px rgba(54, 209, 220, 0.2);
+					border-color: var(--vscode-button-background);
+					box-shadow: 0 4px 12px rgba(54, 209, 220, 0.3);
 				}
 				
 				.btn-primary:hover {
-					background: linear-gradient(135deg, ${theme.secondaryColor}, ${theme.primaryColor});
 					transform: translateY(-2px);
-					box-shadow: 0 4px 16px rgba(54, 209, 220, 0.3);
+					box-shadow: 0 8px 20px rgba(54, 209, 220, 0.4);
 				}
 				
 				.btn-secondary {
@@ -298,7 +396,7 @@ export class DashboardService {
 					background: var(--vscode-list-hoverBackground);
 					border-color: var(--vscode-focusBorder);
 					transform: translateY(-1px);
-					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 				}
 				
 				.btn:active {
@@ -307,9 +405,9 @@ export class DashboardService {
 				
 				.actions-container {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+					grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 					gap: 12px;
-					margin-top: 8px;
+					margin-top: 16px;
 				}
 				
 				.btn-icon {
@@ -317,97 +415,119 @@ export class DashboardService {
 					font-size: 16px;
 				}
 				
-				/* Clean Icons */
-				.icon-activity {
-					font-size: 20px;
-					color: var(--vscode-button-background);
-				}
-				
-				.icon-stats {
-					font-size: 20px;
-					color: var(--vscode-testing-iconPassed);
-				}
-				
-				.icon-actions {
-					font-size: 20px;
-					color: var(--vscode-testing-iconQueued);
-				}
-				
-				.icon-log {
-					font-size: 20px;
-					color: var(--vscode-testing-iconFailed);
-				}
-				
-				/* Activity Log */
-				.activity-log {
-					max-height: 300px;
-					overflow-y: auto;
-					border: 1px solid var(--vscode-panel-border);
-					border-radius: 8px;
-					padding: 16px;
-					margin-top: 16px;
-				}
-				
-				.activity-item {
-					display: flex;
-					align-items: center;
-					padding: 8px 0;
-					border-bottom: 1px solid var(--vscode-panel-border);
-				}
-				
-				.activity-item:last-child {
-					border-bottom: none;
-				}
-				
-				.activity-icon {
-					width: 16px;
-					height: 16px;
-					margin-right: 12px;
-					border-radius: 50%;
-				}
-				
-				.activity-content {
-					flex: 1;
-				}
-				
-				.activity-message {
-					font-size: 14px;
-					margin-bottom: 4px;
-				}
-				
-				.activity-time {
-					font-size: 12px;
-					opacity: 0.7;
-				}
-				
 				/* Statistics */
 				.stats-grid {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+					grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 					gap: 16px;
 					margin-top: 16px;
 				}
 				
 				.stat-item {
 					text-align: center;
-					padding: 16px;
+					padding: 20px 16px;
 					background: var(--vscode-sideBar-background);
-					border-radius: 8px;
+					border-radius: 12px;
 					border: 1px solid var(--vscode-panel-border);
+					transition: all 0.2s ease;
+					position: relative;
+					overflow: hidden;
+				}
+				
+				.stat-item::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					height: 2px;
+					background: var(--vscode-button-background);
+					transform: scaleX(0);
+					transition: transform 0.3s ease;
+				}
+				
+				.stat-item:hover::before {
+					transform: scaleX(1);
+				}
+				
+				.stat-item:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 				}
 				
 				.stat-value {
-					font-size: 24px;
+					font-size: 28px;
 					font-weight: 700;
 					color: var(--vscode-button-background);
-					margin-bottom: 4px;
+					margin-bottom: 6px;
 				}
 				
 				.stat-label {
 					font-size: 12px;
 					text-transform: uppercase;
-					letter-spacing: 0.5px;
+					letter-spacing: 0.6px;
 					opacity: 0.8;
+					font-weight: 500;
+				}
+				
+				/* Activity Log */
+				.activity-log {
+					max-height: 320px;
+					overflow-y: auto;
+					border: 1px solid var(--vscode-panel-border);
+					border-radius: 12px;
+					padding: 16px;
+					margin-top: 16px;
+					background: var(--vscode-sideBar-background);
+				}
+				
+				.activity-item {
+					display: flex;
+					align-items: center;
+					padding: 12px 0;
+					border-bottom: 1px solid var(--vscode-panel-border);
+					transition: all 0.2s ease;
+				}
+				
+				.activity-item:last-child {
+					border-bottom: none;
+				}
+				
+				.activity-item:hover {
+					background: var(--vscode-list-hoverBackground);
+					border-radius: 8px;
+					margin: 0 -8px;
+					padding: 12px 8px;
+				}
+				
+				.activity-icon {
+					width: 24px;
+					height: 24px;
+					margin-right: 16px;
+					border-radius: 6px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					font-size: 12px;
+					font-weight: bold;
+					color: white;
+					flex-shrink: 0;
+				}
+				
+				.activity-content {
+					flex: 1;
+					min-width: 0;
+				}
+				
+				.activity-message {
+					font-size: 14px;
+					margin-bottom: 4px;
+					font-weight: 500;
+				}
+				
+				.activity-time {
+					font-size: 12px;
+					opacity: 0.7;
 				}
 				
 				/* Loading Animation */
@@ -418,11 +538,39 @@ export class DashboardService {
 					border: 2px solid var(--vscode-panel-border);
 					border-radius: 50%;
 					border-top-color: var(--vscode-button-background);
-					animation: spin 1s ease-in-out infinite;
+					animation: spin 1s linear infinite;
 				}
 				
 				@keyframes spin {
 					to { transform: rotate(360deg); }
+				}
+				
+				.loading-text {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding: 40px;
+					color: var(--vscode-descriptionForeground);
+				}
+				
+				/* Full-width cards */
+				.card-full {
+					grid-column: 1 / -1;
+				}
+				
+				/* Scrollbar Styling */
+				.activity-log::-webkit-scrollbar {
+					width: 6px;
+				}
+				
+				.activity-log::-webkit-scrollbar-track {
+					background: var(--vscode-scrollbarSlider-background);
+					border-radius: 3px;
+				}
+				
+				.activity-log::-webkit-scrollbar-thumb {
+					background: var(--vscode-scrollbarSlider-hoverBackground);
+					border-radius: 3px;
 				}
 				
 				/* Responsive Design */
@@ -431,16 +579,20 @@ export class DashboardService {
 						grid-template-columns: 1fr;
 					}
 					
+					.dashboard-row {
+						grid-template-columns: 1fr;
+					}
+					
 					.container {
 						padding: 16px;
 					}
 					
 					.header {
-						padding: 20px;
+						padding: 24px 20px;
 					}
 					
 					.title {
-						font-size: 24px;
+						font-size: 28px;
 					}
 					
 					.actions-container {
@@ -452,31 +604,46 @@ export class DashboardService {
 						width: 100%;
 						min-width: auto;
 					}
+					
+					.stats-grid {
+						grid-template-columns: repeat(2, 1fr);
+					}
+				}
+				
+				@media (max-width: 480px) {
+					.stats-grid {
+						grid-template-columns: 1fr;
+					}
 				}
 			</style>
 		</head>
 		<body>
 			<div class="container">
 				<div class="header">
+					<div class="header-icon">GC</div>
 					<h1 class="title">GitCue Dashboard</h1>
 					<p class="subtitle">AI-Powered Git Automation & Monitoring</p>
 					<span class="version-badge">v${version}</span>
 				</div>
 				
-				<div class="dashboard-grid">
+				<div class="dashboard-row">
 					<!-- Status Card -->
 					<div class="card">
 						<div class="card-header">
 							<div class="card-icon">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
 								</svg>
 							</div>
-							<div class="card-title">System Status</div>
+							<h3 class="card-title">System Status</h3>
 						</div>
-						<div id="status-content">
-							<div class="loading"></div>
-							<span style="margin-left: 12px;">Loading status...</span>
+						<div class="card-body">
+							<div id="status-content">
+								<div class="loading-text">
+									<div class="loading"></div>
+									<span style="margin-left: 12px;">Loading status...</span>
+								</div>
+							</div>
 						</div>
 					</div>
 					
@@ -484,91 +651,121 @@ export class DashboardService {
 					<div class="card">
 						<div class="card-header">
 							<div class="card-icon">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M3 3v18h18"/>
 									<path d="M18.7 8l-4.4 4.4-2.6-2.6L6 15.4"/>
 									<circle cx="18" cy="8" r="2"/>
 								</svg>
 							</div>
-							<div class="card-title">Statistics</div>
+							<h3 class="card-title">Statistics</h3>
 						</div>
-						<div class="stats-grid" id="stats-grid">
-							<div class="stat-item">
-								<div class="stat-value" id="files-changed">0</div>
-								<div class="stat-label">Files Changed</div>
-							</div>
-							<div class="stat-item">
-								<div class="stat-value" id="commits-made">0</div>
-								<div class="stat-label">Commits Made</div>
-							</div>
-							<div class="stat-item">
-								<div class="stat-value" id="ai-calls">0</div>
-								<div class="stat-label">AI Calls</div>
+						<div class="card-body">
+							<div class="stats-grid" id="stats-grid">
+								<div class="stat-item">
+									<div class="stat-value" id="files-changed">0</div>
+									<div class="stat-label">Files Changed</div>
+								</div>
+								<div class="stat-item">
+									<div class="stat-value" id="commits-made">0</div>
+									<div class="stat-label">Commits Made</div>
+								</div>
+								<div class="stat-item">
+									<div class="stat-value" id="ai-calls">0</div>
+									<div class="stat-label">AI Calls</div>
+								</div>
 							</div>
 						</div>
 					</div>
-					
+				</div>
+				
+				<div class="dashboard-grid">
 					<!-- Quick Actions Card -->
 					<div class="card">
 						<div class="card-header">
 							<div class="card-icon">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
 								</svg>
 							</div>
-							<div class="card-title">Quick Actions</div>
+							<h3 class="card-title">Quick Actions</h3>
 						</div>
-						<div class="actions-container">
-							<button class="btn btn-primary" onclick="toggleWatching()">
-								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-									<circle cx="12" cy="12" r="3"/>
-								</svg>
-								<span id="watch-btn-text">Watch</span>
-							</button>
-							<button class="btn btn-secondary" onclick="manualCommit()">
-								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-									<polyline points="17,21 17,13 7,13 7,21"/>
-									<polyline points="7,3 7,8 15,8"/>
-								</svg>
-								Commit
-							</button>
-							<button class="btn btn-secondary" onclick="openTerminal()">
-								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-									<line x1="8" y1="21" x2="16" y2="21"/>
-									<line x1="12" y1="17" x2="12" y2="21"/>
-								</svg>
-								Terminal
-							</button>
-							<button class="btn btn-secondary" onclick="openSettings()">
-								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<circle cx="12" cy="12" r="3"/>
-									<path d="M12 1v6m0 6v6m11-9h-6m-6 0H1"/>
-								</svg>
-								Settings
-							</button>
+						<div class="card-body">
+							<div class="actions-container">
+								<button class="btn btn-primary" onclick="toggleWatching()">
+									<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+										<circle cx="12" cy="12" r="3"/>
+									</svg>
+									<span id="watch-btn-text">Watch</span>
+								</button>
+								<button class="btn btn-secondary" onclick="manualCommit()">
+									<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<circle cx="12" cy="12" r="4"/>
+										<path d="M16 8v5a3 3 0 0 0 6 0v-5a4 4 0 1 0-8 8"/>
+									</svg>
+									Commit
+								</button>
+								<button class="btn btn-secondary" onclick="openTerminal()">
+									<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+										<line x1="8" y1="21" x2="16" y2="21"/>
+										<line x1="12" y1="17" x2="12" y2="21"/>
+									</svg>
+									Terminal
+								</button>
+								<button class="btn btn-secondary" onclick="openSettings()">
+									<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<circle cx="12" cy="12" r="3"/>
+										<path d="M12 1v6m0 6v6m11-9h-6m-6 0H1"/>
+									</svg>
+									Settings
+								</button>
+							</div>
 						</div>
 					</div>
 					
-					<!-- Activity Log Card -->
-					<div class="card" style="grid-column: 1 / -1;">
+					<!-- Configuration Card -->
+					<div class="card">
 						<div class="card-header">
 							<div class="card-icon">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-									<polyline points="14,2 14,8 20,8"/>
-									<line x1="16" y1="13" x2="8" y2="13"/>
-									<line x1="16" y1="17" x2="8" y2="17"/>
-									<polyline points="10,9 9,9 8,9"/>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<circle cx="12" cy="12" r="3"/>
+									<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
 								</svg>
 							</div>
-							<div class="card-title">Recent Activity</div>
+							<h3 class="card-title">Configuration</h3>
 						</div>
+						<div class="card-body">
+							<div id="config-content">
+								<div class="loading-text">
+									<div class="loading"></div>
+									<span style="margin-left: 12px;">Loading configuration...</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<!-- Activity Log Card -->
+				<div class="card card-full">
+					<div class="card-header">
+						<div class="card-icon">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+								<polyline points="14,2 14,8 20,8"/>
+								<line x1="16" y1="13" x2="8" y2="13"/>
+								<line x1="16" y1="17" x2="8" y2="17"/>
+								<polyline points="10,9 9,9 8,9"/>
+							</svg>
+						</div>
+						<h3 class="card-title">Recent Activity</h3>
+					</div>
+					<div class="card-body">
 						<div class="activity-log" id="activity-log">
 							<div class="activity-item">
-								<div class="activity-icon loading"></div>
+								<div class="activity-icon" style="background: var(--vscode-panel-border);">
+									<div class="loading"></div>
+								</div>
 								<div class="activity-content">
 									<div class="activity-message">Loading recent activity...</div>
 									<div class="activity-time">Just now</div>
@@ -602,23 +799,50 @@ export class DashboardService {
 				// Status Updates
 				function updateStatus(data) {
 					const statusContent = document.getElementById('status-content');
+					const configContent = document.getElementById('config-content');
 					const watchBtnText = document.getElementById('watch-btn-text');
 					const filesChanged = document.getElementById('files-changed');
 					
 					// Update status content
 					statusContent.innerHTML = \`
-						<div class="status-indicator">
-							<div class="status-dot \${data.isWatching ? 'active' : 'inactive'}"></div>
-							<span>Watching: \${data.isWatching ? 'Active' : 'Inactive'}</span>
+						<div class="status-section">
+							<div class="status-indicator \${data.isWatching ? 'active' : 'inactive'}">
+								<div class="status-dot \${data.isWatching ? 'active' : 'inactive'}"></div>
+								<span class="status-text">File Watching</span>
+								<span class="status-value">\${data.isWatching ? 'Active' : 'Inactive'}</span>
+							</div>
+							<div class="status-indicator \${data.watchStatus.pendingCommit ? 'pending' : 'inactive'}">
+								<div class="status-dot \${data.watchStatus.pendingCommit ? 'pending' : 'inactive'}"></div>
+								<span class="status-text">Pending Commit</span>
+								<span class="status-value">\${data.watchStatus.pendingCommit ? 'Yes' : 'No'}</span>
+							</div>
+							<div class="status-indicator \${data.config.geminiApiKey ? 'active' : 'inactive'}">
+								<div class="status-dot \${data.config.geminiApiKey ? 'active' : 'inactive'}"></div>
+								<span class="status-text">API Status</span>
+								<span class="status-value">\${data.config.geminiApiKey ? 'Ready' : 'Not Set'}</span>
+							</div>
 						</div>
-						<div class="status-indicator">
-							<div class="status-dot \${data.watchStatus.pendingCommit ? 'pending' : 'inactive'}"></div>
-							<span>Pending Commit: \${data.watchStatus.pendingCommit ? 'Yes' : 'No'}</span>
-						</div>
-						<div style="margin-top: 16px;">
-							<div><strong>Mode:</strong> \${data.config.commitMode}</div>
-							<div><strong>Auto Push:</strong> \${data.config.autoPush ? 'Enabled' : 'Disabled'}</div>
-							<div><strong>Last Change:</strong> \${data.watchStatus.lastChange}</div>
+					\`;
+					
+					// Update configuration content
+					configContent.innerHTML = \`
+						<div class="status-section">
+							<div class="status-indicator">
+								<span class="status-text">Commit Mode</span>
+								<span class="status-value">\${data.config.commitMode}</span>
+							</div>
+							<div class="status-indicator">
+								<span class="status-text">Auto Push</span>
+								<span class="status-value">\${data.config.autoPush ? 'Enabled' : 'Disabled'}</span>
+							</div>
+							<div class="status-indicator">
+								<span class="status-text">Buffer Time</span>
+								<span class="status-value">\${data.config.bufferTimeSeconds}s</span>
+							</div>
+							<div class="status-indicator">
+								<span class="status-text">Last Change</span>
+								<span class="status-value">\${data.watchStatus.lastChange || 'Never'}</span>
+							</div>
 						</div>
 					\`;
 					
@@ -638,7 +862,13 @@ export class DashboardService {
 					if (activities.length === 0) {
 						activityLog.innerHTML = \`
 							<div class="activity-item">
-								<div class="activity-icon" style="background: var(--vscode-panel-border);"></div>
+								<div class="activity-icon" style="background: var(--vscode-panel-border);">
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<circle cx="12" cy="12" r="10"/>
+										<line x1="12" y1="8" x2="12" y2="12"/>
+										<line x1="12" y1="16" x2="12.01" y2="16"/>
+									</svg>
+								</div>
 								<div class="activity-content">
 									<div class="activity-message">No recent activity</div>
 									<div class="activity-time">Start watching to see activity</div>
@@ -648,14 +878,14 @@ export class DashboardService {
 						return;
 					}
 					
-					const recentActivities = activities.slice(-10).reverse();
+					const recentActivities = activities.slice(-15).reverse();
 					activityLog.innerHTML = recentActivities.map(activity => {
 						const iconColor = getActivityIconColor(activity.type);
-						const icon = getActivityIcon(activity.type);
+						const iconSvg = getActivityIconSvg(activity.type);
 						
 						return \`
 							<div class="activity-item">
-								<div class="activity-icon" style="background: \${iconColor}; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px;">\${icon}</div>
+								<div class="activity-icon" style="background: \${iconColor};">\${iconSvg}</div>
 								<div class="activity-content">
 									<div class="activity-message">\${activity.message}</div>
 									<div class="activity-time">\${formatTime(activity.timestamp)}</div>
@@ -671,24 +901,41 @@ export class DashboardService {
 						case 'error': return 'var(--vscode-testing-iconFailed)';
 						case 'file_change': return 'var(--vscode-button-background)';
 						case 'ai_analysis': return 'var(--vscode-testing-iconQueued)';
+						case 'watch_start': return 'var(--vscode-progressBar-background)';
+						case 'watch_stop': return 'var(--vscode-testing-iconFailed)';
 						default: return 'var(--vscode-panel-border)';
 					}
 				}
 				
-				function getActivityIcon(type) {
+				function getActivityIconSvg(type) {
 					switch(type) {
-						case 'commit': return '✓';
-						case 'error': return '✗';
-						case 'file_change': return '📄';
-						case 'ai_analysis': return '🤖';
-						case 'watch_start': return '👁️';
-						case 'watch_stop': return '⏸️';
-						default: return '•';
+						case 'commit': return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-5a4 4 0 1 0-8 8"/></svg>';
+						case 'error': return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+						case 'file_change': return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>';
+						case 'ai_analysis': return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.828 14.828a4 4 0 0 1-5.656 0M9 10h1m4 0h1m-6 4h6"/></svg>';
+						case 'watch_start': return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+						case 'watch_stop': return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/></svg>';
+						default: return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>';
 					}
 				}
 				
 				function formatTime(timestamp) {
-					return new Date(timestamp).toLocaleTimeString();
+					const date = new Date(timestamp);
+					const now = new Date();
+					const diffMs = now.getTime() - date.getTime();
+					const diffMins = Math.floor(diffMs / 60000);
+					const diffHours = Math.floor(diffMins / 60);
+					const diffDays = Math.floor(diffHours / 24);
+
+					if (diffMins < 1) {
+						return 'Just now';
+					} else if (diffMins < 60) {
+						return \`\${diffMins}m ago\`;
+					} else if (diffHours < 24) {
+						return \`\${diffHours}h ago\`;
+					} else {
+						return \`\${diffDays}d ago\`;
+					}
 				}
 				
 				// Message Handling
@@ -729,27 +976,28 @@ export class DashboardService {
 				}
 				
 				body { 
-					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Pro Text', sans-serif;
 					color: var(--vscode-foreground);
 					background: var(--vscode-editor-background);
 					line-height: 1.6;
-					padding: 20px;
+					padding: 24px;
 					min-height: 100vh;
 				}
 				
 				.container {
-					max-width: 800px;
+					max-width: 900px;
 					margin: 0 auto;
 				}
 				
 				.header {
 					text-align: center;
-					margin-bottom: 30px;
-					padding: 20px;
+					margin-bottom: 32px;
+					padding: 32px 24px;
 					background: linear-gradient(135deg, var(--vscode-textCodeBlock-background) 0%, var(--vscode-sideBar-background) 100%);
-					border-radius: 12px;
+					border-radius: 16px;
 					border: 1px solid var(--vscode-panel-border);
 					position: relative;
+					overflow: hidden;
 				}
 				
 				.header::before {
@@ -758,13 +1006,27 @@ export class DashboardService {
 					top: 0;
 					left: 0;
 					right: 0;
-					height: 3px;
+					height: 4px;
 					background: linear-gradient(90deg, var(--vscode-progressBar-background), var(--vscode-button-background));
-					border-radius: 12px 12px 0 0;
+					border-radius: 16px 16px 0 0;
+				}
+				
+				.header-icon {
+					width: 48px;
+					height: 48px;
+					margin: 0 auto 16px;
+					background: linear-gradient(135deg, var(--vscode-button-background), var(--vscode-progressBar-background));
+					border-radius: 12px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: white;
+					font-size: 24px;
+					font-weight: bold;
 				}
 				
 				.title {
-					font-size: 24px;
+					font-size: 28px;
 					font-weight: 700;
 					margin-bottom: 8px;
 					background: linear-gradient(45deg, var(--vscode-foreground), var(--vscode-textLink-foreground));
@@ -775,90 +1037,109 @@ export class DashboardService {
 				
 				.subtitle {
 					opacity: 0.8;
-					font-size: 14px;
+					font-size: 16px;
 				}
 				
 				.stats {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+					grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 					gap: 16px;
-					margin: 20px 0;
+					margin: 24px 0;
 				}
 				
 				.stat {
 					text-align: center;
-					padding: 16px;
+					padding: 20px 16px;
 					background: var(--vscode-textCodeBlock-background);
-					border-radius: 8px;
+					border-radius: 12px;
 					border: 1px solid var(--vscode-panel-border);
 					transition: all 0.2s ease;
+					position: relative;
+					overflow: hidden;
+				}
+				
+				.stat::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					height: 2px;
+					background: var(--vscode-button-background);
+					transform: scaleX(0);
+					transition: transform 0.3s ease;
+				}
+				
+				.stat:hover::before {
+					transform: scaleX(1);
 				}
 				
 				.stat:hover {
 					transform: translateY(-2px);
-					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+					box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 				}
 				
 				.stat-value {
-					font-size: 20px;
+					font-size: 24px;
 					font-weight: 700;
 					color: var(--vscode-button-background);
-					margin-bottom: 4px;
+					margin-bottom: 6px;
 				}
 				
 				.stat-label {
 					font-size: 12px;
 					text-transform: uppercase;
 					opacity: 0.8;
-					letter-spacing: 0.5px;
+					letter-spacing: 0.6px;
+					font-weight: 500;
 				}
 				
 				.section {
 					margin: 24px 0;
-					padding: 20px;
+					padding: 24px;
 					background: var(--vscode-textCodeBlock-background);
-					border-radius: 12px;
+					border-radius: 16px;
 					border: 1px solid var(--vscode-panel-border);
 				}
 				
 				.section-title {
-					font-size: 16px;
+					font-size: 18px;
 					font-weight: 600;
-					margin-bottom: 16px;
+					margin-bottom: 20px;
 					display: flex;
 					align-items: center;
-					gap: 8px;
+					gap: 12px;
+					padding-bottom: 12px;
+					border-bottom: 1px solid var(--vscode-panel-border);
+				}
+				
+				.section-icon {
+					width: 24px;
+					height: 24px;
+					color: var(--vscode-button-background);
 				}
 				
 				.commit-message {
 					background: var(--vscode-sideBar-background);
-					padding: 20px;
-					border-radius: 8px;
+					padding: 24px;
+					border-radius: 12px;
 					border-left: 4px solid var(--vscode-progressBar-background);
-					font-family: 'Consolas', 'Monaco', monospace;
+					font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
 					font-size: 14px;
 					line-height: 1.6;
 					position: relative;
 					overflow-wrap: break-word;
-				}
-				
-				.commit-message::before {
-					content: '💬';
-					position: absolute;
-					top: 16px;
-					right: 16px;
-					font-size: 16px;
-					opacity: 0.5;
+					border: 1px solid var(--vscode-panel-border);
 				}
 				
 				.changes {
 					background: var(--vscode-sideBar-background);
-					padding: 16px;
-					border-radius: 8px;
-					font-family: 'Consolas', 'Monaco', monospace;
-					font-size: 12px;
+					padding: 20px;
+					border-radius: 12px;
+					font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+					font-size: 13px;
 					white-space: pre-wrap;
-					max-height: 300px;
+					max-height: 320px;
 					overflow-y: auto;
 					border: 1px solid var(--vscode-panel-border);
 				}
@@ -866,59 +1147,61 @@ export class DashboardService {
 				.options {
 					display: flex;
 					align-items: center;
-					gap: 12px;
-					padding: 16px;
+					gap: 16px;
+					padding: 20px;
 					background: var(--vscode-sideBar-background);
-					border-radius: 8px;
+					border-radius: 12px;
 					border: 1px solid var(--vscode-panel-border);
 				}
 				
 				.checkbox-container {
 					display: flex;
 					align-items: center;
-					gap: 8px;
+					gap: 12px;
 					cursor: pointer;
+					font-weight: 500;
 				}
 				
 				.checkbox-container input[type="checkbox"] {
-					width: 16px;
-					height: 16px;
+					width: 18px;
+					height: 18px;
 					accent-color: var(--vscode-button-background);
 				}
 				
 				.actions {
 					display: flex;
-					gap: 12px;
+					gap: 16px;
 					justify-content: center;
-					margin-top: 30px;
+					margin-top: 32px;
 					flex-wrap: wrap;
 				}
 				
 				.btn {
 					display: inline-flex;
 					align-items: center;
-					padding: 12px 24px;
+					padding: 14px 28px;
 					border: none;
-					border-radius: 8px;
+					border-radius: 10px;
 					cursor: pointer;
-					font-size: 14px;
+					font-size: 15px;
 					font-weight: 500;
 					text-decoration: none;
-					transition: all 0.2s ease;
-					min-width: 140px;
+					transition: all 0.3s ease;
+					min-width: 160px;
 					justify-content: center;
-					gap: 8px;
+					gap: 10px;
+					font-family: inherit;
 				}
 				
 				.btn-primary {
-					background: var(--vscode-button-background);
-					color: var(--vscode-button-foreground);
+					background: linear-gradient(135deg, var(--vscode-button-background), var(--vscode-progressBar-background));
+					color: white;
+					box-shadow: 0 4px 12px rgba(54, 209, 220, 0.3);
 				}
 				
 				.btn-primary:hover {
-					background: var(--vscode-button-hoverBackground);
-					transform: translateY(-1px);
-					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+					transform: translateY(-2px);
+					box-shadow: 0 8px 20px rgba(54, 209, 220, 0.4);
 				}
 				
 				.btn-secondary {
@@ -930,6 +1213,8 @@ export class DashboardService {
 				.btn-secondary:hover {
 					background: var(--vscode-list-hoverBackground);
 					border-color: var(--vscode-focusBorder);
+					transform: translateY(-1px);
+					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 				}
 				
 				.btn-icon {
@@ -942,7 +1227,11 @@ export class DashboardService {
 					}
 					
 					.stats {
-						grid-template-columns: 1fr;
+						grid-template-columns: 1fr 1fr;
+					}
+					
+					.btn {
+						width: 100%;
 					}
 				}
 			</style>
@@ -950,7 +1239,8 @@ export class DashboardService {
 		<body>
 			<div class="container">
 				<div class="header">
-					<h1 class="title">🤖 GitCue AI Commit</h1>
+					<div class="header-icon">AI</div>
+					<h1 class="title">GitCue AI Commit</h1>
 					<p class="subtitle">Review your AI-generated commit message</p>
 				</div>
 
@@ -970,17 +1260,36 @@ export class DashboardService {
 				</div>
 
 				<div class="section">
-					<h3 class="section-title">💬 Commit Message</h3>
+					<h3 class="section-title">
+						<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+						</svg>
+						Commit Message
+					</h3>
 					<div class="commit-message" id="commitMessage">${message}</div>
 				</div>
 
 				<div class="section">
-					<h3 class="section-title">📋 Changes to Commit</h3>
+					<h3 class="section-title">
+						<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+							<polyline points="14,2 14,8 20,8"/>
+							<line x1="16" y1="13" x2="8" y2="13"/>
+							<line x1="16" y1="17" x2="8" y2="17"/>
+						</svg>
+						Changes to Commit
+					</h3>
 					<div class="changes">${status}</div>
 				</div>
 
 				<div class="section">
-					<h3 class="section-title">⚙️ Options</h3>
+					<h3 class="section-title">
+						<svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="3"/>
+							<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+						</svg>
+						Options
+					</h3>
 					<div class="options">
 						<label class="checkbox-container">
 							<input type="checkbox" id="shouldPush" ${config.autoPush ? 'checked' : ''}>
@@ -991,15 +1300,23 @@ export class DashboardService {
 
 				<div class="actions">
 					<button class="btn btn-primary" onclick="commit()">
-						<span class="btn-icon">🚀</span>
+						<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M7 7l10-10M7 7l8 8M7 7l-7 8"/>
+						</svg>
 						<span>Commit & ${config.autoPush ? 'Push' : 'Save'}</span>
 					</button>
 					<button class="btn btn-secondary" onclick="editMessage()">
-						<span class="btn-icon">✏️</span>
+						<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+							<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+						</svg>
 						<span>Edit Message</span>
 					</button>
 					<button class="btn btn-secondary" onclick="cancel()">
-						<span class="btn-icon">❌</span>
+						<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"/>
+							<line x1="6" y1="6" x2="18" y2="18"/>
+						</svg>
 						<span>Cancel</span>
 					</button>
 				</div>
@@ -1053,34 +1370,62 @@ export class DashboardService {
 			<title>GitCue Commit Buffer</title>
 			<style>
 				body { 
-					font-family: var(--vscode-font-family); 
+					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Pro Text', sans-serif;
 					color: var(--vscode-foreground);
 					background: var(--vscode-editor-background);
-					padding: 20px;
+					padding: 24px;
 					text-align: center;
-					animation: fadeIn 0.3s ease-in;
+					animation: fadeIn 0.4s ease-out;
+					min-height: 100vh;
+					display: flex;
+					flex-direction: column;
+					justify-content: center;
 				}
 				@keyframes fadeIn {
 					from { opacity: 0; transform: translateY(20px); }
 					to { opacity: 1; transform: translateY(0); }
 				}
+				
+				.container {
+					max-width: 500px;
+					margin: 0 auto;
+				}
+				
+				.header-icon {
+					width: 64px;
+					height: 64px;
+					margin: 0 auto 20px;
+					background: linear-gradient(135deg, var(--vscode-button-background), var(--vscode-progressBar-background));
+					border-radius: 16px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: white;
+					font-size: 32px;
+					font-weight: bold;
+				}
+				
 				h1 {
-					margin: 0 0 10px 0;
-					font-size: 24px;
-					font-weight: 600;
+					margin: 0 0 12px 0;
+					font-size: 28px;
+					font-weight: 700;
+					background: linear-gradient(45deg, var(--vscode-foreground), var(--vscode-textLink-foreground));
+					-webkit-background-clip: text;
+					-webkit-text-fill-color: transparent;
+					background-clip: text;
 				}
 				.subtitle {
-					margin: 0 0 30px 0;
+					margin: 0 0 32px 0;
 					opacity: 0.8;
-					font-size: 14px;
+					font-size: 16px;
 				}
 				.timer {
-					font-size: 56px;
-					font-weight: bold;
+					font-size: 72px;
+					font-weight: 800;
 					color: var(--vscode-errorForeground);
-					margin: 20px 0;
-					font-family: 'Courier New', monospace;
-					text-shadow: 0 0 10px rgba(255,255,255,0.1);
+					margin: 24px 0;
+					font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+					text-shadow: 0 0 20px rgba(255,255,255,0.1);
 					transition: all 0.3s ease;
 				}
 				.timer.warning {
@@ -1089,20 +1434,24 @@ export class DashboardService {
 				}
 				@keyframes pulse {
 					0%, 100% { transform: scale(1); }
-					50% { transform: scale(1.05); }
+					50% { transform: scale(1.08); }
 				}
 				.commit-info {
 					background: var(--vscode-textCodeBlock-background);
-					padding: 20px;
-					border-radius: 12px;
-					margin: 20px 0;
+					padding: 24px;
+					border-radius: 16px;
+					margin: 24px 0;
 					border: 1px solid var(--vscode-panel-border);
-					box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+					box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 				}
 				.commit-info h3 {
-					margin: 0 0 10px 0;
-					font-size: 16px;
+					margin: 0 0 12px 0;
+					font-size: 18px;
 					font-weight: 600;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 8px;
 				}
 				.commit-info p {
 					margin: 0;
@@ -1110,51 +1459,54 @@ export class DashboardService {
 					font-size: 14px;
 				}
 				.btn {
-					padding: 15px 30px;
+					padding: 16px 32px;
 					border: none;
-					border-radius: 8px;
+					border-radius: 12px;
 					cursor: pointer;
 					font-size: 16px;
-					font-weight: bold;
-					background: var(--vscode-button-background);
-					color: var(--vscode-button-foreground);
-					transition: all 0.2s ease;
-					box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+					font-weight: 600;
+					background: linear-gradient(135deg, var(--vscode-button-background), var(--vscode-progressBar-background));
+					color: white;
+					transition: all 0.3s ease;
+					box-shadow: 0 4px 12px rgba(54, 209, 220, 0.3);
+					display: inline-flex;
+					align-items: center;
+					gap: 8px;
 				}
 				.btn:hover {
-					background: var(--vscode-button-hoverBackground);
-					transform: translateY(-1px);
-					box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+					transform: translateY(-2px);
+					box-shadow: 0 8px 20px rgba(54, 209, 220, 0.4);
 				}
 				.btn:active {
 					transform: translateY(0);
-					box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+					box-shadow: 0 4px 12px rgba(54, 209, 220, 0.3);
 				}
 				.progress {
 					width: 100%;
-					height: 8px;
+					height: 12px;
 					background: var(--vscode-panel-border);
-					border-radius: 4px;
+					border-radius: 6px;
 					overflow: hidden;
-					margin: 20px 0;
-					box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+					margin: 24px 0;
+					box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 				}
 				.progress-fill {
 					height: 100%;
 					background: linear-gradient(90deg, var(--vscode-progressBar-background), var(--vscode-errorForeground));
 					transition: width 1s linear;
 					width: 100%;
-					border-radius: 4px;
+					border-radius: 6px;
 				}
 				.warning-text {
-					margin: 20px 0;
-					font-size: 14px;
+					margin: 24px 0;
+					font-size: 16px;
 					opacity: 0.9;
+					font-weight: 500;
 				}
 				.cancel-hint {
-					font-size: 12px;
+					font-size: 14px;
 					opacity: 0.7;
-					margin-top: 20px;
+					margin-top: 24px;
 				}
 				.status-dot {
 					display: inline-block;
@@ -1172,29 +1524,70 @@ export class DashboardService {
 			</style>
 		</head>
 		<body>
-			<h1>⏰ Commit Buffer Period</h1>
-			<p class="subtitle"><span class="status-dot"></span>GitCue is about to commit your changes</p>
-			
-			<div class="timer" id="timer">${timeLeft}</div>
-			
-			<div class="commit-info">
-				<h3>💬 ${message}</h3>
-				<p>📁 ${fileCount} files • 🔄 ${config.commitMode} mode • 🚀 ${config.autoPush ? 'Auto-push enabled' : 'No auto-push'}</p>
+			<div class="container">
+				<div class="header-icon">
+					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="10"/>
+						<polyline points="12,6 12,12 16,14"/>
+					</svg>
+				</div>
+				
+				<h1>Commit Buffer Period</h1>
+				<p class="subtitle">
+					<span class="status-dot"></span>GitCue is about to commit your changes
+				</p>
+				
+				<div class="timer" id="timer">${timeLeft}</div>
+				
+				<div class="commit-info">
+					<h3>
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+						</svg>
+						${message}
+					</h3>
+					<p>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 4px;">
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+							<polyline points="14,2 14,8 20,8"/>
+						</svg>
+						${fileCount} files • 
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin: 0 4px;">
+							<circle cx="12" cy="12" r="3"/>
+						</svg>
+						${config.commitMode} mode • 
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin: 0 4px;">
+							<path d="M7 7l10-10M7 7l8 8M7 7l-7 8"/>
+						</svg>
+						${config.autoPush ? 'Auto-push enabled' : 'No auto-push'}
+					</p>
+				</div>
+				
+				<div class="progress">
+					<div class="progress-fill" id="progress-fill"></div>
+				</div>
+				
+				<p class="warning-text" id="warning-text">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 8px;">
+						<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+						<line x1="12" y1="9" x2="12" y2="13"/>
+						<line x1="12" y1="17" x2="12.01" y2="17"/>
+					</svg>
+					Committing in <span id="timer-text">${timeLeft}</span> seconds...
+				</p>
+				
+				<button class="btn" onclick="cancelCommit()">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<line x1="18" y1="6" x2="6" y2="18"/>
+						<line x1="6" y1="6" x2="18" y2="18"/>
+					</svg>
+					Cancel Commit
+				</button>
+				
+				<p class="cancel-hint">
+					Press 'c', 'x', or Ctrl+X to cancel
+				</p>
 			</div>
-			
-			<div class="progress">
-				<div class="progress-fill" id="progress-fill"></div>
-			</div>
-			
-			<p class="warning-text" id="warning-text">⚠️ Committing in <span id="timer-text">${timeLeft}</span> seconds...</p>
-			
-			<button class="btn" onclick="cancelCommit()">
-				🚫 Cancel Commit
-			</button>
-			
-			<p class="cancel-hint">
-				Press 'c', 'x', or Ctrl+X to cancel
-			</p>
 
 			<script>
 				const vscode = acquireVsCodeApi();
@@ -1229,11 +1622,11 @@ export class DashboardService {
 					
 					// Update warning text
 					const warningElement = document.getElementById('warning-text');
-					if (timeLeft <= 5) {
-						warningElement.innerHTML = '🚨 Committing in <span id="timer-text">' + timeLeft + '</span> seconds...';
-					} else {
-						warningElement.innerHTML = '⚠️ Committing in <span id="timer-text">' + timeLeft + '</span> seconds...';
-					}
+					const warningIcon = timeLeft <= 5 ? 
+						'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 8px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' :
+						'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+					
+					warningElement.innerHTML = warningIcon + 'Committing in <span id="timer-text">' + timeLeft + '</span> seconds...';
 				}
 
 				// Listen for timer updates from the extension

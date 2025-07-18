@@ -385,21 +385,21 @@ graph TB
     end
     
     subgraph "Log Types"
-        SUCCESS[Success Messages]
-        ERROR[Error Messages]
-        WARNING[Warning Messages]
-        INFO[Info Messages]
-        DEBUG[Debug Messages]
+            SUCCESS[Success Messages]
+            ERROR[Error Messages]
+            WARNING[Warning Messages]
+            INFO[Info Messages]
+            DEBUG[Debug Messages]
         STATUS[Status Updates]
-    end
-    
+        end
+        
     subgraph "Output Targets"
         VSCODE[VS Code Output]
-        CONSOLE[Console Output]
+            CONSOLE[Console Output]
         INTERACTIVE[Interactive Terminal]
         DASHBOARD[Dashboard Display]
-    end
-    
+        end
+        
     LOGGER --> CHANNEL
     LOGGER --> FORMATTER
     LOGGER --> LEVELS

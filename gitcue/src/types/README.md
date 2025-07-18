@@ -380,13 +380,13 @@ class ExampleService {
   constructor(config: GitCueConfig) {
     this.config = config;
     this.watchStatus = {
-      isWatching: false,
-      filesChanged: 0,
+    isWatching: false,
+    filesChanged: 0,
       lastChange: 'None',
       lastCommit: 'None',
-      pendingCommit: false,
-      aiAnalysisInProgress: false,
-      activityHistory: [],
+    pendingCommit: false,
+    aiAnalysisInProgress: false,
+    activityHistory: [],
       changedFiles: new Set()
     };
   }
@@ -481,7 +481,7 @@ export interface TestHelpers {
   createMockConfig(overrides?: Partial<GitCueConfig>): GitCueConfig;
   createMockWatchStatus(overrides?: Partial<WatchStatus>): WatchStatus;
   validateTypeStructure<T>(obj: T, schema: any): boolean;
-}
+    }
 ```
 
 ---

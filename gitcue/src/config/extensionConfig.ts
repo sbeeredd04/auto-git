@@ -29,7 +29,7 @@ export interface ExtensionConfig {
 }
 
 export const EXTENSION_CONFIG: ExtensionConfig = {
-	version: '0.3.9',
+	version: '0.3.10',
 	displayName: 'GitCue',
 	description: 'GitCue — your Git helper extension for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.',
 	publisher: 'sbeeredd04',

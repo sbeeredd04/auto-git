@@ -128,33 +128,33 @@ import { CommitService } from '../services/commitService';
 import { createMockConfig, createMockWorkspace } from './helpers/testUtils';
 
 suite('CommitService Tests', () => {
-  let commitService: CommitService;
+    let commitService: CommitService;
   let mockConfig: GitCueConfig;
   let mockWorkspace: string;
 
   setup(() => {
-    commitService = CommitService.getInstance();
+      commitService = CommitService.getInstance();
     mockConfig = createMockConfig();
     mockWorkspace = createMockWorkspace();
-  });
-
+    });
+    
   test('should generate commit message with AI', async () => {
     const mockDiff = 'diff --git a/test.js b/test.js\n+console.log("test");';
     const mockStatus = 'M test.js';
-    
+        
     const message = await commitService.generateCommitMessage(mockWorkspace, mockConfig);
     
     assert.ok(message.length > 0);
     assert.ok(message.includes('test') || message.includes('add') || message.includes('update'));
-  });
-
+      });
+      
   test('should handle commit with buffer notification', async () => {
     const mockMessage = 'test: add test functionality';
     const mockStatus = 'M test.js';
     
     // Mock the buffer notification
     const bufferPromise = commitService.commitWithBuffer(mockWorkspace, mockConfig);
-    
+        
     // Simulate user cancellation
     setTimeout(() => {
       commitService.cancelBufferedCommit();
@@ -172,8 +172,8 @@ suite('CommitService Tests', () => {
     assert.ok(typeof analysis.shouldCommit === 'boolean');
     assert.ok(typeof analysis.reason === 'string');
     assert.ok(['LOW', 'MEDIUM', 'HIGH'].includes(analysis.significance));
-  });
-});
+      });
+    });
 ```
 
 ### Utils Testing
@@ -201,8 +201,8 @@ suite('AI Utils Tests', () => {
     assert.ok(typeof decision.reason === 'string');
     assert.ok(decision.reason.length > 0);
     assert.ok(['LOW', 'MEDIUM', 'HIGH'].includes(decision.significance));
-  });
-
+    });
+    
   test('should generate error suggestions', async () => {
     const errorContext = 'Command: git push\nError: Permission denied (publickey)';
     
@@ -210,8 +210,8 @@ suite('AI Utils Tests', () => {
     
     assert.ok(suggestion.length > 0);
     assert.ok(suggestion.includes('ssh') || suggestion.includes('key') || suggestion.includes('authentication'));
-  });
-
+    });
+    
   test('should format AI suggestions correctly', () => {
     const suggestion = '# Solution\nTry running `git status` to check your repository state.';
     const formatted = formatAISuggestion(suggestion);
@@ -238,15 +238,15 @@ import { ConfigManager } from '../utils/config';
 import { createMockConfig } from './helpers/testUtils';
 
 suite('Configuration Tests', () => {
-  let configManager: ConfigManager;
+    let configManager: ConfigManager;
 
   setup(() => {
-    configManager = ConfigManager.getInstance();
-  });
-
-  test('should load default configuration', () => {
-    const config = configManager.getConfig();
+      configManager = ConfigManager.getInstance();
+    });
     
+  test('should load default configuration', () => {
+      const config = configManager.getConfig();
+      
     assert.ok(config);
     assert.ok(['periodic', 'intelligent'].includes(config.commitMode));
     assert.ok(typeof config.autoPush === 'boolean');
@@ -257,14 +257,14 @@ suite('Configuration Tests', () => {
   test('should validate configuration', () => {
     const validConfig = createMockConfig();
     const result = configManager.validateConfig();
-    
+      
     assert.ok(typeof result.valid === 'boolean');
     assert.ok(Array.isArray(result.errors));
     
     if (!result.valid) {
       console.log('Validation errors:', result.errors);
-    }
-  });
+        }
+      });
 
   test('should optimize watch patterns', () => {
     const patterns = configManager.getOptimizedWatchPatterns();
@@ -272,8 +272,8 @@ suite('Configuration Tests', () => {
     assert.ok(Array.isArray(patterns));
     assert.ok(patterns.length > 0);
     assert.ok(patterns.every(pattern => typeof pattern === 'string'));
-  });
-
+    });
+    
   test('should handle configuration updates', async () => {
     const originalMode = configManager.getConfig().commitMode;
     const newMode = originalMode === 'periodic' ? 'intelligent' : 'periodic';
@@ -300,8 +300,8 @@ suite('Markdown Renderer Tests', () => {
 
   setup(() => {
     renderer = new MarkdownRenderer();
-  });
-
+    });
+    
   test('should render headers correctly', () => {
     const markdown = '# Test Header\n## Subheader\n### Sub-subheader';
     const rendered = renderer.render(markdown);
@@ -317,8 +317,8 @@ suite('Markdown Renderer Tests', () => {
     
     assert.ok(rendered.includes('git status'));
     assert.ok(rendered.includes('git add .'));
-  });
-
+    });
+    
   test('should render lists', () => {
     const markdown = '- First item\n- Second item\n- Third item';
     const rendered = renderer.render(markdown);
@@ -339,8 +339,8 @@ suite('Markdown Renderer Tests', () => {
     assert.ok(box.includes('╯'));
     assert.ok(box.includes(title));
     assert.ok(box.includes(content));
-  });
-
+    });
+    
   test('should handle text wrapping', () => {
     const longText = 'This is a very long text that should be wrapped at a certain width to ensure proper display in terminal environments.';
     const wrapped = renderer.wrapText(longText, 40);
@@ -427,14 +427,14 @@ export function createMockActivityEntry(overrides?: Partial<ActivityLogEntry>): 
 
 export function createMockContext(): vscode.ExtensionContext {
   return {
-    subscriptions: [],
-    workspaceState: {
-      get: jest.fn(),
+      subscriptions: [],
+      workspaceState: {
+        get: jest.fn(),
       update: jest.fn(),
       keys: jest.fn()
-    },
-    globalState: {
-      get: jest.fn(),
+      },
+      globalState: {
+        get: jest.fn(),
       update: jest.fn(),
       keys: jest.fn()
     },
@@ -453,8 +453,8 @@ export function createMockContext(): vscode.ExtensionContext {
       store: jest.fn(),
       delete: jest.fn(),
       onDidChange: jest.fn()
-    }
-  } as any;
+      }
+    } as any;
 }
 
 export function createMockWorkspace(): string {
@@ -615,7 +615,7 @@ async function main() {
     
     // Test runner
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
-    
+      
     // Run tests
     await runTests({ 
       extensionDevelopmentPath, 
@@ -648,7 +648,7 @@ export function run(): Promise<void> {
     timeout: 10000,
     reporter: 'spec'
   });
-
+      
   const testsRoot = path.resolve(__dirname, '..');
 
   return new Promise((c, e) => {
@@ -727,7 +727,7 @@ suite('User Workflow Tests', () => {
   setup(() => {
     orchestrator = new TestOrchestrator();
   });
-
+  
   teardown(() => {
     orchestrator.cleanup();
   });
@@ -742,7 +742,7 @@ suite('User Workflow Tests', () => {
     // 3. Verify activity was logged
     const history = orchestrator.getActivityHistory();
     assert.ok(history.length > 0);
-    
+      
     // 4. Verify file change was recorded
     const fileChangeEntry = history.find(entry => entry.type === 'file_change');
     assert.ok(fileChangeEntry);
