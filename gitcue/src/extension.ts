@@ -11,6 +11,7 @@ import { DashboardService } from './services/dashboardService';
 import { ActivityLogger } from './services/activityLogger';
 import { CommitService } from './services/commitService';
 import { FileWatcherService } from './services/fileWatcherService';
+import { GitCueDashboardProvider, GitCueActivityProvider, GitCueSettingsProvider } from './services/sidebarProvider';
 import { GitCueConfig, DashboardState } from './types/interfaces';
 
 const execAsync = promisify(exec);
@@ -25,6 +26,9 @@ class GitCueExtension {
 	private activityLogger: ActivityLogger;
 	private commitService: CommitService;
 	private fileWatcherService: FileWatcherService;
+	private sidebarDashboardProvider: GitCueDashboardProvider;
+	private sidebarActivityProvider: GitCueActivityProvider;
+	private sidebarSettingsProvider: GitCueSettingsProvider;
 
 	constructor(private context: vscode.ExtensionContext) {
 		this.outputChannel = vscode.window.createOutputChannel('GitCue');
@@ -33,6 +37,9 @@ class GitCueExtension {
 		this.activityLogger = ActivityLogger.getInstance();
 		this.commitService = CommitService.getInstance();
 		this.fileWatcherService = FileWatcherService.getInstance();
+		this.sidebarDashboardProvider = new GitCueDashboardProvider();
+		this.sidebarActivityProvider = new GitCueActivityProvider();
+		this.sidebarSettingsProvider = new GitCueSettingsProvider();
 		
 		this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 		this.setupStatusBar();
@@ -44,6 +51,7 @@ class GitCueExtension {
 		this.activityLogger.setUpdateCallback(() => {
 			this.updateStatusBar();
 			this.updateDashboards();
+			this.refreshSidebarViews();
 		});
 		
 		// Auto-watch initialization
@@ -121,6 +129,31 @@ class GitCueExtension {
 			showCollapseAll: false
 		});
 		this.context.subscriptions.push(statusView);
+
+		// Register sidebar views
+		const dashboardView = vscode.window.createTreeView('gitcueDashboard', {
+			treeDataProvider: this.sidebarDashboardProvider,
+			showCollapseAll: false
+		});
+		this.context.subscriptions.push(dashboardView);
+
+		const activityView = vscode.window.createTreeView('gitcueActivity', {
+			treeDataProvider: this.sidebarActivityProvider,
+			showCollapseAll: false
+		});
+		this.context.subscriptions.push(activityView);
+
+		const settingsView = vscode.window.createTreeView('gitcueSettings', {
+			treeDataProvider: this.sidebarSettingsProvider,
+			showCollapseAll: false
+		});
+		this.context.subscriptions.push(settingsView);
+	}
+
+	private refreshSidebarViews() {
+		this.sidebarDashboardProvider.refresh();
+		this.sidebarActivityProvider.refresh();
+		this.sidebarSettingsProvider.refresh();
 	}
 
 	private async commitWithPreview() {
@@ -149,6 +182,7 @@ class GitCueExtension {
 			this.updateStatusBar();
 			this.updateDashboards();
 			this.statusProvider.refresh();
+			this.refreshSidebarViews();
 		}
 	}
 
@@ -157,6 +191,7 @@ class GitCueExtension {
 		this.updateStatusBar();
 		this.updateDashboards();
 		this.statusProvider.refresh();
+		this.refreshSidebarViews();
 	}
 
 	private openDashboard() {

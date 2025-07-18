@@ -2,7 +2,7 @@
   "name": "gitcue",
   "displayName": "GitCue",
   "description": "GitCue — your Git helper extension for VS Code. Automate commits with AI-crafted messages, manage pushes and resets in-editor, and keep your workflow smooth and effortless.",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "publisher": "sbeeredd04",
   "icon": "icon.png",
   "galleryBanner": {
@@ -294,6 +294,23 @@
           "name": "GitCue Status",
           "when": "scmProvider == git"
         }
+      ],
+      "gitcue": [
+        {
+          "id": "gitcueDashboard",
+          "name": "Dashboard",
+          "when": "scmProvider == git"
+        },
+        {
+          "id": "gitcueActivity",
+          "name": "Activity",
+          "when": "scmProvider == git"
+        },
+        {
+          "id": "gitcueSettings",
+          "name": "Settings",
+          "when": "scmProvider == git"
+        }
       ]
     },
     "viewsContainers": {
@@ -301,7 +318,7 @@
         {
           "id": "gitcue",
           "title": "GitCue",
-          "icon": "$(git-branch)"
+          "icon": "media/gitcue-icon.svg"
         }
       ]
     }

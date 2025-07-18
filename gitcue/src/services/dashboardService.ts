@@ -205,7 +205,11 @@ export class DashboardService {
 					width: 24px;
 					height: 24px;
 					margin-right: 12px;
-					font-size: 24px;
+					font-size: 20px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: var(--vscode-button-background);
 				}
 				
 				.card-title {
@@ -246,50 +250,103 @@ export class DashboardService {
 					50% { opacity: 0.5; }
 				}
 				
-				/* Button Styles */
+				/* Modern Button Styles */
 				.btn {
+					width: 10em;
+					position: relative;
+					height: 3.5em;
+					border: 3px ridge var(--vscode-button-background);
+					outline: none;
+					background-color: transparent;
+					color: var(--vscode-foreground);
+					transition: 1s;
+					border-radius: 0.3em;
+					font-size: 16px;
+					font-weight: bold;
+					cursor: pointer;
 					display: inline-flex;
 					align-items: center;
-					padding: 12px 24px;
-					border: none;
-					border-radius: 8px;
-					cursor: pointer;
-					font-size: 14px;
-					font-weight: 500;
-					text-decoration: none;
-					transition: all 0.2s ease;
-					position: relative;
-					overflow: hidden;
+					justify-content: center;
 					margin: 6px;
 					min-width: 120px;
-					justify-content: center;
+					text-decoration: none;
+					font-family: inherit;
+				}
+				
+				.btn::after {
+					content: "";
+					position: absolute;
+					top: -10px;
+					left: 3%;
+					width: 95%;
+					height: 40%;
+					background-color: var(--vscode-editor-background);
+					transition: 0.5s;
+					transform-origin: center;
+				}
+				
+				.btn::before {
+					content: "";
+					transform-origin: center;
+					position: absolute;
+					top: 80%;
+					left: 3%;
+					width: 95%;
+					height: 40%;
+					background-color: var(--vscode-editor-background);
+					transition: 0.5s;
+				}
+				
+				.btn:hover::before, .btn:hover::after {
+					transform: scale(0)
+				}
+				
+				.btn:hover {
+					box-shadow: inset 0px 0px 25px var(--vscode-button-background);
 				}
 				
 				.btn-primary {
-					background: var(--vscode-button-background);
-					color: var(--vscode-button-foreground);
+					border-color: var(--vscode-button-background);
+					color: var(--vscode-button-background);
 				}
 				
 				.btn-primary:hover {
-					background: var(--vscode-button-hoverBackground);
-					transform: translateY(-1px);
-					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+					box-shadow: inset 0px 0px 25px var(--vscode-button-background);
 				}
 				
 				.btn-secondary {
-					background: var(--vscode-textCodeBlock-background);
+					border-color: var(--vscode-panel-border);
 					color: var(--vscode-foreground);
-					border: 1px solid var(--vscode-panel-border);
 				}
 				
 				.btn-secondary:hover {
-					background: var(--vscode-list-hoverBackground);
-					border-color: var(--vscode-focusBorder);
+					box-shadow: inset 0px 0px 25px var(--vscode-panel-border);
 				}
 				
 				.btn-icon {
 					margin-right: 8px;
 					font-size: 16px;
+				}
+				
+				/* Clean Icons */
+				.icon-activity {
+					font-size: 20px;
+					color: var(--vscode-button-background);
+				}
+				
+				.icon-stats {
+					font-size: 20px;
+					color: var(--vscode-testing-iconPassed);
+				}
+				
+				.icon-actions {
+					font-size: 20px;
+					color: var(--vscode-testing-iconQueued);
+				}
+				
+				.icon-log {
+					font-size: 20px;
+					color: var(--vscode-testing-iconFailed);
 				}
 				
 				/* Activity Log */
@@ -396,6 +453,11 @@ export class DashboardService {
 					.title {
 						font-size: 24px;
 					}
+					
+					.btn {
+						width: 100%;
+						max-width: 200px;
+					}
 				}
 			</style>
 		</head>
@@ -411,7 +473,11 @@ export class DashboardService {
 					<!-- Status Card -->
 					<div class="card">
 						<div class="card-header">
-							<div class="card-icon">📊</div>
+							<div class="card-icon">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+								</svg>
+							</div>
 							<div class="card-title">System Status</div>
 						</div>
 						<div id="status-content">
@@ -423,7 +489,13 @@ export class DashboardService {
 					<!-- Statistics Card -->
 					<div class="card">
 						<div class="card-header">
-							<div class="card-icon">📈</div>
+							<div class="card-icon">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M3 3v18h18"/>
+									<path d="M18.7 8l-4.4 4.4-2.6-2.6L6 15.4"/>
+									<circle cx="18" cy="8" r="2"/>
+								</svg>
+							</div>
 							<div class="card-title">Statistics</div>
 						</div>
 						<div class="stats-grid" id="stats-grid">
@@ -445,24 +517,42 @@ export class DashboardService {
 					<!-- Quick Actions Card -->
 					<div class="card">
 						<div class="card-header">
-							<div class="card-icon">⚡</div>
+							<div class="card-icon">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+								</svg>
+							</div>
 							<div class="card-title">Quick Actions</div>
 						</div>
 						<div style="display: flex; flex-wrap: wrap; gap: 8px;">
 							<button class="btn btn-primary" onclick="toggleWatching()">
-								<span class="btn-icon">👁️</span>
-								<span id="watch-btn-text">Toggle Watching</span>
+								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+									<circle cx="12" cy="12" r="3"/>
+								</svg>
+								<span id="watch-btn-text">Watch</span>
 							</button>
 							<button class="btn btn-secondary" onclick="manualCommit()">
-								<span class="btn-icon">💾</span>
-								Commit Now
+								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+									<polyline points="17,21 17,13 7,13 7,21"/>
+									<polyline points="7,3 7,8 15,8"/>
+								</svg>
+								Commit
 							</button>
 							<button class="btn btn-secondary" onclick="openTerminal()">
-								<span class="btn-icon">🖥️</span>
-								AI Terminal
+								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+									<line x1="8" y1="21" x2="16" y2="21"/>
+									<line x1="12" y1="17" x2="12" y2="21"/>
+								</svg>
+								Terminal
 							</button>
 							<button class="btn btn-secondary" onclick="openSettings()">
-								<span class="btn-icon">⚙️</span>
+								<svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<circle cx="12" cy="12" r="3"/>
+									<path d="M12 1v6m0 6v6m11-9h-6m-6 0H1"/>
+								</svg>
 								Settings
 							</button>
 						</div>
@@ -471,7 +561,15 @@ export class DashboardService {
 					<!-- Activity Log Card -->
 					<div class="card" style="grid-column: 1 / -1;">
 						<div class="card-header">
-							<div class="card-icon">📝</div>
+							<div class="card-icon">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+									<polyline points="14,2 14,8 20,8"/>
+									<line x1="16" y1="13" x2="8" y2="13"/>
+									<line x1="16" y1="17" x2="8" y2="17"/>
+									<polyline points="10,9 9,9 8,9"/>
+								</svg>
+							</div>
 							<div class="card-title">Recent Activity</div>
 						</div>
 						<div class="activity-log" id="activity-log">
