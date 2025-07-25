@@ -1,180 +1,95 @@
 import * as vscode from 'vscode';
-import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs/promises';
 import { configManager } from '../utils/config';
 import logger from '../utils/logger';
-import { generateErrorSuggestion } from '../utils/ai';
-import { renderMarkdown } from '../utils/markdown';
+import { ActivityLogger } from '../services/activityLogger';
+
+// Import helper classes
+import { TerminalBase, TerminalIO } from './terminalBase';
+import { AutoCompleteEngine, CompletionResult } from './autoComplete';
+import { AITerminalIntegration, ErrorAnalysisResult } from './aiIntegration';
+import { TerminalCommands, CommandResult } from './terminalCommands';
+import { TerminalRenderer } from './terminalRenderer';
 
 interface SessionHistory {
   commands: string[];
   timestamp: number;
 }
 
-interface AutoCompleteEntry {
-  command: string;
-  description?: string;
-  type: 'command' | 'file' | 'directory' | 'git' | 'npm';
-}
-
 /**
- * GitCue Enhanced Terminal
- * A beautified terminal based on real terminal with AI-powered enhancements
+ * GitCue Enhanced Terminal - AI-Powered Development Terminal
+ * Combines real shell functionality with intelligent AI assistance
  */
 export class GitCuePty implements vscode.Pseudoterminal {
   private writeEmitter = new vscode.EventEmitter<string>();
   private closeEmitter = new vscode.EventEmitter<number>();
-  private terminalProcess?: ChildProcess;
+  
+  // Core components
+  private terminalBase!: TerminalBase;
+  private autoComplete!: AutoCompleteEngine;
+  private aiIntegration!: AITerminalIntegration;
+  private commands!: TerminalCommands;
+  private renderer!: TerminalRenderer;
+  private activityLogger: ActivityLogger;
+  
+  // Input/output management
   private currentInput = '';
   private cursorPosition = 0;
-  private sessionHistory: string[] = [];
-  private historyIndex = -1;
-  private workspaceRoot: string;
-  private historyFile: string;
-  private isAiAnalysisActive = false;
-  
-  // Auto-complete state
-  private autoCompleteEntries: AutoCompleteEntry[] = [];
   private currentSuggestion = '';
   private isShowingSuggestion = false;
   
-  // Terminal state
-  private currentLine = '';
-  private isProcessingCommand = false;
-  private lastErrorOutput = '';
-  private lastCommand = '';
-
-  // Terminal control sequences
-  private readonly CLEAR_LINE = '\r\x1b[K';
-  private readonly CURSOR_LEFT = '\x1b[D';
-  private readonly CURSOR_RIGHT = '\x1b[C';
-  private readonly SAVE_CURSOR = '\x1b[s';
-  private readonly RESTORE_CURSOR = '\x1b[u';
+  // History management
+  private sessionHistory: string[] = [];
+  private historyIndex = -1;
+  private historyFile: string;
   
-  // ANSI color codes for UI enhancements
-  private readonly colors = {
-    reset: '\x1b[0m',
-    bright: '\x1b[1m',
-    dim: '\x1b[2m',
-    translucent: '\x1b[2;37m', // Dim white for auto-complete
-    success: '\x1b[32m',
-    error: '\x1b[31m',
-    warning: '\x1b[33m',
-    info: '\x1b[36m',
-    ai: '\x1b[35m',
-    prompt: '\x1b[1;34m',
-  };
+  // State management
+  private workspaceRoot: string;
+  private isProcessingCommand = false;
+  private lastCommand = '';
+  private lastOutput = '';
+  private lastErrorOutput = '';
 
+  // Events
   readonly onDidWrite = this.writeEmitter.event;
   readonly onDidClose = this.closeEmitter.event;
 
   constructor(workspaceRoot?: string) {
     this.workspaceRoot = workspaceRoot || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
-    this.historyFile = path.join(os.homedir(), '.gitcue-history.json');
-    this.initializeAutoComplete();
+    this.historyFile = path.join(os.homedir(), '.gitcue-enhanced-history.json');
+    
+    // Initialize services
+    this.activityLogger = ActivityLogger.getInstance();
+    
+    // Initialize helper components
+    this.setupComponents();
   }
 
   async open(initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
     try {
+      // Load session history
       await this.loadSessionHistory();
-      await this.startTerminalSession();
-      this.showWelcomeBanner();
       
-      logger.interactiveInfo('Enhanced terminal session started');
+      // Start the underlying shell
+      const started = await this.terminalBase.startShell();
+      if (!started) {
+        throw new Error('Failed to start underlying shell process');
+      }
+      
+      // Show welcome message
+      this.write(this.renderer.renderWelcome());
+      
+      logger.interactiveInfo('GitCue Enhanced Terminal started successfully');
+      this.activityLogger.logActivity('watch_start', 'Enhanced terminal session started');
+      
     } catch (error) {
-      logger.error('Failed to open enhanced terminal', error instanceof Error ? error.message : String(error));
-      this.writeEmitter.fire('❌ Failed to start enhanced terminal session\r\n');
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error('Failed to open enhanced terminal:', errorMsg);
+      this.write('❌ Failed to start GitCue Enhanced Terminal: ' + errorMsg + '\r\n');
       this.closeEmitter.fire(1);
     }
-  }
-
-  private async startTerminalSession(): Promise<void> {
-    const shell = this.getDefaultShell();
-    const shellArgs = this.getShellArgs();
-
-    this.terminalProcess = spawn(shell, shellArgs, {
-      cwd: this.workspaceRoot,
-      env: {
-        ...process.env,
-        TERM: 'xterm-256color',
-        COLORTERM: 'truecolor',
-        PS1: '\\[\\e[1;34m\\]gitcue\\[\\e[0m\\]:\\[\\e[1;36m\\]\\w\\[\\e[0m\\]$ ', // Custom prompt
-      },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    if (!this.terminalProcess) {
-      throw new Error('Failed to start terminal process');
-    }
-
-    // Handle terminal output
-    this.terminalProcess.stdout?.on('data', (data: Buffer) => {
-      const output = data.toString();
-      this.handleTerminalOutput(output);
-    });
-
-    // Handle terminal errors
-    this.terminalProcess.stderr?.on('data', (data: Buffer) => {
-      const errorOutput = data.toString();
-      this.lastErrorOutput = errorOutput;
-      this.writeEmitter.fire(errorOutput);
-    });
-
-    // Handle process exit
-    this.terminalProcess.on('close', (code) => {
-      if (code !== 0 && this.lastCommand && this.lastErrorOutput) {
-        this.triggerAiErrorAnalysis(this.lastCommand, this.lastErrorOutput);
-      }
-      if (code !== null) {
-        this.closeEmitter.fire(code);
-      }
-    });
-
-    this.terminalProcess.on('error', (error) => {
-      logger.error('Terminal process error:', error.message);
-      this.writeEmitter.fire(`\r\n${this.colors.error}❌ Terminal error: ${error.message}${this.colors.reset}\r\n`);
-    });
-  }
-
-  private getDefaultShell(): string {
-    if (process.platform === 'win32') {
-      return process.env.COMSPEC || 'cmd.exe';
-    }
-    return process.env.SHELL || '/bin/bash';
-  }
-
-  private getShellArgs(): string[] {
-    if (process.platform === 'win32') {
-      return [];
-    }
-    return ['--login']; // Interactive login shell
-  }
-
-  private handleTerminalOutput(output: string): void {
-    // Check if this looks like an error (common error patterns)
-    if (this.isErrorOutput(output) && this.lastCommand) {
-      this.lastErrorOutput = output;
-    }
-    
-    // Pass through the output as-is (normal terminal behavior)
-    this.writeEmitter.fire(output);
-  }
-
-  private isErrorOutput(output: string): boolean {
-    const errorPatterns = [
-      /error:/i,
-      /failed/i,
-      /cannot/i,
-      /not found/i,
-      /permission denied/i,
-      /fatal:/i,
-      /usage:/i,
-      /invalid/i
-    ];
-    
-    return errorPatterns.some(pattern => pattern.test(output));
   }
 
   handleInput(data: string): void {
@@ -243,61 +158,123 @@ export class GitCuePty implements vscode.Pseudoterminal {
     }
   }
 
+  close(): void {
+    this.clearSuggestion();
+    
+    // Dispose components
+    this.terminalBase.dispose();
+    
+    // Save session history
+    this.saveSessionHistory().catch(error => {
+      logger.debug('Failed to save session history: ' + (error instanceof Error ? error.message : String(error)));
+    });
+    
+    this.activityLogger.logActivity('watch_stop', 'Enhanced terminal session closed');
+    logger.interactiveInfo('GitCue Enhanced Terminal closed');
+  }
+
+  private setupComponents(): void {
+    // Setup terminal I/O interface
+    const terminalIO: TerminalIO = {
+      write: (data: string) => this.write(data),
+      onData: (callback: (data: string) => void) => {
+        // This would be used for intercepting shell output if needed
+      }
+    };
+    
+    // Initialize all helper components
+    this.terminalBase = new TerminalBase(terminalIO, this.workspaceRoot);
+    this.autoComplete = new AutoCompleteEngine(this.workspaceRoot);
+    this.aiIntegration = new AITerminalIntegration();
+    this.commands = new TerminalCommands(this.workspaceRoot);
+    this.renderer = new TerminalRenderer();
+  }
+
   private handleCtrlC(): void {
-    if (this.isAiAnalysisActive) {
-      this.isAiAnalysisActive = false;
-      this.writeEmitter.fire(`\r\n${this.colors.warning}🛑 AI analysis cancelled${this.colors.reset}\r\n`);
+    if (this.aiIntegration.getIsAnalyzing()) {
+      // Cancel AI analysis
+      this.write('\r\n' + this.renderer.renderStatus('warning', 'AI analysis cancelled by user') + '\r\n');
       return;
     }
     
-    this.terminalProcess?.stdin?.write('\x03');
-  }
-
-  private handleTabCompletion(): void {
-    if (!this.currentInput.trim()) return;
-
-    const suggestions = this.getAutoCompleteSuggestions(this.currentInput);
-    
-    if (suggestions.length === 0) {
-      // Pass tab to terminal for normal completion
-      this.terminalProcess?.stdin?.write('\t');
+    if (this.aiIntegration.isInChatMode()) {
+      // Exit AI chat mode
+      const exitMessage = this.aiIntegration.exitChatMode();
+      this.write('\r\n' + exitMessage + '\r\n');
       return;
     }
-
-    if (suggestions.length === 1) {
-      // Auto-complete with the single suggestion
-      const suggestion = suggestions[0];
-      const words = this.currentInput.split(' ');
-      const lastWord = words[words.length - 1];
-      const completion = suggestion.command.substring(lastWord.length);
-      
-      this.currentInput += completion;
-      this.cursorPosition = this.currentInput.length;
-      this.writeEmitter.fire(completion);
-      this.clearSuggestion();
+    
+    // Pass Ctrl+C to shell or exit
+    if (this.terminalBase.isShellActive()) {
+      this.terminalBase.sendToShell('\x03');
     } else {
-      // Show completion menu
-      this.showCompletionMenu(suggestions);
+      this.write('\r\n' + this.renderer.renderStatus('info', 'Exiting GitCue Enhanced Terminal...') + '\r\n');
+      this.closeEmitter.fire(0);
     }
   }
 
-  private handleEnter(): void {
+  private async handleTabCompletion(): Promise<void> {
+    if (!this.currentInput.trim()) {
+      // Pass tab to shell for normal completion
+      this.terminalBase.sendToShell('\t');
+      return;
+    }
+
+    try {
+      const completions = await this.autoComplete.getCompletions(this.currentInput);
+      
+      if (completions.suggestions.length === 0) {
+        // No custom completions, pass to shell
+        this.terminalBase.sendToShell('\t');
+        return;
+      }
+
+      if (completions.suggestions.length === 1) {
+        // Single completion - auto-complete
+        this.completeWithSuggestion(completions.suggestions[0].command);
+      } else {
+        // Multiple completions - show menu
+        this.showCompletionMenu(completions);
+      }
+    } catch (error) {
+      logger.debug('Tab completion error: ' + (error instanceof Error ? error.message : String(error)));
+      // Fall back to shell completion
+      this.terminalBase.sendToShell('\t');
+    }
+  }
+
+  private async handleEnter(): Promise<void> {
     this.clearSuggestion();
     const command = this.currentInput.trim();
     
-    if (command) {
-      this.addToHistory(command);
-      this.lastCommand = command;
-      this.lastErrorOutput = '';
+    this.write('\r\n');
+    
+    if (!command) {
+      this.resetInput();
+      this.terminalBase.sendToShell('\r\n');
+      return;
     }
 
-    // Pass enter to terminal
-    this.terminalProcess?.stdin?.write('\r\n');
-    
-    // Reset input state
-    this.currentInput = '';
-    this.cursorPosition = 0;
-    this.historyIndex = -1;
+    // Add to history
+    this.addToHistory(command);
+    this.lastCommand = command;
+    this.lastOutput = '';
+    this.lastErrorOutput = '';
+
+    // Check if it's an AI chat message
+    if (this.aiIntegration.isInChatMode()) {
+      await this.handleAIChatMessage(command);
+      return;
+    }
+
+    // Check if it's a built-in command
+    if (this.commands.isBuiltInCommand(command)) {
+      await this.handleBuiltInCommand(command);
+      return;
+    }
+
+    // Execute as shell command
+    await this.executeShellCommand(command);
   }
 
   private handleBackspace(): void {
@@ -305,43 +282,57 @@ export class GitCuePty implements vscode.Pseudoterminal {
       this.currentInput = this.currentInput.slice(0, this.cursorPosition - 1) + 
                          this.currentInput.slice(this.cursorPosition);
       this.cursorPosition--;
-      this.terminalProcess?.stdin?.write('\b \b');
+      
+      // Clear suggestion first, then handle backspace
+      this.clearSuggestion();
+      this.write('\b \b');
+      
+      // Update suggestion after backspace
       this.updateAutoCompleteSuggestion();
     }
   }
 
   private handleHistoryNavigation(direction: 'up' | 'down'): void {
-    if (this.sessionHistory.length === 0) return;
+    const history = this.commands.getCommandHistory();
+    
+    if (history.length === 0) return;
 
     if (direction === 'up') {
-      this.historyIndex = Math.min(this.sessionHistory.length - 1, this.historyIndex + 1);
+      this.historyIndex = Math.min(history.length - 1, this.historyIndex + 1);
     } else {
       this.historyIndex = Math.max(-1, this.historyIndex - 1);
     }
 
-    // Clear current line
-    this.writeEmitter.fire('\r\x1b[K');
-    
+    // Clear current input
+    this.clearCurrentLine();
+
     // Show history command or empty
     const historyCommand = this.historyIndex >= 0 
-      ? this.sessionHistory[this.sessionHistory.length - 1 - this.historyIndex] 
+      ? history[history.length - 1 - this.historyIndex] 
       : '';
     
     this.currentInput = historyCommand;
     this.cursorPosition = this.currentInput.length;
     
-    // Let terminal handle the prompt, just send the command
-    this.terminalProcess?.stdin?.write('\r' + historyCommand);
+    // Display the prompt and command
+    this.showPrompt();
+    this.write(historyCommand);
+    
+    // Update suggestion
+    this.updateAutoCompleteSuggestion();
   }
 
   private handleCursorMove(direction: 'left' | 'right'): void {
     if (direction === 'left' && this.cursorPosition > 0) {
       this.cursorPosition--;
-      this.terminalProcess?.stdin?.write('\x1b[D');
+      this.write('\x1b[D'); // Move cursor left
     } else if (direction === 'right' && this.cursorPosition < this.currentInput.length) {
       this.cursorPosition++;
-      this.terminalProcess?.stdin?.write('\x1b[C');
+      this.write('\x1b[C'); // Move cursor right
     }
+    
+    // Update suggestion after cursor move
+    this.updateAutoCompleteSuggestion();
   }
 
   private handleRegularInput(char: string): void {
@@ -351,275 +342,208 @@ export class GitCuePty implements vscode.Pseudoterminal {
                        this.currentInput.slice(this.cursorPosition);
     this.cursorPosition++;
     
-    // Pass character to terminal
-    this.terminalProcess?.stdin?.write(char);
+    // Clear suggestion before showing new character
+    this.clearSuggestion();
+    
+    // Display the character
+    this.write(char);
     
     // Update auto-complete suggestion
     this.updateAutoCompleteSuggestion();
   }
 
-  private updateAutoCompleteSuggestion(): void {
-    if (!this.currentInput.trim()) {
+  private async updateAutoCompleteSuggestion(): Promise<void> {
+    if (!this.autoComplete.shouldTriggerCompletion(this.currentInput)) {
       this.clearSuggestion();
       return;
     }
 
-    const suggestions = this.getAutoCompleteSuggestions(this.currentInput);
-    
-    if (suggestions.length > 0) {
-      const words = this.currentInput.split(' ');
-      const lastWord = words[words.length - 1];
-      const suggestion = suggestions[0];
+    try {
+      // First try AI-powered ghost text
+      const aiGhostText = await this.autoComplete.getAIGhostText(this.currentInput);
       
-      if (suggestion.command.startsWith(lastWord) && suggestion.command !== lastWord) {
-        const completion = suggestion.command.substring(lastWord.length);
-        this.showTranslucentSuggestion(completion);
+      if (aiGhostText) {
+        this.showTranslucentSuggestion(aiGhostText);
+        return;
+      }
+      
+      // Fallback to regular completions
+      const completions = await this.autoComplete.getCompletions(this.currentInput);
+      
+      if (completions.suggestions.length > 0) {
+        const topSuggestion = completions.suggestions[0];
+        const suffix = this.autoComplete.getCompletionSuffix(this.currentInput, topSuggestion);
+        
+        if (suffix) {
+          this.showTranslucentSuggestion(suffix);
+        } else {
+          this.clearSuggestion();
+        }
       } else {
         this.clearSuggestion();
       }
-    } else {
-      this.clearSuggestion();
+    } catch (error) {
+      logger.debug('Auto-complete suggestion error: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
-  private showTranslucentSuggestion(completion: string): void {
-    if (this.isShowingSuggestion) {
-      this.clearSuggestion();
-    }
+  private showTranslucentSuggestion(suffix: string): void {
+    this.clearSuggestion(); // Clear any existing suggestion
     
-    this.currentSuggestion = completion;
+    this.currentSuggestion = suffix;
     this.isShowingSuggestion = true;
     
-    // Save cursor, show translucent text, restore cursor
-    this.writeEmitter.fire(this.SAVE_CURSOR);
-    this.writeEmitter.fire(this.colors.translucent + completion + this.colors.reset);
-    this.writeEmitter.fire(this.RESTORE_CURSOR);
+    // Use renderer to show translucent suggestion
+    const suggestion = this.renderer.renderTranslucentSuggestion(suffix, this.currentInput);
+    this.write(suggestion);
   }
 
   private clearSuggestion(): void {
     if (this.isShowingSuggestion && this.currentSuggestion) {
-      // Clear the suggestion by overwriting with spaces
-      this.writeEmitter.fire(this.SAVE_CURSOR);
-      this.writeEmitter.fire(' '.repeat(this.currentSuggestion.length));
-      this.writeEmitter.fire(this.RESTORE_CURSOR);
+      const clearSequence = this.renderer.clearTranslucentSuggestion(this.currentSuggestion.length);
+      this.write(clearSequence);
     }
     
     this.currentSuggestion = '';
     this.isShowingSuggestion = false;
   }
 
-  private getAutoCompleteSuggestions(input: string): AutoCompleteEntry[] {
-    const words = input.split(' ');
-    const lastWord = words[words.length - 1].toLowerCase();
+  private completeWithSuggestion(command: string): void {
+    const words = this.currentInput.split(' ');
+    const lastWord = words[words.length - 1];
     
-    if (!lastWord) return [];
-
-    return this.autoCompleteEntries.filter(entry => 
-      entry.command.toLowerCase().startsWith(lastWord)
-    ).slice(0, 10); // Limit suggestions
+    if (command.toLowerCase().startsWith(lastWord.toLowerCase())) {
+      const completion = command.substring(lastWord.length);
+      this.currentInput += completion;
+      this.cursorPosition = this.currentInput.length;
+      
+      this.clearSuggestion();
+      this.write(completion);
+    }
   }
 
-  private showCompletionMenu(suggestions: AutoCompleteEntry[]): void {
-    this.writeEmitter.fire('\r\n');
-    this.writeEmitter.fire(`${this.colors.info}📋 Available completions:${this.colors.reset}\r\n`);
-    
-    suggestions.forEach((suggestion, index) => {
-      const typeColor = this.getTypeColor(suggestion.type);
-      this.writeEmitter.fire(`  ${typeColor}${suggestion.command}${this.colors.reset}`);
-      if (suggestion.description) {
-        this.writeEmitter.fire(`${this.colors.dim} - ${suggestion.description}${this.colors.reset}`);
-      }
-      this.writeEmitter.fire('\r\n');
-    });
+  private showCompletionMenu(completions: CompletionResult): void {
+    const menu = this.renderer.renderCompletionMenu(completions.suggestions);
+    this.write(menu);
     
     // Redisplay current input
-    this.writeEmitter.fire('\r\n');
-    this.terminalProcess?.stdin?.write('\r' + this.currentInput);
+    this.showPrompt();
+    this.write(this.currentInput);
   }
 
-  private getTypeColor(type: string): string {
-    const typeColors = {
-      command: this.colors.success,
-      file: this.colors.info,
-      directory: this.colors.warning,
-      git: this.colors.ai,
-      npm: this.colors.error
-    };
-    return typeColors[type] || this.colors.reset;
-  }
-
-  private async initializeAutoComplete(): Promise<void> {
-    // Initialize common commands
-    this.autoCompleteEntries = [
-      // Git commands
-      { command: 'git', type: 'git', description: 'Git version control' },
-      { command: 'git status', type: 'git', description: 'Show repository status' },
-      { command: 'git add', type: 'git', description: 'Add files to staging' },
-      { command: 'git commit', type: 'git', description: 'Commit changes' },
-      { command: 'git push', type: 'git', description: 'Push to remote' },
-      { command: 'git pull', type: 'git', description: 'Pull from remote' },
-      { command: 'git branch', type: 'git', description: 'Manage branches' },
-      { command: 'git checkout', type: 'git', description: 'Switch branches' },
-      { command: 'git merge', type: 'git', description: 'Merge branches' },
-      { command: 'git log', type: 'git', description: 'Show commit history' },
-      
-      // Common commands
-      { command: 'ls', type: 'command', description: 'List directory contents' },
-      { command: 'cd', type: 'command', description: 'Change directory' },
-      { command: 'pwd', type: 'command', description: 'Print working directory' },
-      { command: 'mkdir', type: 'command', description: 'Create directory' },
-      { command: 'touch', type: 'command', description: 'Create file' },
-      { command: 'rm', type: 'command', description: 'Remove files' },
-      { command: 'cp', type: 'command', description: 'Copy files' },
-      { command: 'mv', type: 'command', description: 'Move files' },
-      
-      // NPM commands
-      { command: 'npm', type: 'npm', description: 'Node package manager' },
-      { command: 'npm install', type: 'npm', description: 'Install packages' },
-      { command: 'npm run', type: 'npm', description: 'Run script' },
-      { command: 'npm start', type: 'npm', description: 'Start application' },
-      { command: 'npm build', type: 'npm', description: 'Build application' },
-      { command: 'npm test', type: 'npm', description: 'Run tests' },
-    ];
-
-    // Load project-specific completions
-    await this.loadProjectCompletions();
-  }
-
-  private async loadProjectCompletions(): Promise<void> {
+  private async handleAIChatMessage(message: string): Promise<void> {
     try {
-      // Load package.json scripts
-      const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
-      const packageJsonContent = await fs.readFile(packageJsonPath, 'utf8');
-      const packageJson = JSON.parse(packageJsonContent);
-      
-      if (packageJson.scripts) {
-        Object.keys(packageJson.scripts).forEach(script => {
-          this.autoCompleteEntries.push({
-            command: `npm run ${script}`,
-            type: 'npm',
-            description: packageJson.scripts[script]
-          });
-        });
-      }
+      this.isProcessingCommand = true;
+      const response = await this.commands.handleAIChat(message);
+      this.write(response);
     } catch (error) {
-      // Ignore if package.json doesn't exist
-    }
-
-    try {
-      // Load common files and directories
-      const items = await fs.readdir(this.workspaceRoot);
-      for (const item of items) {
-        const itemPath = path.join(this.workspaceRoot, item);
-        const stats = await fs.stat(itemPath);
-        
-        this.autoCompleteEntries.push({
-          command: item,
-          type: stats.isDirectory() ? 'directory' : 'file',
-          description: stats.isDirectory() ? 'Directory' : 'File'
-        });
-      }
-    } catch (error) {
-      // Ignore if can't read directory
+      this.write(this.renderer.renderError('AI chat failed: ' + (error instanceof Error ? error.message : String(error))));
+    } finally {
+      this.isProcessingCommand = false;
+      this.resetInput();
+      this.showPrompt();
     }
   }
 
-  private async triggerAiErrorAnalysis(command: string, errorOutput: string): Promise<void> {
-    const config = configManager.getConfig();
-    
-    if (!config.enableSuggestions || !config.geminiApiKey) {
+  private async handleBuiltInCommand(command: string): Promise<void> {
+    try {
+      this.isProcessingCommand = true;
+      const result = await this.commands.executeCommand(command);
+      
+      if (result.output) {
+        this.write(result.output);
+      }
+      
+      if (result.shouldExit) {
+        this.closeEmitter.fire(0);
       return;
     }
 
-    this.isAiAnalysisActive = true;
-    
-    try {
-      this.writeEmitter.fire(`\r\n${this.colors.ai}🤖 Analyzing error with AI...${this.colors.reset}\r\n`);
-      this.writeEmitter.fire(`${this.colors.dim}Press Ctrl+C to cancel analysis${this.colors.reset}\r\n`);
-
-      const errorContext = `Command: ${command}\nError: ${errorOutput}`;
-      const suggestion = await generateErrorSuggestion(errorContext);
-      
-      if (!this.isAiAnalysisActive) return;
-
-      // Show AI analysis as overlay
-      this.showAiAnalysisOverlay(suggestion);
-      
     } catch (error) {
-      if (!this.isAiAnalysisActive) return;
-      
-      this.writeEmitter.fire(`${this.colors.error}❌ AI analysis failed: ${error instanceof Error ? error.message : String(error)}${this.colors.reset}\r\n`);
+      this.write(this.renderer.renderError('Built-in command failed: ' + (error instanceof Error ? error.message : String(error))));
     } finally {
-      this.isAiAnalysisActive = false;
+      this.isProcessingCommand = false;
+      this.resetInput();
+      this.showPrompt();
     }
   }
 
-  private showAiAnalysisOverlay(suggestion: string): void {
-    // Create a beautiful overlay for AI suggestions
-    this.writeEmitter.fire('\r\n');
-    this.writeEmitter.fire(`${this.colors.ai}╭─ 🤖 AI Analysis ─────────────────────────────────────────────────────────────╮${this.colors.reset}\r\n`);
-    
-    // Render markdown with proper formatting
-    const rendered = renderMarkdown(suggestion, {
-      maxWidth: 76,
-      colors: {
-        header: this.colors.bright + this.colors.info,
-        code: this.colors.success,
-        bold: this.colors.bright,
-        italic: this.colors.dim,
-        list: this.colors.warning,
-        quote: this.colors.dim,
-        reset: this.colors.reset,
-        dim: this.colors.dim
+  private async executeShellCommand(command: string): Promise<void> {
+    try {
+      this.isProcessingCommand = true;
+      
+      // Execute command in the underlying shell
+      const success = this.terminalBase.executeCommand(command);
+      
+      if (!success) {
+        this.write(this.renderer.renderError('Failed to execute command in shell'));
+        this.commands.markLastCommandFailed();
       }
-    });
-    
-    // Add padding to each line
-    const lines = rendered.split('\n');
-    lines.forEach(line => {
-      this.writeEmitter.fire(`${this.colors.ai}│${this.colors.reset} ${line.padEnd(76)} ${this.colors.ai}│${this.colors.reset}\r\n`);
-    });
-    
-    this.writeEmitter.fire(`${this.colors.ai}╰───────────────────────────────────────────────────────────────────────────────╯${this.colors.reset}\r\n`);
-    this.writeEmitter.fire(`${this.colors.info}💡 You can run the suggested commands directly in this terminal${this.colors.reset}\r\n\r\n`);
+      
+      // Note: Shell output will be handled by the TerminalBase
+      // Error analysis will be triggered if the command fails
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.write(this.renderer.renderError(errorMsg, command));
+      this.commands.markLastCommandFailed();
+      
+      // Trigger AI error analysis
+      await this.analyzeCommandError(command, '', errorMsg);
+    } finally {
+      this.isProcessingCommand = false;
+      this.resetInput();
+    }
   }
 
-  private showWelcomeBanner(): void {
-    const config = configManager.getConfig();
-    
-    this.writeEmitter.fire('\r\n');
-    this.writeEmitter.fire(`${this.colors.bright}${this.colors.info}╭─ 🚀 GitCue Enhanced Terminal ─────────────────────────────────────────────────╮${this.colors.reset}\r\n`);
-    this.writeEmitter.fire(`${this.colors.bright}${this.colors.info}│${this.colors.reset}  A beautiful terminal with AI-powered enhancements                           ${this.colors.bright}${this.colors.info}│${this.colors.reset}\r\n`);
-    this.writeEmitter.fire(`${this.colors.bright}${this.colors.info}╰───────────────────────────────────────────────────────────────────────────────╯${this.colors.reset}\r\n`);
-    this.writeEmitter.fire('\r\n');
-    
-    this.writeEmitter.fire(`${this.colors.success}✨ Enhanced Features:${this.colors.reset}\r\n`);
-    this.writeEmitter.fire(`  • ${this.colors.info}Tab completion${this.colors.reset} with translucent suggestions\r\n`);
-    this.writeEmitter.fire(`  • ${this.colors.ai}AI-powered error analysis${this.colors.reset} for failed commands\r\n`);
-    this.writeEmitter.fire(`  • ${this.colors.warning}Command history${this.colors.reset} with ↑↓ navigation\r\n`);
-    this.writeEmitter.fire(`  • ${this.colors.success}Beautiful UI overlays${this.colors.reset} on standard terminal\r\n`);
-    this.writeEmitter.fire('\r\n');
-    
-    const aiStatus = config.geminiApiKey && config.enableSuggestions 
-      ? `${this.colors.success}Enabled${this.colors.reset}` 
-      : `${this.colors.error}Disabled${this.colors.reset}`;
-    
-    this.writeEmitter.fire(`${this.colors.dim}AI Analysis: ${aiStatus} | History: ${this.sessionHistory.length} commands loaded${this.colors.reset}\r\n`);
-    this.writeEmitter.fire('\r\n');
+  private async analyzeCommandError(command: string, output: string, errorOutput: string): Promise<void> {
+    try {
+      const analysis = await this.aiIntegration.analyzeCommandError(command, output, errorOutput);
+      
+      if (analysis.hasError && analysis.analysis) {
+        const analysisOutput = this.aiIntegration.formatErrorAnalysis(analysis);
+        this.write(analysisOutput);
+      }
+    } catch (error) {
+      logger.debug('AI error analysis failed: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  }
+
+  private clearCurrentLine(): void {
+    this.write(this.renderer.getControlSequences().clearLine);
+  }
+
+  private showPrompt(): void {
+    const isAIMode = this.aiIntegration.isInChatMode();
+    const prompt = this.renderer.renderPrompt(this.workspaceRoot, isAIMode);
+    this.write(prompt);
+  }
+
+  private resetInput(): void {
+    this.currentInput = '';
+    this.cursorPosition = 0;
+    this.historyIndex = -1;
+    this.clearSuggestion();
+  }
+
+  private write(text: string): void {
+    this.writeEmitter.fire(text);
   }
 
   private addToHistory(command: string): void {
-    const trimmedCommand = command.trim();
-    if (trimmedCommand && trimmedCommand !== this.sessionHistory[this.sessionHistory.length - 1]) {
-      this.sessionHistory.push(trimmedCommand);
+    const trimmed = command.trim();
+    if (trimmed && trimmed !== this.sessionHistory[this.sessionHistory.length - 1]) {
+      this.sessionHistory.push(trimmed);
+      
+      // Also add to auto-complete recent commands for AI context
+      this.autoComplete.addToRecentCommands(trimmed);
       
       const config = configManager.getConfig();
       if (this.sessionHistory.length > config.maxHistorySize) {
         this.sessionHistory = this.sessionHistory.slice(-config.maxHistorySize);
       }
-      
-      this.saveSessionHistory();
     }
+    this.historyIndex = -1;
   }
 
   private async loadSessionHistory(): Promise<void> {
@@ -655,19 +579,5 @@ export class GitCuePty implements vscode.Pseudoterminal {
     } catch (error) {
       logger.debug('Failed to save session history: ' + (error instanceof Error ? error.message : String(error)));
     }
-  }
-
-  close(): void {
-    this.clearSuggestion();
-    
-    if (this.terminalProcess && !this.terminalProcess.killed) {
-      this.terminalProcess.kill();
-    }
-    
-    this.saveSessionHistory().catch(error => {
-      logger.debug('Failed to save session history: ' + error.message);
-    });
-    
-    logger.interactiveInfo('Enhanced terminal session closed');
   }
 } 

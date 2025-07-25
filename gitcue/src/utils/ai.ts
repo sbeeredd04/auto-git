@@ -448,6 +448,153 @@ Use the make_commit_decision function to provide your analysis.`;
 }
 
 /**
+ * Generate AI-powered command completions for terminal
+ */
+export async function generateAICompletions(
+  currentInput: string,
+  workingDirectory: string,
+  recentCommands?: string[]
+): Promise<string[]> {
+  const config = configManager.getConfig();
+  
+  debugLog('Starting AI auto-completion', { currentInput, workingDirectory });
+  
+  if (!config.geminiApiKey) {
+    debugLog('API key not configured, returning empty completions');
+    return [];
+  }
+
+  if (!config.enableSuggestions) {
+    debugLog('AI suggestions disabled');
+    return [];
+  }
+
+  // Don't complete very short inputs or if input ends with space
+  if (currentInput.trim().length < 2 || currentInput.endsWith(' ')) {
+    return [];
+  }
+
+  try {
+    debugLog('Importing Google GenAI SDK for completions...');
+    const { GoogleGenAI } = await import('@google/genai');
+    
+    const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
+
+    // Build context for completion
+    const context = `You are an intelligent terminal auto-completion assistant. Provide command completions for a developer working in a terminal.
+
+Current input: "${currentInput}"
+Working directory: ${workingDirectory}
+Recent commands: ${recentCommands ? recentCommands.slice(-5).join(', ') : 'none'}
+
+Provide up to 5 most relevant command completions that start with the current input. Consider:
+- Git commands and common options
+- File system operations (ls, cd, mkdir, etc.)
+- NPM/Node.js commands
+- Common developer tools
+- Files and directories in the current path
+- Shell built-ins and common utilities
+
+Return ONLY a JSON array of completion strings, no other text:
+["completion1", "completion2", "completion3"]
+
+Each completion should be a logical continuation of the current input.`;
+
+    debugLog('Sending completion request to Gemini...');
+    
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: context,
+      config: {
+        maxOutputTokens: 200,
+        temperature: 0.2, // Lower temperature for more consistent completions
+      }
+    });
+
+    debugLog('Received AI completion response');
+    
+    if (!response || !response.text) {
+      debugLog('Empty AI response');
+      return [];
+    }
+
+    try {
+      // Parse the JSON response
+      const completions = JSON.parse(response.text.trim());
+      
+      if (Array.isArray(completions)) {
+        // Filter and validate completions
+        const validCompletions = completions
+          .filter(comp => typeof comp === 'string' && comp.length > 0)
+          .filter(comp => comp.toLowerCase().startsWith(currentInput.toLowerCase()))
+          .slice(0, 5); // Limit to 5 completions
+        
+        debugLog('AI completions generated', validCompletions);
+        return validCompletions;
+      }
+    } catch (parseError) {
+      debugLog('Failed to parse AI completion response', response.text);
+      
+      // Fallback: try to extract completions from text
+      const lines = response.text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !line.includes(':') && !line.includes('completion'))
+        .filter(line => line.toLowerCase().startsWith(currentInput.toLowerCase()))
+        .slice(0, 3);
+      
+      return lines;
+    }
+
+    return [];
+
+  } catch (error) {
+    debugLog('AI completion failed', error instanceof Error ? error.message : String(error));
+    
+    // Don't throw error for completions, just return empty array
+    return [];
+  }
+}
+
+/**
+ * Generate AI-powered ghost text suggestion for current input
+ */
+export async function generateGhostTextSuggestion(
+  currentInput: string,
+  workingDirectory: string,
+  recentCommands?: string[]
+): Promise<string> {
+  const config = configManager.getConfig();
+  
+  if (!config.geminiApiKey || !config.enableSuggestions) {
+    return '';
+  }
+
+  // Don't suggest for very short inputs
+  if (currentInput.trim().length < 3) {
+    return '';
+  }
+
+  try {
+    const completions = await generateAICompletions(currentInput, workingDirectory, recentCommands);
+    
+    if (completions.length > 0) {
+      const topCompletion = completions[0];
+      
+      // Return the suffix that should be shown as ghost text
+      if (topCompletion.toLowerCase().startsWith(currentInput.toLowerCase())) {
+        return topCompletion.substring(currentInput.length);
+      }
+    }
+    
+    return '';
+    
+  } catch (error) {
+    debugLog('Ghost text generation failed', error instanceof Error ? error.message : String(error));
+    return '';
+  }
+}
+
+/**
  * Uses AI function calling to generate commit messages
  */
 export async function generateCommitMessageWithAI(gitDiff: string, gitStatus: string): Promise<string> {
