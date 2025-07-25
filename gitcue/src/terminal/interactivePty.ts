@@ -5,644 +5,621 @@ import * as os from 'os';
 import * as fs from 'fs/promises';
 import { configManager } from '../utils/config';
 import logger from '../utils/logger';
-import { generateErrorSuggestion, formatAISuggestion, formatGitCommand, formatMarkdown, testAIConnection } from '../utils/ai';
-import { renderMarkdown, createErrorSuggestionBox } from '../utils/markdown';
+import { generateErrorSuggestion } from '../utils/ai';
+import { renderMarkdown } from '../utils/markdown';
 
 interface SessionHistory {
   commands: string[];
   timestamp: number;
 }
 
-interface MarkdownElement {
-  type: 'text' | 'bold' | 'italic' | 'code' | 'codeblock' | 'header' | 'list';
-  content: string;
-  language?: string;
+interface AutoCompleteEntry {
+  command: string;
+  description?: string;
+  type: 'command' | 'file' | 'directory' | 'git' | 'npm';
 }
 
 /**
- * GitCue Interactive Pseudoterminal
- * Provides an AI-powered interactive shell within VS Code
+ * GitCue Enhanced Terminal
+ * A beautified terminal based on real terminal with AI-powered enhancements
  */
 export class GitCuePty implements vscode.Pseudoterminal {
   private writeEmitter = new vscode.EventEmitter<string>();
   private closeEmitter = new vscode.EventEmitter<number>();
-  private process?: ChildProcess;
+  private terminalProcess?: ChildProcess;
   private currentInput = '';
+  private cursorPosition = 0;
   private sessionHistory: string[] = [];
   private historyIndex = -1;
-  private isProcessingCommand = false;
   private workspaceRoot: string;
   private historyFile: string;
-  private isInAiChatMode = false;
-  private isAiAnalysisRunning = false;
+  private isAiAnalysisActive = false;
+  
+  // Auto-complete state
+  private autoCompleteEntries: AutoCompleteEntry[] = [];
+  private currentSuggestion = '';
+  private isShowingSuggestion = false;
+  
+  // Terminal state
+  private currentLine = '';
+  private isProcessingCommand = false;
+  private lastErrorOutput = '';
+  private lastCommand = '';
 
   // Terminal control sequences
   private readonly CLEAR_LINE = '\r\x1b[K';
-  private readonly CURSOR_UP = '\x1b[A';
-  private readonly CURSOR_DOWN = '\x1b[B';
-  private readonly BACKSPACE = '\x1b[D \x1b[D';
+  private readonly CURSOR_LEFT = '\x1b[D';
+  private readonly CURSOR_RIGHT = '\x1b[C';
+  private readonly SAVE_CURSOR = '\x1b[s';
+  private readonly RESTORE_CURSOR = '\x1b[u';
   
-  // ANSI color codes
+  // ANSI color codes for UI enhancements
   private readonly colors = {
     reset: '\x1b[0m',
     bright: '\x1b[1m',
     dim: '\x1b[2m',
-    red: '\x1b[31m',
-    green: '\x1b[32m',
-    yellow: '\x1b[33m',
-    blue: '\x1b[34m',
-    magenta: '\x1b[35m',
-    cyan: '\x1b[36m',
-    white: '\x1b[37m',
-    gray: '\x1b[90m',
-    bgRed: '\x1b[41m',
-    bgGreen: '\x1b[42m',
-    bgYellow: '\x1b[43m',
-    bgBlue: '\x1b[44m',
-    bgMagenta: '\x1b[45m',
-    bgCyan: '\x1b[46m',
+    translucent: '\x1b[2;37m', // Dim white for auto-complete
+    success: '\x1b[32m',
+    error: '\x1b[31m',
+    warning: '\x1b[33m',
+    info: '\x1b[36m',
+    ai: '\x1b[35m',
+    prompt: '\x1b[1;34m',
   };
 
-  // Expose events to VS Code
   readonly onDidWrite = this.writeEmitter.event;
   readonly onDidClose = this.closeEmitter.event;
 
   constructor(workspaceRoot?: string) {
     this.workspaceRoot = workspaceRoot || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
     this.historyFile = path.join(os.homedir(), '.gitcue-history.json');
+    this.initializeAutoComplete();
   }
 
   async open(initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
     try {
-      // Load session history
       await this.loadSessionHistory();
+      await this.startTerminalSession();
+      this.showWelcomeBanner();
       
-      // Show welcome message
-      this.showWelcomeMessage();
-      
-      // Show initial prompt
-      this.showPrompt();
-      
-      logger.interactiveInfo('Interactive terminal session started');
-      
+      logger.interactiveInfo('Enhanced terminal session started');
     } catch (error) {
-      logger.error('Failed to open interactive terminal', error instanceof Error ? error.message : String(error));
-      this.writeEmitter.fire('❌ Failed to start interactive session\r\n');
+      logger.error('Failed to open enhanced terminal', error instanceof Error ? error.message : String(error));
+      this.writeEmitter.fire('❌ Failed to start enhanced terminal session\r\n');
       this.closeEmitter.fire(1);
     }
   }
 
-  handleInput(data: string): void {
-    if (this.isProcessingCommand) {
-      return; // Ignore input while processing
+  private async startTerminalSession(): Promise<void> {
+    const shell = this.getDefaultShell();
+    const shellArgs = this.getShellArgs();
+
+    this.terminalProcess = spawn(shell, shellArgs, {
+      cwd: this.workspaceRoot,
+      env: {
+        ...process.env,
+        TERM: 'xterm-256color',
+        COLORTERM: 'truecolor',
+        PS1: '\\[\\e[1;34m\\]gitcue\\[\\e[0m\\]:\\[\\e[1;36m\\]\\w\\[\\e[0m\\]$ ', // Custom prompt
+      },
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    if (!this.terminalProcess) {
+      throw new Error('Failed to start terminal process');
     }
 
-    // Handle special key sequences
+    // Handle terminal output
+    this.terminalProcess.stdout?.on('data', (data: Buffer) => {
+      const output = data.toString();
+      this.handleTerminalOutput(output);
+    });
+
+    // Handle terminal errors
+    this.terminalProcess.stderr?.on('data', (data: Buffer) => {
+      const errorOutput = data.toString();
+      this.lastErrorOutput = errorOutput;
+      this.writeEmitter.fire(errorOutput);
+    });
+
+    // Handle process exit
+    this.terminalProcess.on('close', (code) => {
+      if (code !== 0 && this.lastCommand && this.lastErrorOutput) {
+        this.triggerAiErrorAnalysis(this.lastCommand, this.lastErrorOutput);
+      }
+      if (code !== null) {
+        this.closeEmitter.fire(code);
+      }
+    });
+
+    this.terminalProcess.on('error', (error) => {
+      logger.error('Terminal process error:', error.message);
+      this.writeEmitter.fire(`\r\n${this.colors.error}❌ Terminal error: ${error.message}${this.colors.reset}\r\n`);
+    });
+  }
+
+  private getDefaultShell(): string {
+    if (process.platform === 'win32') {
+      return process.env.COMSPEC || 'cmd.exe';
+    }
+    return process.env.SHELL || '/bin/bash';
+  }
+
+  private getShellArgs(): string[] {
+    if (process.platform === 'win32') {
+      return [];
+    }
+    return ['--login']; // Interactive login shell
+  }
+
+  private handleTerminalOutput(output: string): void {
+    // Check if this looks like an error (common error patterns)
+    if (this.isErrorOutput(output) && this.lastCommand) {
+      this.lastErrorOutput = output;
+    }
+    
+    // Pass through the output as-is (normal terminal behavior)
+    this.writeEmitter.fire(output);
+  }
+
+  private isErrorOutput(output: string): boolean {
+    const errorPatterns = [
+      /error:/i,
+      /failed/i,
+      /cannot/i,
+      /not found/i,
+      /permission denied/i,
+      /fatal:/i,
+      /usage:/i,
+      /invalid/i
+    ];
+    
+    return errorPatterns.some(pattern => pattern.test(output));
+  }
+
+  handleInput(data: string): void {
+    if (this.isProcessingCommand) {
+      return;
+    }
+
     for (let i = 0; i < data.length; i++) {
       const char = data[i];
       const charCode = char.charCodeAt(0);
 
-      // Handle Ctrl+C
-      if (charCode === 3) {
-        if (this.isAiAnalysisRunning) {
-          this.isAiAnalysisRunning = false;
-          this.write('\r\n' + this.colors.yellow + '🤖 Stopping AI analysis...\r\n' + this.colors.reset);
-          return;
-        }
-        if (this.isInAiChatMode) {
-          this.isInAiChatMode = false;
-          this.write('\r\n' + this.colors.yellow + '🤖 Exiting AI chat mode...\r\n' + this.colors.reset);
-          this.showPrompt();
-          return;
-        }
-        this.writeEmitter.fire('\r\n🔄 Exiting GitCue interactive session...\r\n');
-        this.closeEmitter.fire(0);
+      // Handle special key sequences
+      if (charCode === 3) { // Ctrl+C
+        this.handleCtrlC();
         return;
       }
 
-      // Handle Enter
-      if (charCode === 13 || charCode === 10) {
-        this.write('\r\n');
-        if (this.currentInput.trim()) {
-          if (this.isInAiChatMode) {
-            this.handleAiChat(this.currentInput.trim());
-          } else {
-            this.executeCommand(this.currentInput.trim());
-          }
-        } else {
-          this.showPrompt();
-        }
-        return;
-      }
-
-      // Handle Backspace
-      if (charCode === 127 || charCode === 8) {
-        if (this.currentInput.length > 0) {
-          this.currentInput = this.currentInput.slice(0, -1);
-          this.write(this.BACKSPACE);
-        }
+      if (charCode === 9) { // Tab key
+        this.handleTabCompletion();
         continue;
       }
 
-      // Handle arrow keys (escape sequences)
+      if (charCode === 13 || charCode === 10) { // Enter
+        this.handleEnter();
+        return;
+      }
+
+      if (charCode === 127 || charCode === 8) { // Backspace
+        this.handleBackspace();
+        continue;
+      }
+
+      // Handle arrow keys
       if (charCode === 27 && i + 2 < data.length) {
         const sequence = data.substring(i, i + 3);
         
         if (sequence === '\x1b[A') { // Up arrow
-          this.navigateHistory('up');
-          i += 2; // Skip the next 2 characters
+          this.handleHistoryNavigation('up');
+          i += 2;
           continue;
         }
         
         if (sequence === '\x1b[B') { // Down arrow
-          this.navigateHistory('down');
-          i += 2; // Skip the next 2 characters
+          this.handleHistoryNavigation('down');
+          i += 2;
+          continue;
+        }
+
+        if (sequence === '\x1b[C') { // Right arrow
+          this.handleCursorMove('right');
+          i += 2;
+          continue;
+        }
+
+        if (sequence === '\x1b[D') { // Left arrow
+          this.handleCursorMove('left');
+          i += 2;
           continue;
         }
       }
 
-      // Handle regular printable characters
+      // Handle regular characters
       if (charCode >= 32 && charCode <= 126) {
-        this.currentInput += char;
-        this.write(char);
+        this.handleRegularInput(char);
       }
     }
   }
 
-  close(): void {
-    if (this.process && !this.process.killed) {
-      this.process.kill();
+  private handleCtrlC(): void {
+    if (this.isAiAnalysisActive) {
+      this.isAiAnalysisActive = false;
+      this.writeEmitter.fire(`\r\n${this.colors.warning}🛑 AI analysis cancelled${this.colors.reset}\r\n`);
+      return;
     }
     
-    // Save session history
-    this.saveSessionHistory().catch(error => {
-      logger.debug('Failed to save session history: ' + error.message);
-    });
-    
-    logger.interactiveInfo('Interactive terminal session closed');
+    this.terminalProcess?.stdin?.write('\x03');
   }
 
-  private write(text: string): void {
-    this.writeEmitter.fire(text);
-  }
+  private handleTabCompletion(): void {
+    if (!this.currentInput.trim()) return;
 
-  private showWelcomeMessage(): void {
-    const config = configManager.getConfig();
+    const suggestions = this.getAutoCompleteSuggestions(this.currentInput);
     
-    this.write('\r\n');
-    this.write('╔══════════════════════════════════════════════════════════════════════════════╗\r\n');
-    this.write('║                    GitCue AI-Powered Interactive Shell                       ║\r\n');
-    this.write('║                              Enhanced Terminal v0.3.8                        ║\r\n');
-    this.write('╚══════════════════════════════════════════════════════════════════════════════╝\r\n');
-    this.write('\r\n');   
-    
-    this.write(this.colors.bright + this.colors.blue + 'Enhanced Features:\r\n' + this.colors.reset);
-    this.write('  • Type any command - executed with clean terminal output\r\n');
-    this.write('  • AI-powered error analysis with styled markdown\r\n');
-    this.write('  • Session history with ↑↓ arrow key navigation\r\n');
-    this.write('  • Persistent command history across sessions\r\n');
-    this.write('  • Git command syntax highlighting\r\n');
-    this.write('  • Interactive AI chat mode\r\n');
-    this.write('  • Use Ctrl+C to exit\r\n');
-    this.write('\r\n');
-    
-    this.write(this.colors.bright + this.colors.green + 'Built-in Commands:\r\n' + this.colors.reset);
-    this.write('  • ' + this.colors.cyan + 'history' + this.colors.reset + '                        # Show command history\r\n');
-    this.write('  • ' + this.colors.cyan + 'clear' + this.colors.reset + '                          # Clear terminal screen\r\n');
-    this.write('  • ' + this.colors.cyan + 'help' + this.colors.reset + '                           # Show available commands\r\n');
-    this.write('  • ' + this.colors.cyan + 'config' + this.colors.reset + '                         # Show GitCue configuration\r\n');
-    this.write('  • ' + this.colors.cyan + 'ai' + this.colors.reset + '                             # Start AI chat mode\r\n');
-    this.write('  • ' + this.colors.cyan + 'test-ai' + this.colors.reset + '                        # Test AI connection\r\n');
-    this.write('  • ' + this.colors.cyan + 'exit' + this.colors.reset + '                           # Exit interactive session\r\n');
-    this.write('\r\n');
-    
-    this.write(this.colors.bright + this.colors.yellow + 'Configuration:\r\n' + this.colors.reset);
-    this.write(`  • API Key: ${config.geminiApiKey ? this.colors.green + 'Configured' + this.colors.reset : this.colors.red + 'Not Set' + this.colors.reset}\r\n`);
-    this.write(`  • AI Suggestions: ${config.enableSuggestions ? this.colors.green + 'Enabled' + this.colors.reset : this.colors.red + 'Disabled' + this.colors.reset}\r\n`);
-    this.write(`  • Session Persistence: ${config.sessionPersistence ? this.colors.green + 'Enabled' + this.colors.reset : this.colors.red + 'Disabled' + this.colors.reset}\r\n`);
-    
-    if (this.sessionHistory.length > 0) {
-      this.write('\r\n');
-      this.write(this.colors.bright + this.colors.magenta + 'Session history loaded: ' + this.colors.reset + this.sessionHistory.length + ' commands\r\n');
-      this.write('Use ↑↓ arrow keys to navigate through previous commands\r\n');
+    if (suggestions.length === 0) {
+      // Pass tab to terminal for normal completion
+      this.terminalProcess?.stdin?.write('\t');
+      return;
     }
-    
-    this.write('\r\n');
+
+    if (suggestions.length === 1) {
+      // Auto-complete with the single suggestion
+      const suggestion = suggestions[0];
+      const words = this.currentInput.split(' ');
+      const lastWord = words[words.length - 1];
+      const completion = suggestion.command.substring(lastWord.length);
+      
+      this.currentInput += completion;
+      this.cursorPosition = this.currentInput.length;
+      this.writeEmitter.fire(completion);
+      this.clearSuggestion();
+    } else {
+      // Show completion menu
+      this.showCompletionMenu(suggestions);
+    }
   }
 
-  private showPrompt(): void {
-    const promptText = this.isInAiChatMode 
-      ? this.colors.magenta + 'ai-chat>' + this.colors.reset + ' '
-      : this.colors.green + 'gitcue> ' + this.colors.reset;
-    this.write(promptText);
+  private handleEnter(): void {
+    this.clearSuggestion();
+    const command = this.currentInput.trim();
+    
+    if (command) {
+      this.addToHistory(command);
+      this.lastCommand = command;
+      this.lastErrorOutput = '';
+    }
+
+    // Pass enter to terminal
+    this.terminalProcess?.stdin?.write('\r\n');
+    
+    // Reset input state
     this.currentInput = '';
+    this.cursorPosition = 0;
+    this.historyIndex = -1;
   }
 
-  private navigateHistory(direction: 'up' | 'down'): void {
+  private handleBackspace(): void {
+    if (this.cursorPosition > 0) {
+      this.currentInput = this.currentInput.slice(0, this.cursorPosition - 1) + 
+                         this.currentInput.slice(this.cursorPosition);
+      this.cursorPosition--;
+      this.terminalProcess?.stdin?.write('\b \b');
+      this.updateAutoCompleteSuggestion();
+    }
+  }
+
+  private handleHistoryNavigation(direction: 'up' | 'down'): void {
     if (this.sessionHistory.length === 0) return;
 
     if (direction === 'up') {
-      this.historyIndex = Math.max(0, this.historyIndex - 1);
+      this.historyIndex = Math.min(this.sessionHistory.length - 1, this.historyIndex + 1);
     } else {
-      this.historyIndex = Math.min(this.sessionHistory.length, this.historyIndex + 1);
+      this.historyIndex = Math.max(-1, this.historyIndex - 1);
     }
 
-    // Clear current input
-    this.write(this.CLEAR_LINE);
-    this.showPrompt();
-
+    // Clear current line
+    this.writeEmitter.fire('\r\x1b[K');
+    
     // Show history command or empty
-    const historyCommand = this.historyIndex < this.sessionHistory.length 
-      ? this.sessionHistory[this.historyIndex] 
+    const historyCommand = this.historyIndex >= 0 
+      ? this.sessionHistory[this.sessionHistory.length - 1 - this.historyIndex] 
       : '';
     
     this.currentInput = historyCommand;
-    this.write(historyCommand);
+    this.cursorPosition = this.currentInput.length;
+    
+    // Let terminal handle the prompt, just send the command
+    this.terminalProcess?.stdin?.write('\r' + historyCommand);
   }
 
-  private async executeCommand(command: string): Promise<void> {
-    this.isProcessingCommand = true;
-    
-    // Add to history
-    this.addToHistory(command);
-    
-    // Handle built-in commands
-    const [action, ...args] = command.split(' ');
-    
-    switch (action.toLowerCase()) {
-      case 'exit':
-      case 'quit':
-      case 'q':
-        this.write('🔄 Exiting GitCue interactive session...\r\n');
-        this.closeEmitter.fire(0);
-        return;
-        
-      case 'help':
-        await this.showHelp();
-        break;
-        
-      case 'clear':
-        this.write('\x1b[2J\x1b[H'); // Clear screen and move cursor to top
-        break;
-        
-      case 'history':
-        await this.showHistory();
-        break;
-        
-      case 'config':
-        await this.showConfig();
-        break;
-        
-      case 'ai':
-        this.enterAiChatMode();
-        break;
-        
-      case 'test-ai':
-        await this.testAI();
-        break;
-        
-      case 'version':
-        this.write('GitCue Interactive Terminal v1.0\r\n');
-        break;
-        
-      default:
-        await this.executeTerminalCommand(command);
-        break;
+  private handleCursorMove(direction: 'left' | 'right'): void {
+    if (direction === 'left' && this.cursorPosition > 0) {
+      this.cursorPosition--;
+      this.terminalProcess?.stdin?.write('\x1b[D');
+    } else if (direction === 'right' && this.cursorPosition < this.currentInput.length) {
+      this.cursorPosition++;
+      this.terminalProcess?.stdin?.write('\x1b[C');
     }
-    
-    this.currentInput = '';
-    this.historyIndex = this.sessionHistory.length;
-    this.isProcessingCommand = false;
-    
-    this.write('\r\n');
-    this.showPrompt();
   }
 
-  private async executeTerminalCommand(command: string): Promise<void> {
-    this.write('\r\n');
+  private handleRegularInput(char: string): void {
+    // Insert character at cursor position
+    this.currentInput = this.currentInput.slice(0, this.cursorPosition) + 
+                       char + 
+                       this.currentInput.slice(this.cursorPosition);
+    this.cursorPosition++;
     
-    // Handle directory navigation commands
-    if (command.startsWith('cd ')) {
-      const newPath = command.substring(3).trim();
-      try {
-        const targetPath = path.resolve(this.workspaceRoot, newPath);
-        await fs.access(targetPath); // Check if directory exists
-        this.workspaceRoot = targetPath;
-        this.write(this.colors.blue + '🔄 Changed directory to: ' + this.colors.reset + this.colors.cyan + targetPath + this.colors.reset + '\r\n');
-        return;
-      } catch (error) {
-        const errorMsg = `Directory not found: ${newPath}`;
-        this.write(this.colors.red + `❌ Error: ${errorMsg}` + this.colors.reset + '\r\n');
-        await this.analyzeError(command, errorMsg);
-        return;
-      }
-    }
+    // Pass character to terminal
+    this.terminalProcess?.stdin?.write(char);
+    
+    // Update auto-complete suggestion
+    this.updateAutoCompleteSuggestion();
+  }
 
-    // Handle pwd command
-    if (command === 'pwd') {
-      this.write(this.colors.blue + '🔄 Current directory: ' + this.colors.reset + this.colors.cyan + this.workspaceRoot + this.colors.reset + '\r\n');
+  private updateAutoCompleteSuggestion(): void {
+    if (!this.currentInput.trim()) {
+      this.clearSuggestion();
       return;
     }
 
-    // Show formatted command if it's a git command
-    if (command.startsWith('git ')) {
-      const formatted = this.formatGitCommandDisplay(command);
-      this.write(this.colors.blue + '🔄 Executing: ' + this.colors.reset + formatted + '\r\n');
+    const suggestions = this.getAutoCompleteSuggestions(this.currentInput);
+    
+    if (suggestions.length > 0) {
+      const words = this.currentInput.split(' ');
+      const lastWord = words[words.length - 1];
+      const suggestion = suggestions[0];
+      
+      if (suggestion.command.startsWith(lastWord) && suggestion.command !== lastWord) {
+        const completion = suggestion.command.substring(lastWord.length);
+        this.showTranslucentSuggestion(completion);
+      } else {
+        this.clearSuggestion();
+      }
     } else {
-      this.write(this.colors.blue + '🔄 Executing: ' + this.colors.reset + this.colors.cyan + command + this.colors.reset + '\r\n');
+      this.clearSuggestion();
+    }
+  }
+
+  private showTranslucentSuggestion(completion: string): void {
+    if (this.isShowingSuggestion) {
+      this.clearSuggestion();
     }
     
-    this.write('\r\n');
+    this.currentSuggestion = completion;
+    this.isShowingSuggestion = true;
+    
+    // Save cursor, show translucent text, restore cursor
+    this.writeEmitter.fire(this.SAVE_CURSOR);
+    this.writeEmitter.fire(this.colors.translucent + completion + this.colors.reset);
+    this.writeEmitter.fire(this.RESTORE_CURSOR);
+  }
+
+  private clearSuggestion(): void {
+    if (this.isShowingSuggestion && this.currentSuggestion) {
+      // Clear the suggestion by overwriting with spaces
+      this.writeEmitter.fire(this.SAVE_CURSOR);
+      this.writeEmitter.fire(' '.repeat(this.currentSuggestion.length));
+      this.writeEmitter.fire(this.RESTORE_CURSOR);
+    }
+    
+    this.currentSuggestion = '';
+    this.isShowingSuggestion = false;
+  }
+
+  private getAutoCompleteSuggestions(input: string): AutoCompleteEntry[] {
+    const words = input.split(' ');
+    const lastWord = words[words.length - 1].toLowerCase();
+    
+    if (!lastWord) return [];
+
+    return this.autoCompleteEntries.filter(entry => 
+      entry.command.toLowerCase().startsWith(lastWord)
+    ).slice(0, 10); // Limit suggestions
+  }
+
+  private showCompletionMenu(suggestions: AutoCompleteEntry[]): void {
+    this.writeEmitter.fire('\r\n');
+    this.writeEmitter.fire(`${this.colors.info}📋 Available completions:${this.colors.reset}\r\n`);
+    
+    suggestions.forEach((suggestion, index) => {
+      const typeColor = this.getTypeColor(suggestion.type);
+      this.writeEmitter.fire(`  ${typeColor}${suggestion.command}${this.colors.reset}`);
+      if (suggestion.description) {
+        this.writeEmitter.fire(`${this.colors.dim} - ${suggestion.description}${this.colors.reset}`);
+      }
+      this.writeEmitter.fire('\r\n');
+    });
+    
+    // Redisplay current input
+    this.writeEmitter.fire('\r\n');
+    this.terminalProcess?.stdin?.write('\r' + this.currentInput);
+  }
+
+  private getTypeColor(type: string): string {
+    const typeColors = {
+      command: this.colors.success,
+      file: this.colors.info,
+      directory: this.colors.warning,
+      git: this.colors.ai,
+      npm: this.colors.error
+    };
+    return typeColors[type] || this.colors.reset;
+  }
+
+  private async initializeAutoComplete(): Promise<void> {
+    // Initialize common commands
+    this.autoCompleteEntries = [
+      // Git commands
+      { command: 'git', type: 'git', description: 'Git version control' },
+      { command: 'git status', type: 'git', description: 'Show repository status' },
+      { command: 'git add', type: 'git', description: 'Add files to staging' },
+      { command: 'git commit', type: 'git', description: 'Commit changes' },
+      { command: 'git push', type: 'git', description: 'Push to remote' },
+      { command: 'git pull', type: 'git', description: 'Pull from remote' },
+      { command: 'git branch', type: 'git', description: 'Manage branches' },
+      { command: 'git checkout', type: 'git', description: 'Switch branches' },
+      { command: 'git merge', type: 'git', description: 'Merge branches' },
+      { command: 'git log', type: 'git', description: 'Show commit history' },
+      
+      // Common commands
+      { command: 'ls', type: 'command', description: 'List directory contents' },
+      { command: 'cd', type: 'command', description: 'Change directory' },
+      { command: 'pwd', type: 'command', description: 'Print working directory' },
+      { command: 'mkdir', type: 'command', description: 'Create directory' },
+      { command: 'touch', type: 'command', description: 'Create file' },
+      { command: 'rm', type: 'command', description: 'Remove files' },
+      { command: 'cp', type: 'command', description: 'Copy files' },
+      { command: 'mv', type: 'command', description: 'Move files' },
+      
+      // NPM commands
+      { command: 'npm', type: 'npm', description: 'Node package manager' },
+      { command: 'npm install', type: 'npm', description: 'Install packages' },
+      { command: 'npm run', type: 'npm', description: 'Run script' },
+      { command: 'npm start', type: 'npm', description: 'Start application' },
+      { command: 'npm build', type: 'npm', description: 'Build application' },
+      { command: 'npm test', type: 'npm', description: 'Run tests' },
+    ];
+
+    // Load project-specific completions
+    await this.loadProjectCompletions();
+  }
+
+  private async loadProjectCompletions(): Promise<void> {
+    try {
+      // Load package.json scripts
+      const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
+      const packageJsonContent = await fs.readFile(packageJsonPath, 'utf8');
+      const packageJson = JSON.parse(packageJsonContent);
+      
+      if (packageJson.scripts) {
+        Object.keys(packageJson.scripts).forEach(script => {
+          this.autoCompleteEntries.push({
+            command: `npm run ${script}`,
+            type: 'npm',
+            description: packageJson.scripts[script]
+          });
+        });
+      }
+    } catch (error) {
+      // Ignore if package.json doesn't exist
+    }
 
     try {
-      // Execute command using spawn with proper shell
-      const shell = process.platform === 'win32' ? 'cmd.exe' : 'bash';
-      const shellArgs = process.platform === 'win32' ? ['/c', command] : ['-c', command];
-      
-      const child = spawn(shell, shellArgs, {
-        cwd: this.workspaceRoot,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        env: process.env
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout.on('data', (data) => {
-        const output = data.toString();
-        stdout += output;
+      // Load common files and directories
+      const items = await fs.readdir(this.workspaceRoot);
+      for (const item of items) {
+        const itemPath = path.join(this.workspaceRoot, item);
+        const stats = await fs.stat(itemPath);
         
-        // Clean up the output formatting - remove excessive whitespace and normalize line endings
-        const cleanOutput = output
-          .replace(/\r\n/g, '\n')  // Normalize line endings
-          .replace(/\r/g, '\n')    // Convert remaining \r to \n
-          .split('\n')
-          .map((line: string) => line.trimEnd()) // Remove trailing whitespace from each line
-          .join('\r\n');
-        
-        this.write(cleanOutput);
-      });
-
-      child.stderr.on('data', (data) => {
-        const output = data.toString();
-        stderr += output;
-        
-        // Clean up stderr output as well
-        const cleanOutput = output
-          .replace(/\r\n/g, '\n')
-          .replace(/\r/g, '\n')
-          .split('\n')
-          .map((line: string) => line.trimEnd())
-          .join('\r\n');
-        
-        this.write(this.colors.red + cleanOutput + this.colors.reset);
-      });
-
-      const exitCode = await new Promise<number>((resolve) => {
-        child.on('close', (code) => resolve(code || 0));
-      });
-
-      if (exitCode !== 0) {
-        const errorMsg = stderr.trim() || `Command failed with exit code ${exitCode}`;
-        this.write(this.colors.red + `\r\n❌ Command failed (exit code ${exitCode})` + this.colors.reset + '\r\n');
-        await this.analyzeError(command, errorMsg);
+        this.autoCompleteEntries.push({
+          command: item,
+          type: stats.isDirectory() ? 'directory' : 'file',
+          description: stats.isDirectory() ? 'Directory' : 'File'
+        });
       }
-
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      this.write(this.colors.red + `\r\n❌ Command execution failed: ${errorMsg}` + this.colors.reset + '\r\n');
-      await this.analyzeError(command, errorMsg);
+      // Ignore if can't read directory
     }
   }
 
-  private formatGitCommandDisplay(command: string): string {
-    return command
-      .replace(/^git\s+/, this.colors.bright + this.colors.cyan + 'git' + this.colors.reset + ' ')
-      .replace(/\s(add|commit|push|pull|status|log|branch|checkout|merge|rebase|reset|diff|show)\s/, ` ${this.colors.bright}$1${this.colors.reset} `)
-      .replace(/\s--?([a-zA-Z-]+)/g, ` ${this.colors.yellow}--$1${this.colors.reset}`)
-      .replace(/\s-([a-zA-Z])/g, ` ${this.colors.yellow}-$1${this.colors.reset}`);
-  }
-
-  private async analyzeError(command: string, errorMessage: string): Promise<void> {
+  private async triggerAiErrorAnalysis(command: string, errorOutput: string): Promise<void> {
     const config = configManager.getConfig();
     
-    // Check if AI analysis is enabled
-    if (!config.enableSuggestions) {
-      this.write('\r\n' + this.colors.yellow + '⚠️ AI suggestions are disabled in settings' + this.colors.reset + '\r\n');
+    if (!config.enableSuggestions || !config.geminiApiKey) {
       return;
     }
+
+    this.isAiAnalysisActive = true;
     
-    if (!config.geminiApiKey) {
-      this.write('\r\n' + this.colors.yellow + '⚠️ Gemini API key not configured. Please set it in GitCue settings.' + this.colors.reset + '\r\n');
-      return;
-    }
-
     try {
-      this.write('\r\n' + this.colors.yellow + '🔄 Analyzing error with AI...' + this.colors.reset + '\r\n');
-      this.write(this.colors.dim + 'Press Ctrl+C to stop analysis' + this.colors.reset + '\r\n');
+      this.writeEmitter.fire(`\r\n${this.colors.ai}🤖 Analyzing error with AI...${this.colors.reset}\r\n`);
+      this.writeEmitter.fire(`${this.colors.dim}Press Ctrl+C to cancel analysis${this.colors.reset}\r\n`);
 
-      this.isAiAnalysisRunning = true;
-      logger.debug(`Starting AI analysis for command: ${command}`);
-      logger.debug(`Error message: ${errorMessage}`);
-
-      const errorContext = `Command: ${command}\nError: ${errorMessage}`;
+      const errorContext = `Command: ${command}\nError: ${errorOutput}`;
       const suggestion = await generateErrorSuggestion(errorContext);
       
-      if (!this.isAiAnalysisRunning) {
-        this.write(this.colors.yellow + '🛑 Analysis cancelled by user' + this.colors.reset + '\r\n');
-        return;
-      }
+      if (!this.isAiAnalysisActive) return;
 
-      this.write('\r\n' + this.colors.green + '🔍 Analysis Complete:' + this.colors.reset + '\r\n');
-      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
-      this.renderMarkdown(suggestion);
-      this.write(this.colors.dim + '─'.repeat(80) + this.colors.reset + '\r\n');
-      this.write(this.colors.cyan + '💡 You can run the suggested commands directly in this terminal!' + this.colors.reset + '\r\n');
-
+      // Show AI analysis as overlay
+      this.showAiAnalysisOverlay(suggestion);
+      
     } catch (error) {
-      if (!this.isAiAnalysisRunning) return;
+      if (!this.isAiAnalysisActive) return;
       
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      logger.error(`AI analysis failed: ${errorMsg}`);
-      
-      this.write(this.colors.red + `\r\n❌ AI analysis failed: ${errorMsg}` + this.colors.reset + '\r\n');
-      
-      // Provide basic help if AI fails
-      this.write('\r\n' + this.colors.bright + '📌 Basic troubleshooting:' + this.colors.reset + '\r\n');
-      if (command.startsWith('git ')) {
-        this.write('  • Check: ' + this.colors.cyan + 'git status' + this.colors.reset + '\r\n');
-        this.write('  • Try: ' + this.colors.cyan + `git --help ${command.split(' ')[1]}` + this.colors.reset + '\r\n');
-        this.write('  • Verify repository exists and you have access\r\n');
-      } else {
-        this.write('  • Check command syntax\r\n');
-        this.write('  • Verify paths and permissions\r\n');
-        this.write('  • Try running with --help flag\r\n');
-      }
+      this.writeEmitter.fire(`${this.colors.error}❌ AI analysis failed: ${error instanceof Error ? error.message : String(error)}${this.colors.reset}\r\n`);
     } finally {
-      this.isAiAnalysisRunning = false;
+      this.isAiAnalysisActive = false;
     }
   }
 
-  private renderMarkdown(content: string): void {
-    // Use the new markdown renderer for cleaner output
-    const rendered = renderMarkdown(content, {
-      maxWidth: 80,
+  private showAiAnalysisOverlay(suggestion: string): void {
+    // Create a beautiful overlay for AI suggestions
+    this.writeEmitter.fire('\r\n');
+    this.writeEmitter.fire(`${this.colors.ai}╭─ 🤖 AI Analysis ─────────────────────────────────────────────────────────────╮${this.colors.reset}\r\n`);
+    
+    // Render markdown with proper formatting
+    const rendered = renderMarkdown(suggestion, {
+      maxWidth: 76,
       colors: {
-        header: this.colors.bright + this.colors.blue,
-        code: this.colors.cyan,
+        header: this.colors.bright + this.colors.info,
+        code: this.colors.success,
         bold: this.colors.bright,
         italic: this.colors.dim,
-        list: this.colors.green,
-        quote: this.colors.gray,
+        list: this.colors.warning,
+        quote: this.colors.dim,
         reset: this.colors.reset,
         dim: this.colors.dim
       }
     });
     
-    this.write(rendered + '\r\n');
-  }
-
-  private enterAiChatMode(): void {
-    this.isInAiChatMode = true;
-    this.write('\r\n' + this.colors.bright + this.colors.magenta + '🤖 Entering AI Chat Mode' + this.colors.reset + '\r\n');
-    this.write(this.colors.dim + 'Type your questions and get AI-powered answers. Use Ctrl+C to exit chat mode.' + this.colors.reset + '\r\n');
-    this.write('\r\n');
-  }
-
-  private async handleAiChat(message: string): Promise<void> {
-    const config = configManager.getConfig();
-    
-    if (!config.geminiApiKey) {
-      this.write(this.colors.red + '❌ Gemini API key not configured. Please set it in GitCue settings.' + this.colors.reset + '\r\n');
-      this.showPrompt();
-      return;
-    }
-
-    // Check for exit command
-    if (message.toLowerCase() === 'exit' || message.toLowerCase() === 'quit' || message.toLowerCase() === 'q') {
-      this.isInAiChatMode = false;
-      this.write('\r\n' + this.colors.yellow + '🤖 Exiting AI chat mode...\r\n' + this.colors.reset);
-      this.showPrompt();
-      return;
-    }
-
-    this.write('\r\n' + this.colors.yellow + '🤖 Thinking...' + this.colors.reset + '\r\n');
-
-    try {
-      const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
-
-      const prompt = `You are a Git and development expert. Provide a concise, helpful response.
-
-User Question: ${message}
-
-Keep your response:
-- Under 150 words
-- Focused on practical solutions
-- Include specific commands when relevant
-- Use markdown formatting
-
-Be direct and actionable.`;
-
-      // Always use gemini-2.0-flash
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: prompt,
-        config: {
-          maxOutputTokens: 1000,
-          temperature: 0.3,
-        }
-      });
-
-      this.write('\r\n' + this.colors.green + '🤖 AI Response:' + this.colors.reset + '\r\n');
-      this.renderMarkdown(response.text || 'No response generated');
-
-    } catch (error) {
-      this.write('\r\n' + this.colors.red + '🤖 AI chat failed:' + this.colors.reset + ' ' + (error instanceof Error ? error.message : String(error)) + '\r\n');
-    }
-
-    this.write('\r\n');
-    this.write(this.colors.dim + '💡 Type "exit" or press Ctrl+C to return to GitCue mode' + this.colors.reset + '\r\n');
-    this.showPrompt();
-  }
-
-  private async showHistory(): Promise<void> {
-    this.write('\r\n' + this.colors.bright + this.colors.blue + '📚 Command History' + this.colors.reset + '\r\n');
-    this.write(this.colors.dim + '─'.repeat(40) + this.colors.reset + '\r\n');
-    
-    if (this.sessionHistory.length === 0) {
-      this.write('No commands in history yet\r\n');
-      return;
-    }
-    
-    const recentHistory = this.sessionHistory.slice(-20); // Show last 20 commands
-    recentHistory.forEach((cmd, index) => {
-      const formattedCmd = cmd.startsWith('git ') ? this.formatGitCommandDisplay(cmd) : this.colors.cyan + cmd + this.colors.reset;
-      this.write(`  ${this.colors.gray}•${this.colors.reset} ${formattedCmd}\r\n`);
+    // Add padding to each line
+    const lines = rendered.split('\n');
+    lines.forEach(line => {
+      this.writeEmitter.fire(`${this.colors.ai}│${this.colors.reset} ${line.padEnd(76)} ${this.colors.ai}│${this.colors.reset}\r\n`);
     });
     
-    if (this.sessionHistory.length > 20) {
-      this.write(`\r\n... and ${this.sessionHistory.length - 20} more commands\r\n`);
-    }
-    
-    this.write('\r\n' + this.colors.cyan + '💡 Use ↑↓ arrow keys to navigate through history' + this.colors.reset + '\r\n');
+    this.writeEmitter.fire(`${this.colors.ai}╰───────────────────────────────────────────────────────────────────────────────╯${this.colors.reset}\r\n`);
+    this.writeEmitter.fire(`${this.colors.info}💡 You can run the suggested commands directly in this terminal${this.colors.reset}\r\n\r\n`);
   }
 
-  private async showConfig(): Promise<void> {
+  private showWelcomeBanner(): void {
     const config = configManager.getConfig();
-    const configDisplay = configManager.getConfigForDisplay();
     
-    this.write('\r\n' + this.colors.bright + this.colors.yellow + '🔧 GitCue Configuration' + this.colors.reset + '\r\n');
-    this.write(this.colors.dim + '─'.repeat(40) + this.colors.reset + '\r\n');
+    this.writeEmitter.fire('\r\n');
+    this.writeEmitter.fire(`${this.colors.bright}${this.colors.info}╭─ 🚀 GitCue Enhanced Terminal ─────────────────────────────────────────────────╮${this.colors.reset}\r\n`);
+    this.writeEmitter.fire(`${this.colors.bright}${this.colors.info}│${this.colors.reset}  A beautiful terminal with AI-powered enhancements                           ${this.colors.bright}${this.colors.info}│${this.colors.reset}\r\n`);
+    this.writeEmitter.fire(`${this.colors.bright}${this.colors.info}╰───────────────────────────────────────────────────────────────────────────────╯${this.colors.reset}\r\n`);
+    this.writeEmitter.fire('\r\n');
     
-    Object.entries(configDisplay).forEach(([key, value]) => {
-      this.write(`  ${key.padEnd(20)} ${this.colors.cyan}${value}${this.colors.reset}\r\n`);
-    });
+    this.writeEmitter.fire(`${this.colors.success}✨ Enhanced Features:${this.colors.reset}\r\n`);
+    this.writeEmitter.fire(`  • ${this.colors.info}Tab completion${this.colors.reset} with translucent suggestions\r\n`);
+    this.writeEmitter.fire(`  • ${this.colors.ai}AI-powered error analysis${this.colors.reset} for failed commands\r\n`);
+    this.writeEmitter.fire(`  • ${this.colors.warning}Command history${this.colors.reset} with ↑↓ navigation\r\n`);
+    this.writeEmitter.fire(`  • ${this.colors.success}Beautiful UI overlays${this.colors.reset} on standard terminal\r\n`);
+    this.writeEmitter.fire('\r\n');
     
-    this.write('\r\n' + this.colors.cyan + '💡 Configure settings in VS Code: Preferences > Settings > GitCue' + this.colors.reset + '\r\n');
-  }
-
-  private async showHelp(): Promise<void> {
-    this.write('\r\n' + this.colors.bright + this.colors.blue + '🎯 GitCue Interactive Help' + this.colors.reset + '\r\n');
-    this.write(this.colors.dim + '─'.repeat(40) + this.colors.reset + '\r\n');
+    const aiStatus = config.geminiApiKey && config.enableSuggestions 
+      ? `${this.colors.success}Enabled${this.colors.reset}` 
+      : `${this.colors.error}Disabled${this.colors.reset}`;
     
-    this.write(this.colors.bright + 'Built-in Commands:' + this.colors.reset + '\r\n');
-    this.write('  ' + this.colors.cyan + 'history' + this.colors.reset + '                    Show command history\r\n');
-    this.write('  ' + this.colors.cyan + 'clear' + this.colors.reset + '                      Clear terminal screen\r\n');
-    this.write('  ' + this.colors.cyan + 'config' + this.colors.reset + '                     Show GitCue configuration\r\n');
-    this.write('  ' + this.colors.cyan + 'ai' + this.colors.reset + '                         Start AI chat mode\r\n');
-    this.write('  ' + this.colors.cyan + 'test-ai' + this.colors.reset + '                        Test AI connection\r\n');
-    this.write('  ' + this.colors.cyan + 'version' + this.colors.reset + '                    Show version information\r\n');
-    this.write('  ' + this.colors.cyan + 'help' + this.colors.reset + '                       Show this help message\r\n');
-    this.write('  ' + this.colors.cyan + 'exit' + this.colors.reset + '                       Exit interactive session\r\n');
-    this.write('  ' + this.colors.cyan + 'Ctrl+C' + this.colors.reset + '                     Exit session or AI chat mode\r\n');
-    
-    this.write('\r\n' + this.colors.bright + 'Example Commands:' + this.colors.reset + '\r\n');
-    this.write('  ' + this.colors.cyan + 'git status' + this.colors.reset + '                 Show repository status\r\n');
-    this.write('  ' + this.colors.cyan + 'git pull' + this.colors.reset + '                   Pull latest changes\r\n');
-    this.write('  ' + this.colors.cyan + 'git log --oneline -10' + this.colors.reset + '      Show recent commits\r\n');
-    this.write('  ' + this.colors.cyan + 'ls -la' + this.colors.reset + '                     List directory contents\r\n');
-    this.write('  ' + this.colors.cyan + 'pwd' + this.colors.reset + '                        Show current directory\r\n');
-    
-    this.write('\r\n' + this.colors.bright + 'Features:' + this.colors.reset + '\r\n');
-    this.write('  • AI-powered error analysis and suggestions\r\n');
-    this.write('  • Interactive AI chat mode for questions\r\n');
-    this.write('  • Session history with arrow key navigation\r\n');
-    this.write('  • Git command syntax highlighting\r\n');
-    this.write('  • Persistent command history across sessions\r\n');
-    this.write('  • Clean, formatted terminal output\r\n');
+    this.writeEmitter.fire(`${this.colors.dim}AI Analysis: ${aiStatus} | History: ${this.sessionHistory.length} commands loaded${this.colors.reset}\r\n`);
+    this.writeEmitter.fire('\r\n');
   }
 
   private addToHistory(command: string): void {
-    if (command && command.trim() && command !== this.sessionHistory[this.sessionHistory.length - 1]) {
-      this.sessionHistory.push(command.trim());
+    const trimmedCommand = command.trim();
+    if (trimmedCommand && trimmedCommand !== this.sessionHistory[this.sessionHistory.length - 1]) {
+      this.sessionHistory.push(trimmedCommand);
       
       const config = configManager.getConfig();
       if (this.sessionHistory.length > config.maxHistorySize) {
         this.sessionHistory = this.sessionHistory.slice(-config.maxHistorySize);
       }
+      
+      this.saveSessionHistory();
     }
-    this.historyIndex = this.sessionHistory.length;
   }
 
   private async loadSessionHistory(): Promise<void> {
@@ -660,7 +637,6 @@ Be direct and actionable.`;
         ? history.commands.slice(-config.maxHistorySize) 
         : [];
     } catch (error) {
-      // File doesn't exist or is corrupted, start with empty history
       this.sessionHistory = [];
     }
   }
@@ -668,9 +644,7 @@ Be direct and actionable.`;
   private async saveSessionHistory(): Promise<void> {
     const config = configManager.getConfig();
     
-    if (!config.sessionPersistence) {
-      return;
-    }
+    if (!config.sessionPersistence) return;
 
     try {
       const historyToSave: SessionHistory = {
@@ -679,43 +653,21 @@ Be direct and actionable.`;
       };
       await fs.writeFile(this.historyFile, JSON.stringify(historyToSave, null, 2));
     } catch (error) {
-      // Silently fail if we can't save history
       logger.debug('Failed to save session history: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
-  private async testAI(): Promise<void> {
-    this.write('\r\n' + this.colors.bright + this.colors.blue + '🧪 Testing AI Connection' + this.colors.reset + '\r\n');
-    this.write(this.colors.dim + '─'.repeat(40) + this.colors.reset + '\r\n');
+  close(): void {
+    this.clearSuggestion();
     
-    const config = configManager.getConfig();
-    
-    // Check configuration
-    this.write('Checking configuration...\r\n');
-    if (!config.geminiApiKey) {
-      this.write(this.colors.red + '❌ Gemini API key not configured' + this.colors.reset + '\r\n');
-      return;
+    if (this.terminalProcess && !this.terminalProcess.killed) {
+      this.terminalProcess.kill();
     }
-    this.write(this.colors.green + '✅ API key configured' + this.colors.reset + '\r\n');
     
-    if (!config.enableSuggestions) {
-      this.write(this.colors.yellow + '⚠️ AI suggestions disabled in settings' + this.colors.reset + '\r\n');
-      return;
-    }
-    this.write(this.colors.green + '✅ AI suggestions enabled' + this.colors.reset + '\r\n');
+    this.saveSessionHistory().catch(error => {
+      logger.debug('Failed to save session history: ' + error.message);
+    });
     
-    // Test AI connection
-    this.write('\r\nTesting AI connection...\r\n');
-    try {
-      const isWorking = await testAIConnection();
-      if (isWorking) {
-        this.write(this.colors.green + '✅ AI connection successful!' + this.colors.reset + '\r\n');
-        this.write('AI analysis should work properly for failed commands.\r\n');
-      } else {
-        this.write(this.colors.red + '❌ AI connection failed' + this.colors.reset + '\r\n');
-      }
-    } catch (error) {
-      this.write(this.colors.red + `❌ AI test failed: ${error instanceof Error ? error.message : String(error)}` + this.colors.reset + '\r\n');
-    }
+    logger.interactiveInfo('Enhanced terminal session closed');
   }
 } 
