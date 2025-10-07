@@ -279,10 +279,17 @@ flowchart TD
 
 **Features**:
 - Intelligent analysis of your code changes using Google Gemini AI
+- **Smart Activity Tracking**: Monitors development activity and waits for it to settle before committing
+- **Configurable Thresholds**: Set commit criteria (any/medium/major) based on change significance
+- **Completeness Analysis**: AI determines if changes are complete, partial, or WIP
+- **Minimum Time Between Commits**: Prevents too-frequent commits with configurable intervals
+- **Auto-Cancel on New Changes**: Automatically cancels pending commits when you continue editing
 - Customizable commit modes (periodic/intelligent)
 - Preview and edit capabilities before committing
 - Configurable buffer time to cancel unwanted commits
 - Automatic push capabilities with remote validation
+
+> 📖 **Learn More**: See the [Intelligent Commit Guide](INTELLIGENT_COMMIT_GUIDE.md) for detailed configuration and usage
 
 ### 🖥️ **AI-Enhanced Interactive Terminal**
 
@@ -658,6 +665,10 @@ For detailed documentation of each directory and its components, see the individ
 - [📁 Types](src/types/README.md) - TypeScript interfaces and type definitions
 - [📁 Utils](src/utils/README.md) - Utility functions and helper modules
 - [📁 Test](src/test/README.md) - Test files and testing utilities
+
+### **Feature Guides**
+
+- [🧠 Intelligent Commit System](INTELLIGENT_COMMIT_GUIDE.md) - Complete guide to AI-powered intelligent commits with activity tracking, thresholds, and smart debouncing
 
 ---
 
