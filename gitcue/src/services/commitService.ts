@@ -84,21 +84,41 @@ export class CommitService {
 
 			await execAsync('git add .', { cwd: workspacePath });
 
+			let aiAnalysis: any = null;
+			let commitReason: 'ai_decision' | 'manual' | 'buffer_timeout' | 'periodic' = 'periodic';
+			
 			if (config.commitMode === 'intelligent') {
-				const analysis = await this.analyzeChangesWithAI(workspacePath);
+				aiAnalysis = await this.analyzeChangesWithAI(workspacePath);
+				commitReason = 'ai_decision';
 				
-				if (!analysis.shouldCommit) {
-					logger.info(`AI decided not to commit: ${analysis.reason}`);
+				if (!aiAnalysis.shouldCommit) {
+					logger.info(`AI decided not to commit: ${aiAnalysis.reason}`);
 					if (config.enableNotifications) {
-						vscode.window.showInformationMessage(`🤖 GitCue: ${analysis.reason}`);
+						vscode.window.showInformationMessage(`[GitCue AI] ${aiAnalysis.reason}`);
 					}
 					return;
 				}
 				
-				logger.info(`AI analysis: ${analysis.reason} (${analysis.significance})`);
+				logger.info(`AI analysis: ${aiAnalysis.reason} (${aiAnalysis.significance})`);
+			} else {
+				commitReason = 'buffer_timeout';
 			}
 
 			const commitMessage = await this.generateCommitMessage(workspacePath, config);
+			
+			// Get changed files list for metadata
+			const changedFiles = status.trim().split('\n').map(line => line.substring(3).trim());
+			const { stdout: diff } = await execAsync('git diff --cached --stat', { cwd: workspacePath });
+			
+			// Store metadata for logging
+			(this as any).pendingCommitMetadata = {
+				aiAnalysis,
+				commitReason,
+				changedFiles,
+				diffSummary: diff.trim(),
+				config
+			};
+			
 			await this.showBufferNotification(commitMessage, status, workspacePath, config);
 
 		} catch (error) {
@@ -205,7 +225,7 @@ export class CommitService {
 
 			if (config.enableNotifications) {
 				vscode.window.showWarningMessage(
-					`⏰ GitCue: Committing in ${timeLeft} seconds. Click to cancel.`,
+					`[GitCue] Committing in ${timeLeft} seconds. Click to cancel.`,
 					'Cancel Commit'
 				).then(action => {
 					if (action === 'Cancel Commit') {
@@ -258,7 +278,7 @@ export class CommitService {
 					this.activityLogger.setPendingCommit(false);
 					
 					if (config.enableNotifications) {
-						vscode.window.showInformationMessage('🚫 GitCue: Commit cancelled');
+						vscode.window.showInformationMessage('[GitCue] Commit cancelled');
 					}
 					logger.info('Commit cancelled by user');
 					resolve();
@@ -308,7 +328,23 @@ export class CommitService {
 				}
 				
 				logger.info(`Commit successful: ${message}`);
-				this.activityLogger.setCommitCompleted(message, shouldPush);
+				
+				// Get metadata if available
+				const metadata = (this as any).pendingCommitMetadata;
+				if (metadata) {
+					this.activityLogger.setCommitCompleted(
+						message, 
+						shouldPush, 
+						metadata.changedFiles,
+						metadata.diffSummary,
+						metadata.commitReason,
+						metadata.aiAnalysis,
+						metadata.config
+					);
+					(this as any).pendingCommitMetadata = null;
+				} else {
+					this.activityLogger.setCommitCompleted(message, shouldPush);
+				}
 				return;
 				
 			} catch (error) {

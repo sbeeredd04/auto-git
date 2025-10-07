@@ -40,12 +40,13 @@ export class ActivityLogger {
 		}
 	}
 
-	logActivity(type: ActivityLogEntry['type'], message: string, details?: string): void {
+	logActivity(type: ActivityLogEntry['type'], message: string, details?: string, commitMetadata?: ActivityLogEntry['commitMetadata']): void {
 		const entry: ActivityLogEntry = {
 			timestamp: new Date().toLocaleTimeString(),
 			type,
 			message,
-			details
+			details,
+			commitMetadata
 		};
 		
 		this.watchStatus.activityHistory.unshift(entry);
@@ -99,13 +100,40 @@ export class ActivityLogger {
 		}
 	}
 
-	setCommitCompleted(message: string, shouldPush: boolean): void {
+	setCommitCompleted(message: string, shouldPush: boolean, changedFiles?: string[], diffSummary?: string, commitReason?: string, aiAnalysis?: any, config?: any): void {
 		this.watchStatus.lastCommit = new Date().toLocaleTimeString();
 		this.watchStatus.filesChanged = 0;
 		this.watchStatus.changedFiles.clear();
 		this.watchStatus.pendingCommit = false;
 		
-		this.logActivity('commit', `Committed: ${message}`, shouldPush ? 'Pushed to remote' : 'Local commit only');
+		// Create detailed commit metadata
+		const commitMetadata: ActivityLogEntry['commitMetadata'] = {
+			reason: (commitReason as any) || 'manual',
+			config: config ? {
+				mode: config.commitMode || 'periodic',
+				bufferTime: config.bufferTimeSeconds || 30,
+				autoPush: config.autoPush || false,
+				threshold: config.commitThreshold
+			} : {
+				mode: 'periodic',
+				bufferTime: 30,
+				autoPush: false
+			},
+			changedFiles: changedFiles || [],
+			diffSummary: diffSummary || 'No diff summary available'
+		};
+		
+		if (aiAnalysis) {
+			commitMetadata.aiAnalysis = {
+				shouldCommit: aiAnalysis.shouldCommit || true,
+				significance: aiAnalysis.significance || 'MEDIUM',
+				completeness: aiAnalysis.completeness || 'unknown',
+				changeType: aiAnalysis.changeType || 'unknown',
+				reasoning: aiAnalysis.reason || 'No reasoning provided'
+			};
+		}
+		
+		this.logActivity('commit', `Committed: ${message}`, shouldPush ? 'Pushed to remote' : 'Local commit only', commitMetadata);
 		
 		if (this.updateCallback) {
 			this.updateCallback();
