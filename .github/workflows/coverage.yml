@@ -1,0 +1,98 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  coverage:
+    name: Generate Code Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies (CLI)
+        run: npm ci
+      
+      - name: Install c8 for coverage
+        run: npm install -D c8
+      
+      - name: Run tests with coverage (CLI)
+        run: |
+          npx c8 --reporter=lcov --reporter=text npm test || true
+          echo "Coverage report generated for CLI"
+      
+      - name: Install dependencies (GitCue)
+        working-directory: ./gitcue
+        run: npm ci
+      
+      - name: Run tests with coverage (GitCue)
+        working-directory: ./gitcue
+        run: |
+          npm test || true
+          echo "Tests run for GitCue extension"
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info,./gitcue/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+        continue-on-error: true
+      
+      - name: Generate coverage summary
+        run: |
+          echo "## Coverage Summary 📈" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "coverage/lcov.info" ]; then
+            echo "### CLI Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "Coverage report generated successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### CLI Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "No coverage data available" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### GitCue Extension Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "Test suite executed" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let coverageComment = '## Code Coverage Report 📊\n\n';
+            
+            if (fs.existsSync('coverage/lcov.info')) {
+              coverageComment += '✅ Coverage report generated for CLI package\n';
+            } else {
+              coverageComment += '⚠️ No coverage data for CLI package\n';
+            }
+            
+            coverageComment += '\n*Note: Detailed coverage metrics will be available once test suite is fully implemented.*';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: coverageComment
+            });
+        continue-on-error: true

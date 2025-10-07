@@ -52,7 +52,15 @@ suite('GitCue Services Test Suite', () => {
                     enableSuggestions: true,
                     terminalVerbose: false,
                     sessionPersistence: false,
-                    maxHistorySize: 100
+                    maxHistorySize: 100,
+                    intelligentCommit: {
+                        commitThreshold: 'medium' as const,
+                        minTimeBetweenCommits: 1800000,
+                        activitySettleTime: 300000,
+                        requireCompleteness: true,
+                        bufferTimeSeconds: 30,
+                        cancelOnNewChanges: true
+                    }
                 }
             };
 
@@ -87,7 +95,15 @@ suite('GitCue Services Test Suite', () => {
                     enableSuggestions: true,
                     terminalVerbose: false,
                     sessionPersistence: false,
-                    maxHistorySize: 100
+                    maxHistorySize: 100,
+                    intelligentCommit: {
+                        commitThreshold: 'medium' as const,
+                        minTimeBetweenCommits: 1800000,
+                        activitySettleTime: 300000,
+                        requireCompleteness: true,
+                        bufferTimeSeconds: 30,
+                        cancelOnNewChanges: true
+                    }
                 }
             };
 
@@ -121,7 +137,15 @@ suite('GitCue Services Test Suite', () => {
                     enableSuggestions: true,
                     terminalVerbose: false,
                     sessionPersistence: false,
-                    maxHistorySize: 100
+                    maxHistorySize: 100,
+                    intelligentCommit: {
+                        commitThreshold: 'medium' as const,
+                        minTimeBetweenCommits: 1800000,
+                        activitySettleTime: 300000,
+                        requireCompleteness: true,
+                        bufferTimeSeconds: 30,
+                        cancelOnNewChanges: true
+                    }
                 },
                 watchStatus: {
                     isWatching: true,

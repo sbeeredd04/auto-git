@@ -1,3 +1,40 @@
+## v4.1.0 - 2025-01-XX
+
+### 🚀 Major Features
+
+#### Intelligent Commit System for VSCode Extension
+- **Smart Activity Tracking**: Monitors development activity and waits for it to settle before analyzing changes
+- **AI-Enhanced Analysis**: Analyzes changes across multiple dimensions (significance, completeness, change type, risk level)
+- **Configurable Thresholds**: Choose from "any", "medium", or "major" commit thresholds
+- **Time-Based Controls**: 
+  - Activity settle time (default: 5 minutes) - waits for file changes to stop
+  - Minimum time between commits (default: 30 minutes) - prevents too-frequent commits
+- **Auto-Cancellation**: Automatically cancels pending commits when new changes are detected during buffer period
+- **Enhanced User Feedback**: Detailed notifications showing change type, significance, and AI decision rationale
+
+#### Configuration Presets
+- **Balanced (Default)**: Medium threshold, 30-minute intervals, completeness required
+- **Conservative**: Major changes only, 1-hour intervals, for production environments
+- **Frequent**: Any meaningful change, 10-minute intervals, for experimental work
+
+#### Documentation
+- **INTELLIGENT_COMMIT_GUIDE.md**: Complete user guide with configuration presets, troubleshooting, and best practices
+- **TESTING_GUIDE_INTELLIGENT_COMMIT.md**: 10 test scenarios and verification checklist
+- **Example Configuration**: Pre-configured settings for different workflows
+
+### 🛠️ Technical Improvements
+- Extended AI analysis with completeness, change type, and risk assessment
+- Implemented activity tracking with diff hashing to prevent duplicate API calls
+- Added minimum time between commits enforcement
+- Enhanced buffer notification with analysis details
+- Backward compatible with existing configurations
+
+### 📦 GitCue Extension v0.5.0
+- Implemented intelligent commit logic matching CLI capabilities
+- Added 6 new configuration settings for fine-grained control
+- Enhanced commit decision flow with threshold filtering
+- Improved user experience with detailed feedback
+
 ## v3.10.0 - 2025-05-26
 
 Bug fixes and improvements
