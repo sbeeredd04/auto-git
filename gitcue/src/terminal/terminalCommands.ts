@@ -116,14 +116,14 @@ export class TerminalCommands {
     }
     
     let output = '\r\n';
-    output += this.formatSeparator('🎯 GitCue Terminal Help', 'info');
+    output += this.formatSeparator(' GitCue Terminal Help', 'info');
     output += '\r\n';
     
     output += this.formatOutput('GitCue Enhanced Terminal - AI-Powered Development Assistant', 'info');
     output += '\r\n\r\n';
     
     // Built-in Commands
-    output += this.formatOutput('🔧 Built-in Commands:', 'success');
+    output += this.formatOutput(' Built-in Commands:', 'success');
     output += '\r\n';
     output += this.formatCommandHelp('help [topic]', 'Show help information (try: help ai, help git)');
     output += this.formatCommandHelp('config [setting]', 'Show/modify GitCue configuration');
@@ -136,7 +136,7 @@ export class TerminalCommands {
     output += '\r\n';
     
     // AI Features
-    output += this.formatOutput('🤖 AI Features:', 'ai');
+    output += this.formatOutput(' AI Features:', 'ai');
     output += '\r\n';
     output += '  • Automatic error analysis and suggestions\r\n';
     output += '  • Interactive AI chat mode (type "ai")\r\n';
@@ -155,7 +155,7 @@ export class TerminalCommands {
     output += '\r\n';
     
     // Usage Tips
-    output += this.formatOutput('💡 Usage Tips:', 'info');
+    output += this.formatOutput(' Usage Tips:', 'info');
     output += '\r\n';
     output += '  • Use Tab for command completion\r\n';
     output += '  • Press ↑↓ arrows to navigate command history\r\n';
@@ -181,13 +181,13 @@ export class TerminalCommands {
       case 'completion':
         return this.showCompletionHelp();
       default:
-        return this.formatOutput(`❌ Unknown help topic: ${topic}. Try: help, help ai, help git, help config`, 'error');
+        return this.formatOutput(` Unknown help topic: ${topic}. Try: help, help ai, help git, help config`, 'error');
     }
   }
 
   private showAIHelp(): string {
     let output = '\r\n';
-    output += this.formatSeparator('🤖 AI Features Help', 'ai');
+    output += this.formatSeparator(' AI Features Help', 'ai');
     output += '\r\n';
     
     output += this.formatOutput('AI Chat Mode:', 'ai');
@@ -244,15 +244,15 @@ export class TerminalCommands {
 
   private showConfigHelp(): string {
     let output = '\r\n';
-    output += this.formatSeparator('⚙️ Configuration Help', 'warning');
+    output += this.formatSeparator(' Configuration Help', 'warning');
     output += '\r\n';
     
     const config = configManager.getConfig();
     
     output += this.formatOutput('Current Configuration:', 'info');
     output += '\r\n';
-    output += this.formatConfigItem('API Key', config.geminiApiKey ? 'Configured ✓' : 'Not Set ❌');
-    output += this.formatConfigItem('AI Suggestions', config.enableSuggestions ? 'Enabled ✓' : 'Disabled ❌');
+    output += this.formatConfigItem('API Key', config.geminiApiKey ? 'Configured ✓' : 'Not Set ');
+    output += this.formatConfigItem('AI Suggestions', config.enableSuggestions ? 'Enabled ✓' : 'Disabled ');
     output += this.formatConfigItem('Commit Mode', config.commitMode);
     output += this.formatConfigItem('Auto Push', config.autoPush ? 'Enabled' : 'Disabled');
     output += this.formatConfigItem('Buffer Time', `${config.bufferTimeSeconds}s`);
@@ -314,13 +314,13 @@ export class TerminalCommands {
     
     if (option === 'api-key') {
       const config = configManager.getConfig();
-      const status = config.geminiApiKey ? 'Configured ✓' : 'Not Set ❌';
+      const status = config.geminiApiKey ? 'Configured ✓' : 'Not Set ';
       return this.formatOutput(`API Key Status: ${status}`, config.geminiApiKey ? 'success' : 'error');
     }
     
     // Show full configuration
     let output = '\r\n';
-    output += this.formatSeparator('⚙️ GitCue Configuration', 'warning');
+    output += this.formatSeparator(' GitCue Configuration', 'warning');
     output += '\r\n';
     
     const config = configManager.getConfig();
@@ -338,12 +338,12 @@ export class TerminalCommands {
     // Status indicators
     output += this.formatOutput('Feature Status:', 'success');
     output += '\r\n';
-    output += this.formatConfigItem('AI Features', config.geminiApiKey && config.enableSuggestions ? '✅ Ready' : '❌ Needs Setup');
-    output += this.formatConfigItem('File Watching', this.activityLogger.getWatchStatus().isWatching ? '✅ Active' : '⏸️ Inactive');
-    output += this.formatConfigItem('Auto Commits', config.commitMode === 'intelligent' ? '🤖 AI-Powered' : '⏰ Time-Based');
+    output += this.formatConfigItem('AI Features', config.geminiApiKey && config.enableSuggestions ? ' Ready' : ' Needs Setup');
+    output += this.formatConfigItem('File Watching', this.activityLogger.getWatchStatus().isWatching ? ' Active' : '⏸️ Inactive');
+    output += this.formatConfigItem('Auto Commits', config.commitMode === 'intelligent' ? ' AI-Powered' : ' Time-Based');
     output += '\r\n';
     
-    output += this.formatOutput('💡 Use "config open" to modify settings in VS Code', 'dim');
+    output += this.formatOutput(' Use "config open" to modify settings in VS Code', 'dim');
     output += '\r\n';
     output += this.formatSeparator('', 'dim');
     output += '\r\n';
@@ -371,14 +371,14 @@ export class TerminalCommands {
     
     recentHistory.forEach((entry, index) => {
       const time = new Date(entry.timestamp).toLocaleTimeString();
-      const status = entry.success ? '✅' : '❌';
+      const status = entry.success ? '' : '';
       const number = String(this.commandHistory.length - index).padStart(3, ' ');
       
       output += `${this.formatOutput(number, 'dim')} ${status} ${this.formatOutput(`[${time}]`, 'dim')} ${entry.command}\r\n`;
     });
     
     output += '\r\n';
-    output += this.formatOutput(`💡 Total commands in history: ${this.commandHistory.length}`, 'dim');
+    output += this.formatOutput(` Total commands in history: ${this.commandHistory.length}`, 'dim');
     output += '\r\n';
     output += this.formatOutput('Use ↑↓ arrows to navigate through history', 'dim');
     output += '\r\n';
@@ -401,7 +401,7 @@ export class TerminalCommands {
     output += this.formatConfigItem('VS Code API', vscode.version);
     output += '\r\n';
     
-    output += this.formatOutput('🚀 GitCue Terminal - AI-Powered Development Assistant', 'success');
+    output += this.formatOutput(' GitCue Terminal - AI-Powered Development Assistant', 'success');
     output += '\r\n';
     output += this.formatOutput('Built with ❤️ for developers', 'dim');
     output += '\r\n';

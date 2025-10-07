@@ -63,7 +63,7 @@ export class TerminalRenderer {
     let output = '\r\n';
     
     // Main header with gradient effect
-    output += this.renderBorder('╭─ 🚀 GitCue Enhanced Terminal ─────────────────────────────────────────────╮', 'primary');
+    output += this.renderBorder('╭─  GitCue Enhanced Terminal ─────────────────────────────────────────────╮', 'primary');
     output += this.renderBorder('│  AI-Powered Development Terminal with Smart Completion                    │', 'info');
     output += this.renderBorder(`│  Version ${version} • Press Ctrl+C to exit                                     │`, 'dim');
     output += this.renderBorder('╰───────────────────────────────────────────────────────────────────────────╯', 'primary');
@@ -79,7 +79,7 @@ export class TerminalRenderer {
     output += '\r\n';
     
     // Quick start
-    output += this.colorize('🚀 Quick Start:', 'primary') + '\r\n';
+    output += this.colorize(' Quick Start:', 'primary') + '\r\n';
     output += '  • Type ' + this.colorize('help', 'success') + ' for command reference\r\n';
     output += '  • Type ' + this.colorize('ai', 'ai') + ' for interactive AI assistance\r\n';
     output += '  • Use ' + this.colorize('Tab', 'warning') + ' for auto-completion\r\n';
@@ -134,7 +134,7 @@ export class TerminalRenderer {
     if (suggestions.length === 0) return '';
     
     let output = '\r\n';
-    output += this.colorize('📋 Available completions:', 'info') + '\r\n';
+    output += this.colorize(' Available completions:', 'info') + '\r\n';
     output += this.renderSeparator(40, 'dim') + '\r\n';
     
     const displaySuggestions = suggestions.slice(0, opts.maxSuggestions);
@@ -151,7 +151,7 @@ export class TerminalRenderer {
     }
     
     output += this.renderSeparator(40, 'dim') + '\r\n';
-    output += this.colorize('💡 Press Tab to complete, Esc to cancel', 'dim') + '\r\n';
+    output += this.colorize(' Press Tab to complete, Esc to cancel', 'dim') + '\r\n';
     
     return output;
   }
@@ -161,7 +161,7 @@ export class TerminalRenderer {
    */
   renderError(message: string, command?: string): string {
     let output = '\r\n';
-    output += this.renderBorder('╭─ ❌ Command Error ─────────────────────────────────────────────────────────╮', 'error');
+    output += this.renderBorder('╭─  Command Error ─────────────────────────────────────────────────────────╮', 'error');
     
     if (command) {
       output += this.renderBorder(`│ Command: ${command.padEnd(63)} │`, 'dim');
@@ -187,7 +187,7 @@ export class TerminalRenderer {
    */
   renderAIAnalysis(analysis: string, quickFixes?: string[]): string {
     let output = '\r\n';
-    output += this.renderBorder('╭─ 🤖 AI Analysis ─────────────────────────────────────────────────────────────╮', 'ai');
+    output += this.renderBorder('╭─  AI Analysis ─────────────────────────────────────────────────────────────╮', 'ai');
     output += '\r\n';
     
     // Format analysis text with word wrapping
@@ -198,7 +198,7 @@ export class TerminalRenderer {
     
     // Add quick fixes if available
     if (quickFixes && quickFixes.length > 0) {
-      output += this.renderBorder('├─ 💡 Quick Fixes ─────────────────────────────────────────────────────────────┤', 'ai');
+      output += this.renderBorder('├─  Quick Fixes ─────────────────────────────────────────────────────────────┤', 'ai');
       quickFixes.forEach((fix, index) => {
         const fixText = `${index + 1}. ${fix}`;
         const fixLines = this.wrapText(fixText, 72);
@@ -212,7 +212,7 @@ export class TerminalRenderer {
     
     output += this.renderBorder('╰───────────────────────────────────────────────────────────────────────────────╯', 'ai');
     output += '\r\n';
-    output += this.colorize('💡 You can run the suggested commands directly in this terminal', 'info') + '\r\n';
+    output += this.colorize(' You can run the suggested commands directly in this terminal', 'info') + '\r\n';
     
     return output;
   }
@@ -246,8 +246,8 @@ export class TerminalRenderer {
    */
   renderStatus(status: 'success' | 'error' | 'warning' | 'info', message: string): string {
     const icons = {
-      success: '✅',
-      error: '❌',
+      success: '',
+      error: '',
       warning: '⚠️',
       info: 'ℹ️'
     };
@@ -268,7 +268,7 @@ export class TerminalRenderer {
    */
   renderPrompt(workingDir?: string, isAIMode = false): string {
     if (isAIMode) {
-      return this.colorize('🤖 ai-chat> ', 'ai');
+      return this.colorize(' ai-chat> ', 'ai');
     }
     
     let prompt = this.colorize('GitCue', 'primary');
@@ -356,8 +356,8 @@ export class TerminalRenderer {
 
   private getTypeIcon(type: CompletionEntry['type']): string {
     const iconMap: Record<CompletionEntry['type'], string> = {
-      builtin: '🔧',
-      ai: '🤖'
+      builtin: '',
+      ai: ''
     };
     
     return iconMap[type] || '•';

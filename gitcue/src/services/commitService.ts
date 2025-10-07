@@ -158,7 +158,7 @@ export class CommitService {
 				if (config.enableNotifications) {
 					const settleMinutes = Math.ceil(intelligentConfig.activitySettleTime / 60000);
 					vscode.window.showInformationMessage(
-						`🤖 GitCue: ${analysis.reason}\n\nContinuing to monitor (next analysis in ${settleMinutes}min after activity settles)...`
+						` GitCue: ${analysis.reason}\n\nContinuing to monitor (next analysis in ${settleMinutes}min after activity settles)...`
 					);
 				}
 				this.activityLogger.logActivity('ai_analysis', 'Skipped commit', analysis.reason);
@@ -342,11 +342,6 @@ export class CommitService {
 				message, status, timeLeft, config
 			});
 
-			// Enhanced notification message with analysis details
-			let notificationMsg = `⏰ GitCue: Committing in ${timeLeft} seconds. Click to cancel.`;
-			if (analysis) {
-				notificationMsg = `⏰ GitCue: ${analysis.changeType || 'change'} (${analysis.significance || 'medium'}) - Committing in ${timeLeft}s`;
-			}
 
 			if (config.enableNotifications) {
 				vscode.window.showWarningMessage(
