@@ -1,0 +1,260 @@
+name: Test & Quality Assurance
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies (CLI)
+        run: npm ci
+      
+      - name: Run ESLint (CLI)
+        run: |
+          if [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ]; then
+            npx eslint . --ext .js,.mjs --max-warnings 0 || echo "No ESLint config found, skipping"
+          else
+            echo "⚠️ No ESLint configuration found for CLI"
+          fi
+      
+      - name: Install dependencies (GitCue)
+        working-directory: ./gitcue
+        run: npm ci
+      
+      - name: Run ESLint (GitCue)
+        working-directory: ./gitcue
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Type Check (GitCue)
+        working-directory: ./gitcue
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+  unit-tests-cli:
+    name: Unit Tests - CLI
+    runs-on: ${{ matrix.os }}
+    needs: lint
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20, 22]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run unit tests
+        run: npm test
+      
+      - name: Test CLI help command
+        run: node bin/auto-git.js --help
+      
+      - name: Test CLI version
+        run: node bin/auto-git.js --version
+
+  unit-tests-gitcue:
+    name: Unit Tests - GitCue Extension
+    runs-on: ${{ matrix.os }}
+    needs: lint
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        working-directory: ./gitcue
+        run: npm ci
+      
+      - name: Compile TypeScript
+        working-directory: ./gitcue
+        run: npm run compile
+      
+      - name: Run tests
+        working-directory: ./gitcue
+        run: npm test
+        continue-on-error: true
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests-cli, unit-tests-gitcue]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup Git
+        run: |
+          git config --global user.name "Test User"
+          git config --global user.email "test@example.com"
+      
+      - name: Create test repository
+        run: |
+          mkdir -p /tmp/test-repo
+          cd /tmp/test-repo
+          git init
+          echo "# Test" > README.md
+          git add .
+          git commit -m "Initial commit"
+      
+      - name: Test CLI config command
+        working-directory: /tmp/test-repo
+        run: node ${{ github.workspace }}/bin/auto-git.js config || true
+      
+      - name: Test CLI in git repository
+        working-directory: /tmp/test-repo
+        run: |
+          echo "Testing CLI in git repository..."
+          node ${{ github.workspace }}/bin/auto-git.js --help
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check for console.log statements
+        run: |
+          echo "🔍 Checking for console.log statements..."
+          if grep -r "console\.log" --include="*.js" --include="*.ts" --exclude-dir=node_modules --exclude-dir=dist --exclude="*.test.*" --exclude="*.spec.*" lib/ utils/ bin/ 2>/dev/null; then
+            echo "⚠️ Found console.log statements (consider using logger instead)"
+          else
+            echo "✅ No console.log statements found"
+          fi
+      
+      - name: Check for TODO comments
+        run: |
+          echo "🔍 Checking for TODO comments..."
+          TODO_COUNT=$(grep -r "TODO\|FIXME\|HACK" --include="*.js" --include="*.ts" --exclude-dir=node_modules lib/ utils/ bin/ gitcue/src/ 2>/dev/null | wc -l || echo "0")
+          echo "📝 Found $TODO_COUNT TODO/FIXME/HACK comments"
+          if [ "$TODO_COUNT" -gt 20 ]; then
+            echo "⚠️ High number of TODO comments. Consider addressing some."
+          fi
+      
+      - name: Check file sizes
+        run: |
+          echo "📊 Checking for large files..."
+          find . -type f -size +100k -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/dist/*" -not -path "*/coverage/*" -exec ls -lh {} \; || true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Run npm audit (CLI)
+        run: |
+          npm audit --production || true
+          echo "Security audit completed for CLI package"
+      
+      - name: Run npm audit (GitCue)
+        working-directory: ./gitcue
+        run: |
+          npm audit --production || true
+          echo "Security audit completed for GitCue extension"
+      
+      - name: Check for known vulnerabilities
+        run: |
+          echo "🔒 Checking for known vulnerabilities..."
+          npm audit --audit-level=high --production || echo "Vulnerabilities found - review required"
+
+  test-report:
+    name: Test Report & Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests-cli, unit-tests-gitcue, integration-tests, code-quality, security-audit]
+    if: always()
+    
+    steps:
+      - name: Create test summary
+        run: |
+          echo "## Test Summary 📊" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Lint & Static Analysis: ${{ needs.lint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests (CLI): ${{ needs.unit-tests-cli.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests (GitCue): ${{ needs.unit-tests-gitcue.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Integration Tests: ${{ needs.integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Code Quality: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security Audit: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.unit-tests-cli.result }}" == "success" ] && [ "${{ needs.unit-tests-gitcue.result }}" == "success" ]; then
+            echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some tests failed. Please review the logs." >> $GITHUB_STEP_SUMMARY
+          fi

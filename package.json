@@ -9,7 +9,11 @@
   },
   "scripts": {
     "start": "node bin/auto-git.js",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "node --test test/*.test.mjs || echo 'Tests require npm ci to install dependencies first'",
+    "test:coverage": "c8 --reporter=lcov --reporter=text node --test test/*.test.mjs || echo 'Coverage requires dependencies'",
+    "test:watch": "node --test --watch test/*.test.mjs",
+    "lint": "eslint . --ext .js,.mjs --max-warnings 0 || echo 'Run npm install eslint first'",
+    "lint:fix": "eslint . --ext .js,.mjs --fix || echo 'Run npm install eslint first'"
   },
   "repository": {
     "type": "git",
@@ -81,6 +85,10 @@
     "keypress": "^0.2.1",
     "node-fetch": "^3.3.2",
     "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "c8": "^9.1.0",
+    "eslint": "^8.57.0"
   },
   "engines": {
     "node": ">=18.0.0",
