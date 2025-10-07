@@ -1,4 +1,4 @@
-import { describe, it, before } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
