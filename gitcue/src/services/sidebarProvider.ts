@@ -400,9 +400,9 @@ export class GitCueActivityProvider implements vscode.TreeDataProvider<ActivityI
 			case 'file_change':
 				return `📝 ${message}`;
 			case 'ai_analysis':
-				return `🤖 ${message}`;
+				return ` ${message}`;
 			case 'watch_start':
-				return `👁️ ${message}`;
+				return ` ${message}`;
 			case 'watch_stop':
 				return `⏹️ ${message}`;
 			default:

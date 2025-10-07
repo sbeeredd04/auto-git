@@ -317,7 +317,7 @@ class GitCueExtension {
 				cwd: workspaceFolder.uri.fsPath 
 			});
 
-			vscode.window.showInformationMessage(`✅ Reset ${count} commit(s) (${resetType.value})`);
+			vscode.window.showInformationMessage(` Reset ${count} commit(s) (${resetType.value})`);
 			this.statusProvider.refresh();
 			
 		} catch (error) {

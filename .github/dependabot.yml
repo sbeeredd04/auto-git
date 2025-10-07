@@ -1,0 +1,60 @@
+version: 2
+updates:
+  # CLI package dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "sbeeredd04"
+    assignees:
+      - "sbeeredd04"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    versioning-strategy: increase
+    
+  # GitCue extension dependencies
+  - package-ecosystem: "npm"
+    directory: "/gitcue"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "sbeeredd04"
+    assignees:
+      - "sbeeredd04"
+    labels:
+      - "dependencies"
+      - "automated"
+      - "vscode-extension"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    versioning-strategy: increase
+    
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "sbeeredd04"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "chore(ci):"
+      include: "scope"

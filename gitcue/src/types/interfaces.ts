@@ -1,5 +1,14 @@
 import * as vscode from 'vscode';
 
+export interface IntelligentCommitConfig {
+	commitThreshold: 'any' | 'medium' | 'major';
+	minTimeBetweenCommits: number; // milliseconds
+	activitySettleTime: number; // milliseconds
+	requireCompleteness: boolean;
+	bufferTimeSeconds: number;
+	cancelOnNewChanges: boolean;
+}
+
 export interface GitCueConfig {
 	geminiApiKey: string;
 	commitMode: 'periodic' | 'intelligent';
@@ -16,6 +25,8 @@ export interface GitCueConfig {
 	terminalVerbose: boolean;
 	sessionPersistence: boolean;
 	maxHistorySize: number;
+	// Intelligent commit configuration
+	intelligentCommit: IntelligentCommitConfig;
 }
 
 export interface BufferNotification {
