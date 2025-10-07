@@ -441,6 +441,6 @@
   },
   "dependencies": {
     "@google/genai": "^1.0.1",
-    "@sbeeredd04/auto-git": "^3.10.1"
+    "@sbeeredd04/auto-git": "^3.10.4"
   }
 }
