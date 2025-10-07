@@ -1,6 +1,6 @@
 {
   "name": "@sbeeredd04/auto-git",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "AI-powered Git automation with intelligent commit decisions, enhanced interactive sidebar, smart diff optimization, push control, and persistent terminal session with command history",
   "main": "bin/auto-git.js",
   "type": "module",

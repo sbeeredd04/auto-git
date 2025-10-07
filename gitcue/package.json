@@ -2,7 +2,7 @@
   "name": "gitcue",
   "displayName": "GitCue",
   "description": "GitCue — AI-powered Git assistant with enhanced interactive sidebar, smart commit automation, and seamless VS Code integration for effortless version control.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "sbeeredd04",
   "icon": "icon.png",
   "galleryBanner": {

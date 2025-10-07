@@ -5,6 +5,124 @@ All notable changes to the GitCue extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-01-XX
+
+### 🧠 Intelligent Commit System
+
+#### Smart Activity Tracking
+- **Activity Monitoring**: Tracks development activity and waits for it to settle before analyzing changes
+- **Prevents Interruptions**: No commits during active development
+- **Last Commit Tracking**: Enforces minimum intervals between commits
+- **Diff Hashing**: Avoids duplicate AI API calls for unchanged content
+
+#### AI-Enhanced Analysis
+- **Multi-Dimensional Analysis**: 
+  - Significance: LOW, MEDIUM, or HIGH impact assessment
+  - Completeness: incomplete (WIP), partial (functional but missing tests/docs), or complete
+  - Change Type: feature, bugfix, refactor, docs, style, test, chore, performance, security
+  - Risk Level: low, medium, or high (breaking changes, architecture modifications)
+
+#### Configurable Thresholds
+- **any**: Commits all meaningful changes
+- **medium**: Commits features, bug fixes, meaningful refactoring (default)
+- **major**: Only commits significant features and major changes
+
+#### Time-Based Controls
+- **Activity Settle Time** (default: 5 minutes): Waits for file changes to stop before analyzing
+- **Minimum Time Between Commits** (default: 30 minutes): Prevents too-frequent commits
+- **Configurable Buffer Time** (default: 30 seconds): Grace period to cancel commits
+
+#### Auto-Cancellation
+- **Cancel on New Changes**: Automatically cancels pending commits when new file changes detected during buffer
+- **Manual Cancellation**: Via notification, keyboard shortcut (Ctrl+Alt+X), or webview
+- **Smart Buffer Management**: Enhanced notifications showing change details
+
+### 📋 Configuration Presets
+
+#### Balanced (Default)
+- Medium threshold, 30-minute intervals, completeness required
+- Best for most development workflows
+
+#### Conservative (Production)
+- Major changes only, 1-hour intervals
+- Best for production applications and stable branches
+
+#### Frequent (Experimental)
+- Any meaningful change, 10-minute intervals
+- Best for experimental projects and documentation work
+
+### 📚 Documentation
+
+#### New Guides
+- **INTELLIGENT_COMMIT_GUIDE.md**: Complete user guide (10KB)
+  - Configuration presets and detailed explanations
+  - Troubleshooting guide and best practices
+  - API reference and CLI comparison
+  - System flow diagrams
+
+- **TESTING_GUIDE_INTELLIGENT_COMMIT.md**: Testing guide (9KB)
+  - 10 comprehensive test scenarios
+  - Verification checklist for all features
+  - Performance validation criteria
+  - Success criteria and next steps
+
+- **settings.example.json**: Example configuration (3KB)
+  - All three presets with detailed comments
+  - Timing values in human-readable format
+  - Quick reference for threshold options
+
+#### Updated Documentation
+- **README.md**: Updated with intelligent commit highlights and guide links
+- Inline code documentation throughout implementation
+
+### 🔧 Technical Implementation
+
+#### Core Changes
+- **Configuration System** (`interfaces.ts`, `config.ts`):
+  - Added `IntelligentCommitConfig` interface with 6 configurable settings
+  - Integrated into main `GitCueConfig` with appropriate defaults
+  - Added `getIntelligentCommitConfig()` helper method
+
+- **File Watcher Service** (`fileWatcherService.ts`):
+  - Activity tracking: `lastCommitTime`, `activityCount`, `recentActivity`
+  - Implemented `handleIntelligentModeActivity()` with proper debouncing
+  - Minimum time between commits enforcement
+  - Cancel-on-new-changes during buffer period
+
+- **Commit Service** (`commitService.ts`):
+  - `commitWithIntelligentAnalysis()` method for threshold-based commits
+  - `analyzeChangesWithIntelligentCriteria()` for enhanced AI analysis
+  - Enhanced buffer notification with analysis details
+  - Improved user feedback with meaningful messages
+
+- **AI Integration** (`ai.ts`):
+  - Extended `CommitDecision` interface with completeness, changeType, riskLevel
+  - `makeCommitDecisionWithAI()` accepts threshold and completeness parameters
+  - Threshold checking logic with proper significance mapping
+  - Enhanced AI prompts with detailed analysis criteria
+
+- **Configuration Schema** (`package.json`):
+  - 6 new VS Code settings for intelligent commit control
+  - Clear descriptions for each setting
+  - Defaults matching proven CLI behavior
+
+### 🛠️ Quality & Testing
+- Build Status: ✅ Successful
+- TypeScript compilation passes
+- Tests updated with intelligent commit configuration
+- No breaking changes to existing functionality
+
+### 🔄 Migration Notes
+- **Backward Compatible**: Existing configurations continue to work
+- **Automatic Benefits**: Users on "intelligent" mode get new features with defaults
+- **Easy Customization**: VS Code Settings UI or example configuration file
+- **Opt-out Available**: Can switch to "periodic" mode if needed
+
+### 📈 Statistics
+- 11 files modified
+- 1,154+ lines added
+- Comprehensive documentation and testing guides
+
 ## [4.0.0] - 2024-12-19
 
 ### 🎨 Enhanced Interactive Sidebar
