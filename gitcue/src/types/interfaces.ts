@@ -40,6 +40,26 @@ export interface ActivityLogEntry {
 	type: 'file_change' | 'ai_analysis' | 'commit' | 'error' | 'watch_start' | 'watch_stop';
 	message: string;
 	details?: string;
+	
+	// Enhanced commit metadata
+	commitMetadata?: {
+		reason: 'ai_decision' | 'manual' | 'buffer_timeout' | 'periodic';
+		aiAnalysis?: {
+			shouldCommit: boolean;
+			significance: 'LOW' | 'MEDIUM' | 'HIGH';
+			completeness: string;
+			changeType: string;
+			reasoning: string;
+		};
+		config: {
+			mode: string;
+			bufferTime: number;
+			autoPush: boolean;
+			threshold?: string;
+		};
+		changedFiles: string[];
+		diffSummary: string;
+	};
 }
 
 export interface DashboardState {

@@ -500,6 +500,10 @@ export class DashboardService {
 					padding: 12px 8px;
 				}
 				
+				.activity-item.has-details:hover {
+					background: var(--vscode-list-activeSelectionBackground);
+				}
+				
 				.activity-icon {
 					width: 24px;
 					height: 24px;
@@ -517,6 +521,22 @@ export class DashboardService {
 				.activity-content {
 					flex: 1;
 					min-width: 0;
+				}
+				
+				#activity-details {
+					margin-top: 16px;
+					animation: slideIn 0.3s ease;
+				}
+				
+				@keyframes slideIn {
+					from {
+						opacity: 0;
+						transform: translateY(-10px);
+					}
+					to {
+						opacity: 1;
+						transform: translateY(0);
+					}
 				}
 				
 				.activity-message {
@@ -879,20 +899,95 @@ export class DashboardService {
 					}
 					
 					const recentActivities = activities.slice(-15).reverse();
-					activityLog.innerHTML = recentActivities.map(activity => {
+					activityLog.innerHTML = recentActivities.map((activity, index) => {
 						const iconColor = getActivityIconColor(activity.type);
 						const iconSvg = getActivityIconSvg(activity.type);
+						const hasDetails = activity.type === 'commit' && activity.commitMetadata;
 						
 						return \`
-							<div class="activity-item">
+							<div class="activity-item \${hasDetails ? 'has-details' : ''}" onclick="\${hasDetails ? \`showActivityDetails(\${index})\` : ''}" style="\${hasDetails ? 'cursor: pointer;' : ''}">
 								<div class="activity-icon" style="background: \${iconColor};">\${iconSvg}</div>
 								<div class="activity-content">
 									<div class="activity-message">\${activity.message}</div>
-									<div class="activity-time">\${formatTime(activity.timestamp)}</div>
+									<div class="activity-time">\${formatTime(activity.timestamp)}\${hasDetails ? ' • Click for details' : ''}</div>
 								</div>
 							</div>
 						\`;
 					}).join('');
+					
+					// Store activities for details view
+					window.currentActivities = recentActivities;
+				}
+				
+				function showActivityDetails(index) {
+					const activity = window.currentActivities[index];
+					if (!activity || !activity.commitMetadata) return;
+					
+					const metadata = activity.commitMetadata;
+					const detailsHtml = \`
+						<div style="padding: 16px; background: var(--vscode-editor-background); border-radius: 4px; margin-top: 8px;">
+							<h3 style="margin: 0 0 12px 0; color: var(--vscode-foreground);">Commit Details</h3>
+							
+							<div style="margin-bottom: 12px;">
+								<strong>Commit Reason:</strong> <span style="color: var(--vscode-textLink-foreground);">\${metadata.reason.replace('_', ' ').toUpperCase()}</span>
+							</div>
+							
+							<div style="margin-bottom: 12px;">
+								<strong>Configuration:</strong>
+								<ul style="margin: 4px 0; padding-left: 20px;">
+									<li>Mode: \${metadata.config.mode}</li>
+									<li>Buffer Time: \${metadata.config.bufferTime}s</li>
+									<li>Auto Push: \${metadata.config.autoPush ? 'Yes' : 'No'}</li>
+									\${metadata.config.threshold ? \`<li>Threshold: \${metadata.config.threshold}</li>\` : ''}
+								</ul>
+							</div>
+							
+							\${metadata.aiAnalysis ? \`
+								<div style="margin-bottom: 12px;">
+									<strong>AI Analysis:</strong>
+									<ul style="margin: 4px 0; padding-left: 20px;">
+										<li>Significance: <span style="color: \${metadata.aiAnalysis.significance === 'HIGH' ? 'var(--vscode-testing-iconFailed)' : metadata.aiAnalysis.significance === 'MEDIUM' ? 'var(--vscode-testing-iconQueued)' : 'var(--vscode-testing-iconPassed)'};">\${metadata.aiAnalysis.significance}</span></li>
+										<li>Completeness: \${metadata.aiAnalysis.completeness}</li>
+										<li>Change Type: \${metadata.aiAnalysis.changeType}</li>
+										<li>Reasoning: \${metadata.aiAnalysis.reasoning}</li>
+									</ul>
+								</div>
+							\` : ''}
+							
+							<div style="margin-bottom: 12px;">
+								<strong>Changed Files (\${metadata.changedFiles.length}):</strong>
+								<ul style="margin: 4px 0; padding-left: 20px; max-height: 100px; overflow-y: auto;">
+									\${metadata.changedFiles.slice(0, 10).map(file => \`<li style="font-family: monospace; font-size: 12px;">\${file}</li>\`).join('')}
+									\${metadata.changedFiles.length > 10 ? \`<li>... and \${metadata.changedFiles.length - 10} more</li>\` : ''}
+								</ul>
+							</div>
+							
+							<div style="margin-bottom: 12px;">
+								<strong>Diff Summary:</strong>
+								<pre style="margin: 4px 0; padding: 8px; background: var(--vscode-textCodeBlock-background); border-radius: 4px; overflow-x: auto; font-size: 12px;">\${metadata.diffSummary || 'No diff summary available'}</pre>
+							</div>
+							
+							<button onclick="closeActivityDetails()" style="padding: 6px 12px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 4px; cursor: pointer;">Close</button>
+						</div>
+					\`;
+					
+					const detailsContainer = document.getElementById('activity-details');
+					if (!detailsContainer) {
+						const container = document.createElement('div');
+						container.id = 'activity-details';
+						container.innerHTML = detailsHtml;
+						document.getElementById('activity-log').parentElement.appendChild(container);
+					} else {
+						detailsContainer.innerHTML = detailsHtml;
+						detailsContainer.style.display = 'block';
+					}
+				}
+				
+				function closeActivityDetails() {
+					const detailsContainer = document.getElementById('activity-details');
+					if (detailsContainer) {
+						detailsContainer.style.display = 'none';
+					}
 				}
 				
 				function getActivityIconColor(type) {
