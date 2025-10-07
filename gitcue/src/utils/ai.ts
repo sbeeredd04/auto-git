@@ -38,6 +38,21 @@ const getCommitDecisionFunctionDeclaration = async () => {
           enum: ['LOW', 'MEDIUM', 'HIGH'],
           description: 'The significance level of the changes',
         },
+        completeness: {
+          type: Type.STRING,
+          enum: ['incomplete', 'partial', 'complete'],
+          description: 'Whether changes appear complete, partial (functional but missing tests/docs), or incomplete (WIP)',
+        },
+        changeType: {
+          type: Type.STRING,
+          enum: ['feature', 'bugfix', 'refactor', 'docs', 'style', 'test', 'chore', 'performance', 'security'],
+          description: 'The primary type of change',
+        },
+        riskLevel: {
+          type: Type.STRING,
+          enum: ['low', 'medium', 'high'],
+          description: 'Risk level of the changes (breaking changes, architecture changes, etc.)',
+        },
         suggestedMessage: {
           type: Type.STRING,
           description: 'Suggested commit message if shouldCommit is true',
@@ -48,7 +63,7 @@ const getCommitDecisionFunctionDeclaration = async () => {
           description: 'Recommended next steps for the developer',
         }
       },
-      required: ['shouldCommit', 'reason', 'significance'],
+      required: ['shouldCommit', 'reason', 'significance', 'completeness', 'changeType', 'riskLevel'],
     },
   };
 };
@@ -94,6 +109,10 @@ interface CommitDecision {
   significance: 'LOW' | 'MEDIUM' | 'HIGH';
   suggestedMessage?: string;
   nextSteps?: string[];
+  // Enhanced fields for intelligent mode
+  completeness?: 'incomplete' | 'partial' | 'complete';
+  changeType?: 'feature' | 'bugfix' | 'refactor' | 'docs' | 'style' | 'test' | 'chore' | 'performance' | 'security';
+  riskLevel?: 'low' | 'medium' | 'high';
 }
 
 interface CommitMessage {
@@ -386,8 +405,17 @@ export async function showAISuggestionInVSCode(errorContext: string): Promise<vo
 
 /**
  * Uses AI function calling to make intelligent commit decisions
+ * @param gitDiff - The git diff output
+ * @param gitStatus - The git status output
+ * @param threshold - Commit threshold ('any', 'medium', 'major')
+ * @param requireCompleteness - Whether to require complete changes
  */
-export async function makeCommitDecisionWithAI(gitDiff: string, gitStatus: string): Promise<CommitDecision> {
+export async function makeCommitDecisionWithAI(
+  gitDiff: string, 
+  gitStatus: string,
+  threshold: 'any' | 'medium' | 'major' = 'medium',
+  requireCompleteness: boolean = true
+): Promise<CommitDecision> {
   const config = configManager.getConfig();
   
   if (!config.geminiApiKey) {
@@ -398,7 +426,23 @@ export async function makeCommitDecisionWithAI(gitDiff: string, gitStatus: strin
     const { GoogleGenAI, Type } = await import('@google/genai');
     const ai = new GoogleGenAI({ apiKey: config.geminiApiKey });
 
-    const prompt = `Analyze these Git changes and decide if they should be committed:
+    const thresholdGuidance = {
+      'any': 'Commit any meaningful change that improves the codebase. Skip only completely meaningless changes.',
+      'medium': 'Commit substantial changes like features, bug fixes, meaningful refactoring. Skip formatting-only, comment-only, or trivial changes.',
+      'major': 'Only commit significant features, major bug fixes, breaking changes, or architectural improvements. Skip minor fixes, small refactoring, or documentation updates.'
+    };
+
+    const completenessGuidance = requireCompleteness
+      ? 'Only commit if changes appear complete and production-ready (not WIP, debugging code, or incomplete implementations).'
+      : 'Changes can be committed even if incomplete, as long as they represent meaningful progress.';
+
+    const prompt = `Analyze these Git changes and decide if they should be committed based on the following criteria:
+
+Commit Threshold: ${threshold.toUpperCase()}
+${thresholdGuidance[threshold]}
+
+Completeness Requirement: ${requireCompleteness ? 'REQUIRED' : 'OPTIONAL'}
+${completenessGuidance}
 
 Git Status:
 ${gitStatus}
@@ -406,12 +450,12 @@ ${gitStatus}
 Git Diff (first 3000 chars):
 ${gitDiff.substring(0, 3000)}
 
-Consider:
-- Are these meaningful, complete changes?
-- Is this a good stopping point for a commit?
-- Are there any incomplete features or broken functionality?
-- Code quality and consistency
-- Whether changes form a logical unit
+Analyze:
+1. **Significance**: Is this change trivial, minor, medium, major, or critical?
+2. **Completeness**: Does it look incomplete (WIP/debugging), partial (functional but missing tests/docs), or complete?
+3. **Change Type**: What kind of change is this (feature, bugfix, refactor, docs, etc.)?
+4. **Risk Level**: What's the risk (breaking changes, architecture changes)?
+5. **Commit Decision**: Based on threshold "${threshold}" and completeness requirement "${requireCompleteness}", should we commit?
 
 Use the make_commit_decision function to provide your analysis.`;
 
@@ -430,7 +474,22 @@ Use the make_commit_decision function to provide your analysis.`;
     if (response.functionCalls && response.functionCalls.length > 0) {
       const functionCall = response.functionCalls[0];
       if (functionCall.name === 'make_commit_decision') {
-        return functionCall.args as unknown as CommitDecision;
+        const decision = functionCall.args as unknown as CommitDecision;
+        
+        // Apply threshold logic
+        const shouldCommitByThreshold = checkThreshold(decision.significance || 'MEDIUM', threshold);
+        const shouldCommitByCompleteness = !requireCompleteness || (decision.completeness === 'complete' || decision.completeness === 'partial');
+        
+        // Override shouldCommit if threshold or completeness checks fail
+        if (!shouldCommitByThreshold) {
+          decision.shouldCommit = false;
+          decision.reason = `Change significance (${decision.significance}) does not meet threshold (${threshold}). ${decision.reason}`;
+        } else if (!shouldCommitByCompleteness) {
+          decision.shouldCommit = false;
+          decision.reason = `Changes appear ${decision.completeness} but completeness is required. ${decision.reason}`;
+        }
+        
+        return decision;
       }
     }
 
@@ -438,13 +497,38 @@ Use the make_commit_decision function to provide your analysis.`;
     return {
       shouldCommit: true,
       reason: 'AI analysis completed without function call, defaulting to commit',
-      significance: 'MEDIUM'
+      significance: 'MEDIUM',
+      completeness: 'partial',
+      changeType: 'chore',
+      riskLevel: 'low'
     };
 
   } catch (error) {
     logger.error('AI commit decision failed: ' + (error instanceof Error ? error.message : String(error)));
     throw error;
   }
+}
+
+/**
+ * Check if significance meets the threshold
+ */
+function checkThreshold(significance: string, threshold: string): boolean {
+  const significanceMap: Record<string, number> = {
+    'LOW': 1,
+    'MEDIUM': 2,
+    'HIGH': 3
+  };
+  
+  const thresholdMap: Record<string, number> = {
+    'any': 1,
+    'medium': 2,
+    'major': 3
+  };
+  
+  const sigLevel = significanceMap[significance.toUpperCase()] || 2;
+  const thresholdLevel = thresholdMap[threshold.toLowerCase()] || 2;
+  
+  return sigLevel >= thresholdLevel;
 }
 
 /**

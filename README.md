@@ -1,18 +1,27 @@
-# Auto-Git v4.0.0
+# Auto-Git v4.1.0
 =======
 
 [![npm version](https://badge.fury.io/js/@sbeeredd04%2Fauto-git.svg)](https://badge.fury.io/js/@sbeeredd04%2Fauto-git)
 [![npm downloads](https://img.shields.io/npm/dm/@sbeeredd04/auto-git.svg)](https://www.npmjs.com/package/@sbeeredd04/auto-git)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Tests](https://github.com/sbeeredd04/auto-git/actions/workflows/test.yml/badge.svg)](https://github.com/sbeeredd04/auto-git/actions/workflows/test.yml)
+[![Coverage](https://github.com/sbeeredd04/auto-git/actions/workflows/coverage.yml/badge.svg)](https://github.com/sbeeredd04/auto-git/actions/workflows/coverage.yml)
 [![GitHub Stars](https://img.shields.io/github/stars/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/sbeeredd04/auto-git.svg)](https://github.com/sbeeredd04/auto-git/issues)
 
 > AI-powered Git automation with intelligent commit decisions, enhanced interactive sidebar, smart diff optimization, push control, and persistent terminal session
 
-Auto-Git is a cross-platform CLI tool that intelligently analyzes your code changes and automatically generates meaningful commit messages using Google's Gemini AI. **Version 4.0.0** introduces a revolutionary VS Code extension with enhanced interactive sidebar, improved UI/UX, and seamless integration alongside the powerful CLI tools.
+Auto-Git is a cross-platform CLI tool that intelligently analyzes your code changes and automatically generates meaningful commit messages using Google's Gemini AI. **Version 4.1.0** introduces a revolutionary VS Code extension with enhanced interactive sidebar, improved UI/UX, and seamless integration alongside the powerful CLI tools.
 
-## 🚀 What's New in v4.0.0
+## 🚀 What's New in v4.1.0
+
+### 🧠 Intelligent Commit System
+- **Smart Activity Tracking**: Monitors development activity and waits for it to settle before analyzing
+- **AI-Enhanced Analysis**: Multi-dimensional analysis (significance, completeness, change type, risk)
+- **Configurable Thresholds**: Choose commit criteria (any/medium/major)
+- **Time-Based Controls**: Activity settle time and minimum time between commits
+- **Auto-Cancellation**: Cancels pending commits on new changes during buffer period
 
 ### 🎨 Enhanced VS Code Extension
 - **Interactive Sidebar**: Redesigned with actionable buttons and better space utilization
@@ -22,11 +31,12 @@ Auto-Git is a cross-platform CLI tool that intelligently analyzes your code chan
 - **Professional UI**: Modern interface with proper icons, tooltips, and organized sections
 =======
 
-### 🧠 Intelligent Commit Mode
-- **AI-Driven Decisions**: Gemini analyzes changes and decides when to commit based on significance
-- **Function Calling**: Structured AI analysis with commit recommendations
-- **30-Second Buffer**: Review and cancel commits before execution
-- **Smart Significance Detection**: High/Medium/Low change analysis
+### 🧪 Comprehensive Testing & QA
+- **Automated Test Suite**: Unit and integration tests for all key logic
+- **Multi-Platform CI/CD**: Tests on Ubuntu, Windows, macOS with Node 18, 20, 22
+- **Code Coverage**: Automated coverage reporting with Codecov integration
+- **Quality Checks**: Linting, static analysis, security audits
+- **Dependabot**: Automated dependency updates for npm and GitHub Actions
 
 ### ⚡ Smart API Optimization
 - **Diff Hash Tracking**: Only calls Gemini when actual changes are detected
