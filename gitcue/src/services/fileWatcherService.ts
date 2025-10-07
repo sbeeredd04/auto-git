@@ -14,10 +14,17 @@ export class FileWatcherService {
 	private static instance: FileWatcherService;
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
 	private debounceTimer: NodeJS.Timeout | undefined;
+	private activitySettleTimer: NodeJS.Timeout | undefined;
 	private isWatching = false;
 	private activityLogger: ActivityLogger;
 	private commitService: CommitService;
 	private workspaceFolder: vscode.WorkspaceFolder | undefined;
+	
+	// Intelligent commit tracking
+	private lastCommitTime = 0;
+	private recentActivity = false;
+	private activityCount = 0;
+	private lastDiffHash: string | null = null;
 
 	private constructor() {
 		this.activityLogger = ActivityLogger.getInstance();
@@ -148,6 +155,18 @@ export class FileWatcherService {
 			changeTracker.delete(filePath);
 		}, 1000);
 		
+		const config = configManager.getConfig();
+		
+		// Track activity for intelligent mode
+		this.recentActivity = true;
+		this.activityCount++;
+		
+		// Cancel pending commit if new changes detected during buffer period
+		if (config.commitMode === 'intelligent' && config.intelligentCommit.cancelOnNewChanges) {
+			this.commitService.cancelBufferedCommit();
+			logger.debug('New changes detected during buffer period, cancelled pending commit');
+		}
+		
 		// Check actual git changes to get accurate count
 		try {
 			const { stdout: gitStatus } = await execAsync('git status --porcelain', { 
@@ -172,11 +191,12 @@ export class FileWatcherService {
 				const currentDiffHash = this.createDiffHash(diff);
 				
 				// Skip if this is the same diff we already processed
-				if (currentDiffHash === lastDiffHash) {
+				if (currentDiffHash === this.lastDiffHash) {
+					logger.debug('Diff unchanged since last analysis, skipping');
 					return;
 				}
 				
-				lastDiffHash = currentDiffHash;
+				this.lastDiffHash = currentDiffHash;
 			} else {
 				// No git changes, reset counters
 				this.activityLogger.updateWatchStatus({ 
@@ -193,35 +213,37 @@ export class FileWatcherService {
 			this.activityLogger.logActivity('error', 'Git status check failed', error instanceof Error ? error.message : String(error));
 		}
 		
-		// Clear existing debounce timer
+		// Clear existing timers
 		if (this.debounceTimer) {
 			clearTimeout(this.debounceTimer);
 		}
+		if (this.activitySettleTimer) {
+			clearTimeout(this.activitySettleTimer);
+		}
 		
-		// Set new debounce timer
-		const config = configManager.getConfig();
-		this.debounceTimer = setTimeout(async () => {
-			try {
-				this.activityLogger.logActivity('ai_analysis', 'Starting AI analysis for changes');
-				
-				if (config.commitMode === 'intelligent') {
-					await this.handleIntelligentCommit();
-				} else {
-					// For periodic mode, also use buffer notification
+		// Use intelligent mode activity tracking or standard debouncing
+		if (config.commitMode === 'intelligent') {
+			await this.handleIntelligentModeActivity();
+		} else {
+			// Standard periodic mode debouncing
+			this.debounceTimer = setTimeout(async () => {
+				try {
+					this.activityLogger.logActivity('ai_analysis', 'Starting AI analysis for changes');
+					
 					if (this.workspaceFolder) {
 						await this.commitService.commitWithBuffer(this.workspaceFolder.uri.fsPath, config);
 					}
+				} catch (error) {
+					const errorMsg = error instanceof Error ? error.message : String(error);
+					logger.error('Error processing file changes: ' + errorMsg);
+					this.activityLogger.logActivity('error', 'Failed to process file changes', errorMsg);
+					
+					if (config.enableNotifications) {
+						vscode.window.showErrorMessage(`GitCue: Error processing changes - ${errorMsg}`);
+					}
 				}
-			} catch (error) {
-				const errorMsg = error instanceof Error ? error.message : String(error);
-				logger.error('Error processing file changes: ' + errorMsg);
-				this.activityLogger.logActivity('error', 'Failed to process file changes', errorMsg);
-				
-				if (config.enableNotifications) {
-					vscode.window.showErrorMessage(`GitCue: Error processing changes - ${errorMsg}`);
-				}
-			}
-		}, config.debounceMs);
+			}, config.debounceMs);
+		}
 	}
 
 	private shouldIgnoreFile(fileName: string, filePath: string): boolean {
@@ -278,7 +300,83 @@ export class FileWatcherService {
 		await this.commitService.commitWithBuffer(this.workspaceFolder.uri.fsPath, config);
 	}
 
+	/**
+	 * Handle intelligent mode activity tracking and debouncing
+	 */
+	private async handleIntelligentModeActivity(): Promise<void> {
+		const config = configManager.getConfig();
+		const intelligentConfig = config.intelligentCommit;
+		
+		// Reset activity settle timer - wait for user to stop making changes
+		this.activitySettleTimer = setTimeout(async () => {
+			this.recentActivity = false;
+			
+			// Check if enough time has passed since last commit
+			const timeSinceLastCommit = Date.now() - this.lastCommitTime;
+			if (timeSinceLastCommit < intelligentConfig.minTimeBetweenCommits) {
+				const remainingMinutes = Math.ceil((intelligentConfig.minTimeBetweenCommits - timeSinceLastCommit) / 60000);
+				logger.debug(`Intelligent mode: ${remainingMinutes} minutes remaining before next commit analysis`);
+				this.activityLogger.logActivity('ai_analysis', `Waiting ${remainingMinutes}min before next commit`, 'Min time between commits');
+				
+				// Schedule analysis for when the minimum time has passed
+				this.debounceTimer = setTimeout(async () => {
+					if (!this.recentActivity) {
+						await this.processIntelligentCommit();
+					}
+				}, intelligentConfig.minTimeBetweenCommits - timeSinceLastCommit);
+				return;
+			}
+			
+			// Proceed with analysis if no recent activity and enough time has passed
+			if (!this.recentActivity) {
+				logger.debug(`Intelligent mode: Activity settled (${this.activityCount} changes), analyzing for commit...`);
+				this.activityLogger.logActivity('ai_analysis', `Activity settled after ${this.activityCount} changes`, 'Starting commit analysis');
+				this.activityCount = 0; // Reset activity counter
+				await this.processIntelligentCommit();
+			}
+		}, intelligentConfig.activitySettleTime);
+		
+		const settleMinutes = Math.ceil(intelligentConfig.activitySettleTime / 60000);
+		logger.debug(`Activity detected, waiting ${settleMinutes} minutes for activity to settle...`);
+	}
+
+	/**
+	 * Process intelligent commit with AI analysis
+	 */
+	private async processIntelligentCommit(): Promise<void> {
+		if (!this.workspaceFolder) return;
+
+		const config = configManager.getConfig();
+		if (!config.geminiApiKey) return;
+
+		try {
+			this.activityLogger.logActivity('ai_analysis', 'Analyzing changes with AI for commit decision');
+			
+			// Use intelligent commit with buffer
+			await this.commitService.commitWithIntelligentAnalysis(
+				this.workspaceFolder.uri.fsPath, 
+				config
+			);
+			
+			// Update last commit time
+			this.lastCommitTime = Date.now();
+		} catch (error) {
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			logger.error('Intelligent commit analysis failed: ' + errorMsg);
+			this.activityLogger.logActivity('error', 'Intelligent commit failed', errorMsg);
+			
+			if (config.enableNotifications) {
+				vscode.window.showErrorMessage(`GitCue: Intelligent commit analysis failed - ${errorMsg}`);
+			}
+		}
+	}
+
 	dispose(): void {
 		this.stopWatching();
+		
+		// Clear all timers
+		if (this.activitySettleTimer) {
+			clearTimeout(this.activitySettleTimer);
+		}
 	}
 } 

@@ -324,6 +324,41 @@
             "/pnpm-lock\\.yaml$/"
           ],
           "description": "Glob patterns for files and directories to ignore when watching"
+        },
+        "gitcue.intelligentCommit.commitThreshold": {
+          "type": "string",
+          "enum": [
+            "any",
+            "medium",
+            "major"
+          ],
+          "default": "medium",
+          "description": "Commit threshold: 'any' (all meaningful changes), 'medium' (features/fixes), 'major' (significant features only)"
+        },
+        "gitcue.intelligentCommit.minTimeBetweenCommits": {
+          "type": "number",
+          "default": 1800000,
+          "description": "Minimum time between commits in milliseconds (default: 30 minutes)"
+        },
+        "gitcue.intelligentCommit.activitySettleTime": {
+          "type": "number",
+          "default": 300000,
+          "description": "Time to wait for activity to settle before analyzing in milliseconds (default: 5 minutes)"
+        },
+        "gitcue.intelligentCommit.requireCompleteness": {
+          "type": "boolean",
+          "default": true,
+          "description": "Only commit when changes appear complete (not WIP or debugging code)"
+        },
+        "gitcue.intelligentCommit.bufferTimeSeconds": {
+          "type": "number",
+          "default": 30,
+          "description": "Buffer time in seconds to cancel commits (overrides global bufferTimeSeconds in intelligent mode)"
+        },
+        "gitcue.intelligentCommit.cancelOnNewChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically cancel pending commits if new changes are detected during buffer period"
         }
       }
     },
