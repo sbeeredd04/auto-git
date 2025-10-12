@@ -67,7 +67,7 @@ suite('GitCue Services Test Suite', () => {
             const panel = dashboardService.createBufferNotification(options);
             
             assert.ok(panel, 'Buffer notification panel should be created');
-            assert.strictEqual(panel.title, '⏰ GitCue Commit Buffer');
+            assert.strictEqual(panel.title, ' GitCue Commit Buffer');
             assert.ok(panel.webview.html.includes('id="timer"'), 'HTML should contain timer element');
             assert.ok(panel.webview.html.includes('id="timer-text"'), 'HTML should contain timer text element');
             assert.ok(panel.webview.html.includes('id="progress-fill"'), 'HTML should contain progress bar element');

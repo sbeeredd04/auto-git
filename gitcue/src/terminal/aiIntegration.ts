@@ -63,7 +63,7 @@ export class AITerminalIntegration {
     this.isAiChatMode = false;
     this.activityLogger.logActivity('ai_analysis', 'Exited AI chat mode');
     
-    return this.formatOutput('🤖 Exited AI chat mode. Back to terminal.', 'info');
+    return this.formatOutput(' Exited AI chat mode. Back to terminal.', 'info');
   }
 
   /**
@@ -73,7 +73,7 @@ export class AITerminalIntegration {
     const config = configManager.getConfig();
     
     if (!config.geminiApiKey) {
-      return this.formatOutput('❌ Gemini API key not configured. Use "config" command to set it up.', 'error');
+      return this.formatOutput(' Gemini API key not configured. Use "config" command to set it up.', 'error');
     }
 
     // Check for exit commands
@@ -102,7 +102,7 @@ export class AITerminalIntegration {
       return this.formatChatResponse(response);
       
     } catch (error) {
-      return this.formatOutput(`❌ AI chat failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+      return this.formatOutput(` AI chat failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
     } finally {
       this.isAnalyzing = false;
       this.activityLogger.setAiAnalysisInProgress(false);
@@ -161,13 +161,13 @@ export class AITerminalIntegration {
     }
 
     // Use the AI utility's createBox function for better formatting
-    const boxedAnalysis = createBox(result.analysis, '🤖 AI Error Analysis');
+    const boxedAnalysis = createBox(result.analysis, ' AI Error Analysis');
     
     let output = '\r\n' + boxedAnalysis + '\r\n';
     
     // Add quick fixes if available
     if (result.quickFixes && result.quickFixes.length > 0) {
-      output += '\r\n' + this.formatOutput('💡 Quick Fixes:', 'info');
+      output += '\r\n' + this.formatOutput(' Quick Fixes:', 'info');
       result.quickFixes.forEach((fix, index) => {
         output += `\r\n  ${index + 1}. \x1b[32m${fix}\x1b[0m`;
       });
@@ -183,17 +183,17 @@ export class AITerminalIntegration {
   async testConnection(): Promise<string> {
     const config = configManager.getConfig();
     
-    let output = this.formatSeparator('🧪 AI Connection Test', 'info');
+    let output = this.formatSeparator(' AI Connection Test', 'info');
     output += '\r\n';
     
     // Check configuration
     if (!config.geminiApiKey) {
-      output += this.formatOutput('❌ Gemini API key not configured', 'error');
+      output += this.formatOutput(' Gemini API key not configured', 'error');
       output += '\r\n' + this.formatOutput('Run "config" command to set up your API key', 'info');
       return output;
     }
     
-    output += this.formatOutput('✅ API key configured', 'success');
+    output += this.formatOutput(' API key configured', 'success');
     output += '\r\n';
     
     if (!config.enableSuggestions) {
@@ -201,7 +201,7 @@ export class AITerminalIntegration {
       return output;
     }
     
-    output += this.formatOutput('✅ AI suggestions enabled', 'success');
+    output += this.formatOutput(' AI suggestions enabled', 'success');
     output += '\r\n';
     
     // Test actual connection
@@ -210,13 +210,13 @@ export class AITerminalIntegration {
     try {
       const isWorking = await testAIConnection();
       if (isWorking) {
-        output += '\r\n' + this.formatOutput('✅ AI connection successful!', 'success');
+        output += '\r\n' + this.formatOutput(' AI connection successful!', 'success');
         output += '\r\n' + this.formatOutput('All AI features are working properly.', 'info');
       } else {
-        output += '\r\n' + this.formatOutput('❌ AI connection failed', 'error');
+        output += '\r\n' + this.formatOutput(' AI connection failed', 'error');
       }
     } catch (error) {
-      output += '\r\n' + this.formatOutput(`❌ Connection test failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+      output += '\r\n' + this.formatOutput(` Connection test failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
     
     return output;
@@ -224,7 +224,7 @@ export class AITerminalIntegration {
 
   private formatWelcomeMessage(): string {
     let output = '\r\n';
-    output += this.formatSeparator('🤖 GitCue AI Chat Mode', 'ai');
+    output += this.formatSeparator(' GitCue AI Chat Mode', 'ai');
     output += '\r\n';
     output += this.formatOutput('Welcome to AI Chat! I can help you with:', 'info');
     output += '\r\n  • Git commands and troubleshooting';

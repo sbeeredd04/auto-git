@@ -230,7 +230,7 @@ export async function testAIConnection(): Promise<boolean> {
  */
 export function formatAISuggestion(suggestion: string): string {
   // Add header
-  let formatted = '🤖 **AI Assistant Suggestion**\n\n';
+  let formatted = ' **AI Assistant Suggestion**\n\n';
   formatted += suggestion;
   formatted += '\n\n---\n';
   formatted += '*Powered by Google Gemini AI*';

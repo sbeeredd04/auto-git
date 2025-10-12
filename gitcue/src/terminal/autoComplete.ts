@@ -276,8 +276,8 @@ export class AutoCompleteEngine {
    */
   getTypeIcon(type: CompletionEntry['type']): string {
     const icons = {
-      builtin: '🔧',
-      ai: '🤖',
+      builtin: '',
+      ai: '',
     };
     
     return icons[type] || '•';
