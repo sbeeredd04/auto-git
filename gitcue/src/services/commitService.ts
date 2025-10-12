@@ -129,6 +129,58 @@ export class CommitService {
 		}
 	}
 
+	/**
+	 * Commit with intelligent analysis using threshold and completeness
+	 */
+	async commitWithIntelligentAnalysis(workspacePath: string, config: GitCueConfig): Promise<void> {
+		try {
+			const { stdout: status } = await execAsync('git status --porcelain', { 
+				cwd: workspacePath 
+			});
+			
+			if (!status.trim()) {
+				logger.info('No changes to commit');
+				return;
+			}
+
+			await execAsync('git add .', { cwd: workspacePath });
+
+			// Enhanced AI analysis with threshold and completeness
+			const intelligentConfig = config.intelligentCommit;
+			const analysis = await this.analyzeChangesWithIntelligentCriteria(
+				workspacePath,
+				intelligentConfig.commitThreshold,
+				intelligentConfig.requireCompleteness
+			);
+			
+			if (!analysis.shouldCommit) {
+				logger.info(`AI decided not to commit: ${analysis.reason}`);
+				if (config.enableNotifications) {
+					const settleMinutes = Math.ceil(intelligentConfig.activitySettleTime / 60000);
+					vscode.window.showInformationMessage(
+						` GitCue: ${analysis.reason}\n\nContinuing to monitor (next analysis in ${settleMinutes}min after activity settles)...`
+					);
+				}
+				this.activityLogger.logActivity('ai_analysis', 'Skipped commit', analysis.reason);
+				return;
+			}
+			
+			// Log detailed analysis
+			logger.info(`AI Analysis - Significance: ${analysis.significance}, Completeness: ${analysis.completeness}, Type: ${analysis.changeType}`);
+			this.activityLogger.logActivity('ai_analysis', 'Commit approved', 
+				`${analysis.significance} ${analysis.changeType} (${analysis.completeness})`);
+
+			const commitMessage = analysis.suggestedMessage || await this.generateCommitMessage(workspacePath, config);
+			await this.showBufferNotification(commitMessage, status, workspacePath, config, analysis);
+
+		} catch (error) {
+			logger.error(`Error in commitWithIntelligentAnalysis: ${error}`);
+			if (config.enableNotifications) {
+				vscode.window.showErrorMessage(`GitCue Error: ${error}`);
+			}
+		}
+	}
+
 	private async analyzeChangesWithAI(workspacePath: string): Promise<{ shouldCommit: boolean; reason: string; significance: string }> {
 		try {
 			this.activityLogger.setAiAnalysisInProgress(true);
@@ -154,6 +206,67 @@ export class CommitService {
 		} catch (error) {
 			logger.error('AI analysis failed: ' + (error instanceof Error ? error.message : String(error)));
 			return { shouldCommit: true, reason: 'AI analysis failed, defaulting to commit', significance: 'MEDIUM' };
+		} finally {
+			this.activityLogger.setAiAnalysisInProgress(false);
+		}
+	}
+
+	/**
+	 * Analyze changes with intelligent criteria (threshold and completeness)
+	 */
+	private async analyzeChangesWithIntelligentCriteria(
+		workspacePath: string,
+		threshold: 'any' | 'medium' | 'major',
+		requireCompleteness: boolean
+	): Promise<{ 
+		shouldCommit: boolean; 
+		reason: string; 
+		significance: string;
+		completeness?: string;
+		changeType?: string;
+		riskLevel?: string;
+		suggestedMessage?: string;
+	}> {
+		try {
+			this.activityLogger.setAiAnalysisInProgress(true);
+
+			const { stdout: diff } = await execAsync('git diff', { cwd: workspacePath });
+			const { stdout: status } = await execAsync('git status --porcelain', { cwd: workspacePath });
+
+			if (!diff.trim() && !status.trim()) {
+				return { 
+					shouldCommit: false, 
+					reason: 'No changes detected', 
+					significance: 'NONE',
+					completeness: 'complete',
+					changeType: 'none'
+				};
+			}
+
+			await execAsync('git add .', { cwd: workspacePath });
+			const { stdout: stagedDiff } = await execAsync('git diff --cached', { cwd: workspacePath });
+
+			const decision = await makeCommitDecisionWithAI(stagedDiff, status, threshold, requireCompleteness);
+			
+			return {
+				shouldCommit: decision.shouldCommit,
+				reason: decision.reason,
+				significance: decision.significance,
+				completeness: decision.completeness,
+				changeType: decision.changeType,
+				riskLevel: decision.riskLevel,
+				suggestedMessage: decision.suggestedMessage
+			};
+
+		} catch (error) {
+			logger.error('AI analysis failed: ' + (error instanceof Error ? error.message : String(error)));
+			return { 
+				shouldCommit: true, 
+				reason: 'AI analysis failed, defaulting to commit', 
+				significance: 'MEDIUM',
+				completeness: 'unknown',
+				changeType: 'chore'
+			};
 		} finally {
 			this.activityLogger.setAiAnalysisInProgress(false);
 		}
@@ -208,7 +321,13 @@ export class CommitService {
 		);
 	}
 
-	private async showBufferNotification(message: string, status: string, workspacePath: string, config: GitCueConfig): Promise<void> {
+	private async showBufferNotification(
+		message: string, 
+		status: string, 
+		workspacePath: string, 
+		config: GitCueConfig, 
+		analysis?: { significance?: string; completeness?: string; changeType?: string; riskLevel?: string }
+	): Promise<void> {
 		return new Promise((resolve) => {
 			if (this.bufferNotification) {
 				this.cancelBufferedCommit();
@@ -216,12 +335,13 @@ export class CommitService {
 
 			this.activityLogger.setPendingCommit(true);
 
-			let timeLeft = config.bufferTimeSeconds;
+			let timeLeft = config.intelligentCommit?.bufferTimeSeconds || config.bufferTimeSeconds;
 			let cancelled = false;
 
 			const panel = this.dashboardService.createBufferNotification({
 				message, status, timeLeft, config
 			});
+
 
 			if (config.enableNotifications) {
 				vscode.window.showWarningMessage(

@@ -1,5 +1,14 @@
 import * as vscode from 'vscode';
 
+export interface IntelligentCommitConfig {
+  commitThreshold: 'any' | 'medium' | 'major';
+  minTimeBetweenCommits: number; // milliseconds
+  activitySettleTime: number; // milliseconds
+  requireCompleteness: boolean;
+  bufferTimeSeconds: number;
+  cancelOnNewChanges: boolean;
+}
+
 export interface GitCueExtensionConfig {
   // Core settings
   geminiApiKey: string;
@@ -18,6 +27,9 @@ export interface GitCueExtensionConfig {
   terminalVerbose: boolean;
   sessionPersistence: boolean;
   maxHistorySize: number;
+  
+  // Intelligent commit configuration
+  intelligentCommit: IntelligentCommitConfig;
   
   // Watch configuration
   watchOptions: {
@@ -70,6 +82,16 @@ export class ConfigManager {
       terminalVerbose: config.get('terminalVerbose') ?? false,
       sessionPersistence: config.get('sessionPersistence') ?? true,
       maxHistorySize: config.get('maxHistorySize') || 100,
+      
+      // Intelligent commit configuration
+      intelligentCommit: {
+        commitThreshold: config.get('intelligentCommit.commitThreshold') || 'medium',
+        minTimeBetweenCommits: config.get('intelligentCommit.minTimeBetweenCommits') || 1800000, // 30 minutes
+        activitySettleTime: config.get('intelligentCommit.activitySettleTime') || 300000, // 5 minutes
+        requireCompleteness: config.get('intelligentCommit.requireCompleteness') ?? true,
+        bufferTimeSeconds: config.get('intelligentCommit.bufferTimeSeconds') || config.get('bufferTimeSeconds') || 30,
+        cancelOnNewChanges: config.get('intelligentCommit.cancelOnNewChanges') ?? true
+      },
       
       // Watch options
       watchOptions: {
@@ -193,6 +215,14 @@ export class ConfigManager {
       bufferTimeSeconds: config.bufferTimeSeconds,
       maxCallsPerMinute: config.maxCallsPerMinute
     };
+  }
+
+  /**
+   * Get intelligent commit configuration
+   */
+  getIntelligentCommitConfig(): IntelligentCommitConfig {
+    const config = this.getConfig();
+    return config.intelligentCommit;
   }
 
   /**

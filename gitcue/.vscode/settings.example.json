@@ -1,0 +1,69 @@
+{
+  "// GitCue Extension Configuration Example": "",
+  "// Copy this file to .vscode/settings.json in your workspace": "",
+  "// Or configure via VS Code Settings UI (Preferences > Settings > GitCue)": "",
+  
+  "// === Core Settings ===": "",
+  "gitcue.geminiApiKey": "YOUR_GEMINI_API_KEY_HERE",
+  "gitcue.commitMode": "intelligent",
+  "gitcue.autoPush": true,
+  "gitcue.enableNotifications": true,
+  "gitcue.autoWatch": true,
+  
+  "// === Intelligent Commit Settings ===": "",
+  "// Choose a preset or customize individual settings": "",
+  
+  "// PRESET: Balanced (Recommended Default)": "",
+  "gitcue.intelligentCommit.commitThreshold": "medium",
+  "gitcue.intelligentCommit.minTimeBetweenCommits": 1800000,
+  "gitcue.intelligentCommit.activitySettleTime": 300000,
+  "gitcue.intelligentCommit.requireCompleteness": true,
+  "gitcue.intelligentCommit.bufferTimeSeconds": 30,
+  "gitcue.intelligentCommit.cancelOnNewChanges": true,
+  
+  "// PRESET: Conservative (Uncomment to use)": "",
+  "// \"gitcue.intelligentCommit.commitThreshold\": \"major\",": "",
+  "// \"gitcue.intelligentCommit.minTimeBetweenCommits\": 3600000,": "",
+  "// \"gitcue.intelligentCommit.activitySettleTime\": 600000,": "",
+  "// \"gitcue.intelligentCommit.requireCompleteness\": true,": "",
+  "// \"gitcue.intelligentCommit.bufferTimeSeconds\": 60,": "",
+  "// \"gitcue.intelligentCommit.cancelOnNewChanges\": true,": "",
+  
+  "// PRESET: Frequent Commits (Uncomment to use)": "",
+  "// \"gitcue.intelligentCommit.commitThreshold\": \"any\",": "",
+  "// \"gitcue.intelligentCommit.minTimeBetweenCommits\": 600000,": "",
+  "// \"gitcue.intelligentCommit.activitySettleTime\": 120000,": "",
+  "// \"gitcue.intelligentCommit.requireCompleteness\": false,": "",
+  "// \"gitcue.intelligentCommit.bufferTimeSeconds\": 15,": "",
+  "// \"gitcue.intelligentCommit.cancelOnNewChanges\": false,": "",
+  
+  "// === Advanced Settings ===": "",
+  "gitcue.debounceMs": 30000,
+  "gitcue.maxCallsPerMinute": 15,
+  
+  "// === Watch Settings ===": "",
+  "gitcue.watchPaths": [
+    "**/*.{js,ts,jsx,tsx,py,java,cpp,c,h,cs,php,rb,go,rs}",
+    "**/*.{json,yaml,yml,md,txt}"
+  ],
+  
+  "// === Interactive Terminal Settings ===": "",
+  "gitcue.interactiveOnError": true,
+  "gitcue.enableSuggestions": true,
+  "gitcue.terminalVerbose": false,
+  "gitcue.sessionPersistence": true,
+  "gitcue.maxHistorySize": 100,
+  
+  "// === Configuration Notes ===": "",
+  "// commitThreshold values:": "",
+  "//   - \"any\": Commit all meaningful changes": "",
+  "//   - \"medium\": Commit features, fixes, refactoring (default)": "",
+  "//   - \"major\": Only significant features and major changes": "",
+  "// ": "",
+  "// Timing values (in milliseconds):": "",
+  "//   - minTimeBetweenCommits: 1800000 = 30 minutes": "",
+  "//   - activitySettleTime: 300000 = 5 minutes": "",
+  "//   - debounceMs: 30000 = 30 seconds": "",
+  "// ": "",
+  "// See INTELLIGENT_COMMIT_GUIDE.md for detailed documentation": ""
+}

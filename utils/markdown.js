@@ -192,6 +192,7 @@ export function formatInfo(message) {
  * @returns {string} - Clean text
  */
 function stripAnsi(text) {
+  // eslint-disable-next-line no-control-regex
   return text.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
