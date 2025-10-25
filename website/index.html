@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Git - AI-Powered Git Automation</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts - Ubuntu Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Ubuntu Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+    
+    <!-- Navigation Bar -->
+    <nav class="border-b border-gray-200 bg-white sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="material-icons text-gray-700">auto_awesome</span>
+                    <h1 class="text-xl font-bold">Auto-Git</h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="https://github.com/sbeeredd04/auto-git" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors">
+                        <span class="material-icons text-sm">code</span>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://www.npmjs.com/package/@sbeeredd04/auto-git" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors">
+                        <span class="material-icons text-sm">inventory_2</span>
+                        <span>NPM</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-6 py-16">
+        
+        <!-- Hero Section -->
+        <section class="mb-24">
+            <div class="mb-6">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 border border-gray-200">
+                    <span class="material-icons text-sm mr-1">new_releases</span>
+                    Version 4.1.0
+                </span>
+            </div>
+            <h2 class="text-5xl font-bold mb-6 leading-tight">AI-Powered Git Automation</h2>
+            <p class="text-xl text-gray-600 mb-8 max-w-3xl">
+                Intelligently analyze code changes and automatically generate meaningful commit messages using Google's Gemini AI
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <a href="https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                    <span class="material-icons mr-2">extension</span>
+                    VSCode Extension
+                </a>
+                <a href="https://github.com/sbeeredd04/auto-git" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
+                    <span class="material-icons mr-2">open_in_new</span>
+                    View on GitHub
+                </a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="mb-24">
+            <div class="flex items-center space-x-2 mb-8">
+                <span class="material-icons text-gray-700">info</span>
+                <h3 class="text-2xl font-bold">About</h3>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-8">
+                <p class="text-lg text-gray-700 mb-4">
+                    Auto-Git is a cross-platform CLI tool and VS Code extension that revolutionizes your development workflow. It monitors your code changes, intelligently analyzes significance and completeness, and automatically generates meaningful commit messages using AI.
+                </p>
+                <p class="text-lg text-gray-700">
+                    Built for developers who value automation and efficiency, Auto-Git eliminates the cognitive overhead of writing commit messages while maintaining high-quality version control practices.
+                </p>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="mb-24">
+            <div class="flex items-center space-x-2 mb-8">
+                <span class="material-icons text-gray-700">star</span>
+                <h3 class="text-2xl font-bold">Key Features</h3>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="material-icons text-gray-600">psychology</span>
+                        <h4 class="text-lg font-bold">Intelligent Commits</h4>
+                    </div>
+                    <p class="text-gray-600">
+                        AI analyzes code significance and decides when to commit based on multi-dimensional analysis
+                    </p>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="material-icons text-gray-600">visibility</span>
+                        <h4 class="text-lg font-bold">Auto-Watch Mode</h4>
+                    </div>
+                    <p class="text-gray-600">
+                        Monitors file changes and commits automatically when activity settles
+                    </p>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="material-icons text-gray-600">terminal</span>
+                        <h4 class="text-lg font-bold">Interactive Terminal</h4>
+                    </div>
+                    <p class="text-gray-600">
+                        AI-powered shell with error analysis, suggestions, and persistent session history
+                    </p>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="material-icons text-gray-600">speed</span>
+                        <h4 class="text-lg font-bold">Smart Diff Optimization</h4>
+                    </div>
+                    <p class="text-gray-600">
+                        Reduces API calls by 80% with intelligent change tracking and caching
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Get Started Section -->
+        <section class="mb-24">
+            <div class="flex items-center space-x-2 mb-8">
+                <span class="material-icons text-gray-700">rocket_launch</span>
+                <h3 class="text-2xl font-bold">Get Started</h3>
+            </div>
+            
+            <!-- CLI Installation -->
+            <div class="mb-8">
+                <h4 class="text-xl font-bold mb-4 flex items-center space-x-2">
+                    <span class="material-icons">computer</span>
+                    <span>CLI Installation</span>
+                </h4>
+                <div class="bg-gray-900 text-gray-100 rounded-lg p-6 mb-4">
+                    <code class="text-sm">npm install -g @sbeeredd04/auto-git</code>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-start space-x-3">
+                        <span class="material-icons text-gray-500 mt-1">chevron_right</span>
+                        <div>
+                            <p class="font-bold mb-1">Watch for changes and auto-commit</p>
+                            <code class="text-sm text-gray-600">auto-git watch</code>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="material-icons text-gray-500 mt-1">chevron_right</span>
+                        <div>
+                            <p class="font-bold mb-1">Single commit with AI message</p>
+                            <code class="text-sm text-gray-600">auto-git commit</code>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <span class="material-icons text-gray-500 mt-1">chevron_right</span>
+                        <div>
+                            <p class="font-bold mb-1">Interactive terminal session</p>
+                            <code class="text-sm text-gray-600">auto-git interactive</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VS Code Extension -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-8">
+                <h4 class="text-xl font-bold mb-4 flex items-center space-x-2">
+                    <span class="material-icons">extension</span>
+                    <span>VS Code Extension</span>
+                </h4>
+                <p class="text-gray-700 mb-6">
+                    Experience Auto-Git with enhanced interactive sidebar, dashboard, and seamless integration directly in your editor.
+                </p>
+                <div class="mb-6">
+                    <p class="font-bold mb-2">Search for "GitCue" in VS Code extensions or install directly:</p>
+                    <a href="https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        <span class="material-icons mr-2">extension</span>
+                        Install GitCue Extension
+                        <span class="material-icons ml-2 text-sm">open_in_new</span>
+                    </a>
+                </div>
+                <div class="border-t border-gray-300 pt-6">
+                    <p class="font-bold mb-3">Available Commands:</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="material-icons text-sm text-gray-500">check_circle</span>
+                            <span class="text-gray-700">GitCue: AI Commit - Generate AI commit message</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="material-icons text-sm text-gray-500">check_circle</span>
+                            <span class="text-gray-700">GitCue: Toggle Auto-Watch - Start/stop file watching</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="material-icons text-sm text-gray-500">check_circle</span>
+                            <span class="text-gray-700">GitCue: Open AI Terminal - Launch AI-powered terminal</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="material-icons text-sm text-gray-500">check_circle</span>
+                            <span class="text-gray-700">GitCue: Dashboard - Open GitCue control panel</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Configuration Section -->
+        <section class="mb-24">
+            <div class="flex items-center space-x-2 mb-8">
+                <span class="material-icons text-gray-700">settings</span>
+                <h3 class="text-2xl font-bold">Configuration</h3>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-8">
+                <h4 class="text-lg font-bold mb-4 flex items-center space-x-2">
+                    <span class="material-icons">vpn_key</span>
+                    <span>API Key Setup</span>
+                </h4>
+                <p class="text-gray-700 mb-4">
+                    Get your Gemini API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Google AI Studio</a>
+                </p>
+                <div class="space-y-4">
+                    <div>
+                        <p class="font-bold mb-2">For CLI:</p>
+                        <div class="bg-gray-900 text-gray-100 rounded-lg p-4">
+                            <code class="text-sm">export GEMINI_API_KEY="your-api-key"</code>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="font-bold mb-2">For VS Code:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-gray-700">
+                            <li>Open Settings (Cmd/Ctrl+,)</li>
+                            <li>Search "GitCue API Key"</li>
+                            <li>Enter your API key</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Requirements Section -->
+        <section class="mb-24">
+            <div class="flex items-center space-x-2 mb-8">
+                <span class="material-icons text-gray-700">checklist</span>
+                <h3 class="text-2xl font-bold">Requirements</h3>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <span class="material-icons text-3xl text-gray-600 mb-2">code</span>
+                    <p class="font-bold mb-1">Node.js</p>
+                    <p class="text-sm text-gray-600">>= 18.0.0</p>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <span class="material-icons text-3xl text-gray-600 mb-2">source</span>
+                    <p class="font-bold mb-1">Git</p>
+                    <p class="text-sm text-gray-600">Installed & configured</p>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <span class="material-icons text-3xl text-gray-600 mb-2">key</span>
+                    <p class="font-bold mb-1">Gemini API</p>
+                    <p class="text-sm text-gray-600">Free API key required</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 bg-gray-50">
+        <div class="max-w-5xl mx-auto px-6 py-12">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <h4 class="font-bold mb-3 flex items-center space-x-1">
+                        <span class="material-icons text-sm">link</span>
+                        <span>Links</span>
+                    </h4>
+                    <div class="space-y-2">
+                        <a href="https://github.com/sbeeredd04/auto-git" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">GitHub Repository</a>
+                        <a href="https://www.npmjs.com/package/@sbeeredd04/auto-git" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">NPM Package</a>
+                        <a href="https://marketplace.visualstudio.com/items?itemName=sbeeredd04.gitcue" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">VS Code Extension</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-3 flex items-center space-x-1">
+                        <span class="material-icons text-sm">description</span>
+                        <span>Documentation</span>
+                    </h4>
+                    <div class="space-y-2">
+                        <a href="https://github.com/sbeeredd04/auto-git/blob/main/docs/installation.md" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">Installation Guide</a>
+                        <a href="https://github.com/sbeeredd04/auto-git/blob/main/docs/configuration.md" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">Configuration</a>
+                        <a href="https://github.com/sbeeredd04/auto-git/blob/main/docs/advanced/system-design.md" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">System Design</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-3 flex items-center space-x-1">
+                        <span class="material-icons text-sm">support</span>
+                        <span>Support</span>
+                    </h4>
+                    <div class="space-y-2">
+                        <a href="https://github.com/sbeeredd04/auto-git/issues" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">Issue Tracker</a>
+                        <a href="https://github.com/sbeeredd04/auto-git/blob/main/docs/advanced/contributing.md" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">Contributing Guide</a>
+                        <a href="https://github.com/sbeeredd04/auto-git/blob/main/docs/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="block text-gray-600 hover:text-gray-900 transition-colors">Changelog</a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-300 pt-8 text-center">
+                <p class="text-gray-600">
+                    MIT License - Made with AI assistance for developers who value automation
+                </p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
