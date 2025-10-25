@@ -435,7 +435,7 @@
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.25.1",
     "ts-loader": "^9.5.2",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.3",
     "webpack": "^5.99.7",
     "webpack-cli": "^6.0.1"
   },
