@@ -28,6 +28,11 @@ Auto-Git is a cross-platform CLI tool that intelligently analyzes your code chan
 - **Quality Checks**: Linting, static analysis, security audits
 - **Dependabot**: Automated dependency updates for npm and GitHub Actions
 
+### .gitignore Integration
+- **Automatic Pattern Recognition**: Reads and respects your `.gitignore` file
+- **Smart File Watching**: Excludes ignored files from monitoring
+- **Zero Configuration**: Works automatically with your existing .gitignore
+
 ## Features
 
 - **Intelligent Commits** - AI analyzes code significance and decides when to commit
@@ -36,6 +41,7 @@ Auto-Git is a cross-platform CLI tool that intelligently analyzes your code chan
 - **Smart Diff Optimization** - Reduces API calls by 80% with change tracking
 - **VS Code Integration** - Full-featured extension with enhanced sidebar and dashboard
 - **Flexible Configuration** - Customize commit behavior, timing, and push settings
+- **.gitignore Integration** - Automatically respects your .gitignore patterns
 
 ## Quick Start
 

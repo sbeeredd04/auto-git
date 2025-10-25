@@ -161,6 +161,20 @@ Auto-Git watches these patterns by default:
 ]
 ```
 
+### .gitignore Integration
+
+**New in v4.1.0**: Auto-Git automatically reads and respects patterns from your `.gitignore` file. Files and directories specified in `.gitignore` will be excluded from file watching and commits.
+
+This integration:
+- Reads `.gitignore` from your repository root
+- Merges .gitignore patterns with the default ignore patterns
+- Automatically converts .gitignore syntax to watcher-compatible patterns
+- Works seamlessly with existing configuration
+
+No additional configuration is needed - .gitignore integration is enabled by default.
+
+### Customizing Watch Patterns
+
 Customize in config file:
 
 ```json
