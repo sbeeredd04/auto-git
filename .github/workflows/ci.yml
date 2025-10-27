@@ -122,7 +122,7 @@ jobs:
           echo "✅ Package created successfully"
         
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: npm-package-${{ github.sha }}
           path: '*.tgz'
